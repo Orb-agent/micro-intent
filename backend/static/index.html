@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Micro Intent · Beaver</title>
+<title>Orbs · Voice companion</title>
 <!--
   Mac prototype client for the /ws protocol in docs/contracts.md: mic, screen sharing,
   mascot voice and cards. Stands in for the iPhone app (WP1) so the idea can be tried on
@@ -11,80 +11,80 @@
 -->
 <style>
   :root {
-    color-scheme: dark;
-    --bg: #0b0d12; --bg-raised: #141826; --panel: rgb(26 28 36 / .84);
-    --ink: #f7f8fb; --muted: #a9afbf; --line: rgb(255 255 255 / .1);
-    --accent: #3d63ff; --accent-bright: #6fb8ff; --success: #4ade80;
-    --warning: #fcd34d; --danger: #fca5a5;
+    color-scheme: dark light;
+    --bg: #050505; --panel: #101010; --ink: #f8f8f8; --muted: #9a9a9a;
+    --line: #292929; --mark: #fff; --soft: #171717; --accent: #fff;
+    --success: #b8e7c0; --warning: #f2d89a; --danger: #f0aaaa;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { color-scheme: light; --bg: #f7f7f6; --panel: #fff; --ink: #080808;
+      --muted: #686868; --line: #dededc; --mark: #050505; --soft: #f0f0ef;
+      --accent: #050505; --success: #27663a; --warning: #876515; --danger: #9d3030; }
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   body {
-    min-height: 100vh; margin: 0; color: var(--ink);
-    background: radial-gradient(ellipse at 50% 22%, #17254a 0, transparent 38%),
-      linear-gradient(180deg, var(--bg) 0%, #101522 100%);
+    min-height: 100vh; margin: 0; color: var(--ink); background: var(--bg);
     font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   }
   main { width: min(100% - 40px, 940px); min-height: 100vh; margin: 0 auto; padding: 28px 0 36px; display: flex; flex-direction: column; }
   header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
   .brand { display: flex; align-items: center; gap: 12px; min-width: max-content; }
-  .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid rgb(111 184 255 / .34); border-radius: 13px; color: #b9d8ff; background: linear-gradient(145deg, #1b3bd1, #3d63ff 62%, #6fb8ff); box-shadow: 0 5px 22px rgb(61 99 255 / .28); }
-  .brand-mark svg { width: 21px; height: 21px; }
-  h1 { margin: 0; font-size: 16px; line-height: 1.2; font-weight: 650; letter-spacing: -.02em; }
-  .brand-caption { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 50%; color: var(--mark); background: transparent; }
+  .brand-mark svg { width: 25px; height: 25px; fill: currentColor; }
+  h1 { margin: 0; font-size: 16px; line-height: 1.2; font-weight: 650; letter-spacing: .16em; text-transform: uppercase; }
+  .brand-caption { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
   .row, .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   button, select, input { font: inherit; color: inherit; }
-  button, select { min-height: 42px; border: 1px solid var(--line); background: rgb(255 255 255 / .055); border-radius: 13px; padding: 8px 14px; cursor: pointer; transition: background .18s, border-color .18s, transform .18s; }
-  button:hover:not(:disabled), select:hover { border-color: rgb(157 187 255 / .38); background: rgb(255 255 255 / .09); }
+  button, select { min-height: 42px; border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 8px 16px; cursor: pointer; transition: background .18s, border-color .18s, transform .18s; }
+  button:hover:not(:disabled), select:hover { border-color: var(--ink); background: var(--soft); }
   button:active:not(:disabled) { transform: translateY(1px); }
   button:disabled { opacity: .42; cursor: default; }
-  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid #6fb8ff; outline-offset: 3px; }
-  select { max-width: 230px; color: #dce5ff; }
-  option { color: #f7f8fb; background: #141826; }
-  .pill { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; background: rgb(255 255 255 / .04); font-size: 12px; }
-  #conn::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #737b8e; }
-  .pill.ok { color: var(--success); border-color: rgb(74 222 128 / .24); background: rgb(34 197 94 / .08); }
-  .pill.ok::before { background: var(--success); box-shadow: 0 0 10px rgb(74 222 128 / .6); }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--mark); outline-offset: 3px; }
+  select { max-width: 230px; color: var(--ink); }
+  option { color: var(--ink); background: var(--bg); }
+  .pill { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; background: transparent; font-size: 12px; }
+  #conn::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #666; }
+  .pill.ok { color: var(--success); border-color: currentColor; background: transparent; }
+  .pill.ok::before { background: currentColor; }
   .stage { flex: 1; display: grid; align-content: center; justify-items: center; gap: 16px; min-height: 400px; padding: 28px 0 32px; text-align: center; }
-  .eyebrow { margin: 0; color: #9dbbff; font-size: 11px; font-weight: 650; letter-spacing: .18em; text-transform: uppercase; }
-  #orb { position: relative; isolation: isolate; display: grid; place-items: center; width: 156px; height: 156px; margin: 8px 0 4px; padding: 0; border: 1px solid rgb(255 255 255 / .5); border-radius: 50%; color: #14358d; background: radial-gradient(circle at 33% 25%, #fff 0%, #cff4ff 14%, #6fb8ff 39%, #3d63ff 67%, #1b3bd1 100%); box-shadow: inset -10px -15px 24px rgb(10 20 90 / .45), inset 6px 7px 15px rgb(255 255 255 / .78), 0 0 60px rgb(62 139 255 / .34), 0 18px 54px rgb(0 0 0 / .3); transition: transform .25s, filter .25s, box-shadow .25s; touch-action: none; }
-  #orb::before, #orb::after { content: ""; position: absolute; z-index: -1; border: 1px solid rgb(157 187 255 / .24); border-radius: 50%; pointer-events: none; }
-  #orb::before { inset: -13px; }
-  #orb::after { inset: -25px; border-color: rgb(157 187 255 / .11); }
-  #orb:hover { filter: brightness(1.08); transform: scale(1.025); }
+  .eyebrow { margin: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; }
+  #orb { position: relative; display: grid; place-items: center; width: 168px; height: 168px; margin: 8px 0 4px; padding: 0; border: 1px solid var(--line); border-radius: 50%; color: var(--mark); background: transparent; box-shadow: none; transition: transform .25s, border-color .25s, box-shadow .25s; touch-action: none; }
+  #orb:hover { border-color: var(--muted); transform: scale(1.025); }
   #orb:active { transform: scale(.96); }
-  #orb svg { width: 31px; height: 31px; filter: drop-shadow(0 2px 5px rgb(255 255 255 / .45)); }
-  #orb[data-state="listening"] { animation: listen 1.25s ease-in-out infinite; }
-  #orb[data-state="thinking"], #orb[data-state="searching"] { animation: think 2.8s linear infinite; }
-  #orb[data-state="speaking"] { animation: speak .8s ease-in-out infinite alternate; }
-  #orb[data-state="listening"]::before, #orb[data-state="speaking"]::before { border-color: rgb(111 184 255 / .6); }
-  @keyframes listen { 50% { box-shadow: inset -10px -15px 24px rgb(10 20 90 / .4), inset 6px 7px 15px rgb(255 255 255 / .8), 0 0 0 12px rgb(61 99 255 / .12), 0 0 72px rgb(62 139 255 / .62); } }
-  @keyframes think { to { filter: hue-rotate(45deg); } }
-  @keyframes speak { to { transform: scale(1.045); box-shadow: inset -10px -15px 24px rgb(10 20 90 / .4), inset 6px 7px 15px rgb(255 255 255 / .8), 0 0 72px rgb(62 139 255 / .65), 0 0 0 9px rgb(61 99 255 / .1); } }
+  #orb svg { width: 124px; height: 124px; overflow: visible; }
+  #orb .orb-rays { fill: currentColor; transform-box: fill-box; transform-origin: center; transition: opacity .2s; }
+  #orb .orb-mic { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: .78; }
+  #orb[data-state="listening"] .orb-rays { animation: listen 1.2s ease-in-out infinite; }
+  #orb[data-state="thinking"] .orb-rays, #orb[data-state="searching"] .orb-rays { animation: think 10s linear infinite; }
+  #orb[data-state="speaking"] .orb-rays { animation: speak .8s ease-in-out infinite alternate; }
+  @keyframes listen { 50% { transform: scale(1.08); opacity: .72; } }
+  @keyframes think { to { transform: rotate(360deg); } }
+  @keyframes speak { to { transform: scale(1.12); } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }
-  #label { min-height: 1.5em; color: #b9d8ff; font-size: 14px; font-weight: 550; }
+  #label { min-height: 1.5em; color: var(--ink); font-size: 14px; font-weight: 550; }
   .hint { max-width: 410px; margin: 0; color: var(--muted); font-size: 13px; }
   .content { width: min(100%, 700px); margin: 0 auto; display: grid; gap: 12px; }
-  .bubble { background: linear-gradient(135deg, rgb(61 99 255 / .12), rgb(255 255 255 / .045)); border: 1px solid rgb(111 184 255 / .18); border-radius: 18px; padding: 15px 18px; box-shadow: 0 12px 32px rgb(0 0 0 / .12); }
+  .bubble { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 15px 18px; }
   .you { color: var(--muted); font-size: 13px; }
   #screenRow { min-height: 0; }
   #cards { display: grid; gap: 10px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; display: grid; gap: 5px; box-shadow: 0 12px 32px rgb(0 0 0 / .12); backdrop-filter: blur(18px); }
-  .card .kind { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: #9dbbff; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; display: grid; gap: 5px; }
+  .card .kind { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
   .card .big { font-size: 27px; font-weight: 650; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
   .card .meta { color: var(--muted); }
-  .badge { display: inline-block; background: rgb(61 99 255 / .2); color: #c9d8ff; border-radius: 7px; padding: 0 7px; font-weight: 600; }
+  .badge { display: inline-block; background: var(--soft); color: var(--ink); border-radius: 7px; padding: 0 7px; font-weight: 600; }
   .verdict-fits { color: var(--success); } .verdict-tight { color: var(--warning); } .verdict-clash { color: var(--danger); }
   #screenThumb { max-width: 120px; border-radius: 12px; border: 1px solid var(--line); display: none; }
   #screenSummary { max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #textForm { display: flex; gap: 9px; padding: 7px; border: 1px solid var(--line); border-radius: 17px; background: rgb(255 255 255 / .055); box-shadow: 0 14px 36px rgb(0 0 0 / .18); }
+  #textForm { display: flex; gap: 9px; padding: 7px; border: 1px solid var(--line); border-radius: 17px; background: var(--panel); }
   #textForm input { flex: 1; min-width: 0; min-height: 42px; border: 0; outline: 0; background: transparent; padding: 7px 12px; }
-  #textForm input::placeholder { color: #81899d; }
-  #textForm button { min-width: 78px; border-color: transparent; color: white; background: linear-gradient(135deg, #3d63ff, #2448f5); font-weight: 600; }
-  #textForm button:hover { background: linear-gradient(135deg, #5878ff, #3157ff); }
-  #logDetails { margin-top: 16px; color: #858da1; font-size: 12px; }
+  #textForm input::placeholder { color: var(--muted); }
+  #textForm button { min-width: 78px; border-color: var(--ink); color: var(--bg); background: var(--ink); font-weight: 600; }
+  #textForm button:hover { color: var(--ink); background: var(--soft); }
+  #logDetails { margin-top: 16px; color: var(--muted); font-size: 12px; }
   #logDetails summary { width: max-content; cursor: pointer; user-select: none; }
-  #log { margin-top: 8px; font: 11px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; max-height: 150px; overflow: auto; background: rgb(0 0 0 / .2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  #log { margin-top: 8px; font: 11px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; max-height: 150px; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
   @media (max-width: 680px) { main { width: min(100% - 28px, 940px); padding-top: 17px; } header { align-items: flex-start; flex-direction: column; } .toolbar { width: 100%; } .toolbar > * { flex: 1; } .toolbar select { max-width: none; } .stage { min-height: 360px; } #orb { width: 136px; height: 136px; } }
 </style>
 </head>
@@ -92,8 +92,55 @@
 <main>
   <header>
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12c2.2-4.5 5.1-6.8 8.7-6.8 3.1 0 5.2 1.5 7.3 4.4M4 12c2.2 4.5 5.1 6.8 8.7 6.8 3.1 0 5.2-1.5 7.3-4.4M4 12h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><h1>Micro Intent</h1><span class="brand-caption">Beaver voice companion</span></div>
+      <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 100 100"><g><rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(0 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(7.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(15 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(22.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(30 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(37.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(45 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(52.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(60 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(67.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(75 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(82.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(90 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(97.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(105 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(112.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(120 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(127.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(135 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(142.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(150 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(157.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(165 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(172.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(180 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(187.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(195 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(202.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(210 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(217.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(225 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(232.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(240 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(247.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(255 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(262.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(270 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(277.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(285 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(292.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(300 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(307.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(315 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(322.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(330 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(337.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(345 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(352.5 50 50)"/></g></svg></div>
+      <div><h1>Orbs</h1><span class="brand-caption">Voice companion</span></div>
     </div>
     <div class="toolbar">
       <span id="conn" class="pill">disconnected</span>
@@ -107,12 +154,61 @@
   </header>
 
   <section class="stage" aria-label="Voice assistant">
-    <p class="eyebrow">Your day, in the moment</p>
+    <p class="eyebrow">Here when you need it</p>
     <button id="orb" data-state="idle" aria-label="Hold to talk" title="Hold to talk">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 100 100" aria-hidden="true"><g class="orb-rays">
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(0 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(7.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(15 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(22.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(30 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(37.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(45 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(52.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(60 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(67.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(75 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(82.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(90 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(97.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(105 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(112.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(120 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(127.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(135 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(142.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(150 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(157.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(165 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(172.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(180 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(187.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(195 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(202.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(210 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(217.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(225 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(232.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(240 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(247.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(255 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(262.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(270 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(277.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(285 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(292.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(300 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(307.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(315 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(322.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(330 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(337.5 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(345 50 50)"/>
+        <rect x="48.45" y="12.5" width="3.1" height="7" rx="1.55" transform="rotate(352.5 50 50)"/>
+      </g><g class="orb-mic"><rect x="46.5" y="39" width="7" height="14" rx="3.5"/><path d="M42 49a8 8 0 0 0 16 0M50 57v5m-4 0h8"/></g></svg>
     </button>
     <div id="label"></div>
-    <p class="hint" id="hint">Tap the orb to enable your microphone. Then hold it, or hold Space, while you talk.</p>
+    <p class="hint" id="hint">Tap to enable your mic. Then hold the ring, or Space, while you talk.</p>
   </section>
 
   <section class="content" aria-live="polite">
@@ -121,7 +217,7 @@
     <div id="say" class="bubble" hidden></div>
     <div id="cards"></div>
 
-    <form id="textForm"><input id="text" aria-label="Type a question" placeholder="Ask Beaver anything…" autocomplete="off"><button>Send</button></form>
+    <form id="textForm"><input id="text" aria-label="Type a question" placeholder="Ask Orbs anything…" autocomplete="off"><button>Send</button></form>
   </section>
   <details id="logDetails"><summary>Connection details</summary><div id="log"></div></details>
 </main>
