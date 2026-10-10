@@ -340,7 +340,7 @@ function renderCards(cards) {
 async function start() {
   try { localStorage.removeItem("beaverToken"); } catch {}
   try {
-    const response = await fetch("/extension-config", { cache: "no-store" });
+    const response = await fetch("/extension-config", { cache: "no-store", headers: { "X-Orbs-Client": "orbs-ui" } });
     if (!response.ok) throw new Error(`Configuration unavailable (${response.status})`);
     const config = await response.json();
     if (typeof config.app_token !== "string" || !config.app_token || typeof config.backend_url !== "string") {

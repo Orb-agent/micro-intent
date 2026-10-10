@@ -170,8 +170,10 @@ async def health():
 
 
 @app.get("/extension-config")
-async def extension_config():
+async def extension_config(request: Request):
     """Provide browser clients with runtime config without exposing it in the UI."""
+    if request.headers.get("x-orbs-client") != "orbs-ui":
+        raise HTTPException(404)
     token = os.environ.get("APP_TOKEN", "").strip()
     if not token:
         raise HTTPException(503, "APP_TOKEN is not configured on the backend")

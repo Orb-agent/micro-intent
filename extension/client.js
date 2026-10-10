@@ -234,7 +234,9 @@ async function initialize() {
   if (widgetMode) $("label").textContent = mode === "handsfree" ? "Tap to listen" : "Tap to talk";
 
   try {
-    const response = await fetch(new URL("/extension-config", CONFIG_BOOTSTRAP_URL), { cache: "no-store" });
+    const response = await fetch(new URL("/extension-config", CONFIG_BOOTSTRAP_URL), {
+      cache: "no-store", headers: { "X-Orbs-Client": "orbs-ui" },
+    });
     if (!response.ok) throw new Error(`Backend config unavailable (${response.status})`);
     const config = await response.json();
     if (typeof config.app_token !== "string" || !config.app_token || typeof config.backend_url !== "string") {

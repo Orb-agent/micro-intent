@@ -94,7 +94,7 @@ The orb shows `speaking` while the app still has audio queued, even after the se
 | --- | --- |
 | `POST /screenshot` | From the iPhone Shortcut. `Authorization: Bearer <APP_TOKEN>`, body is the raw image (`image/jpeg` or `image/png`, max 8 MB). Returns `204` and starts vision |
 | `GET /health` | `{"ok": true, "workspace": "rest" \| "fixture"}` |
-| `GET /extension-config` | Desktop/Chrome clients only. `{"backend_url": "https://…", "app_token": "…"}` with `Cache-Control: no-store`; responds `503` when configuration is missing or invalid. Never log or cache the token. |
+| `GET /extension-config` | Desktop/Chrome clients send `X-Orbs-Client: orbs-ui`. Returns `{"backend_url": "https://…", "app_token": "…"}` with `Cache-Control: no-store`; responds `404` without the client header or `503` when configuration is missing/invalid. Never log or cache the token. |
 
 **Screenshot rule:** the server keeps only the latest screenshot and its `ScreenContext`. A turn gets the context if the screenshot is less than 120 s old and no earlier turn has used it; if vision is still running, the turn waits for it.
 
