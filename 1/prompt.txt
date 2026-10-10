@@ -1,0 +1,17 @@
+<task-notification>
+<task-id>b1aalbuiu</task-id>
+<tool-use-id>toolu_01RdgEf47QTioaRyALu9pW5n</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-macbook-Documents-GitHub-micro-intent/a9833779-9242-41ac-929c-a598e00579e2/tasks/b1aalbuiu.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait until the iOS build finishes" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b0la20gb6</task-id>
+<tool-use-id>toolu_01Rho2u1rqjRGBBHgHiNb1Q9</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-macbook-Documents-GitHub-micro-intent/a9833779-9242-41ac-929c-a598e00579e2/tasks/b0la20gb6.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for scratch iOS build to finish" completed (exit code 0)</summary>
+</task-notification>
