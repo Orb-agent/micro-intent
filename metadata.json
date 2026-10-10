@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4JY2DPA8WV4QFAC3SHGZE4S",
+  "strategy": "manual-commit",
+  "branch": "feature/wp2-backend-voice-vision",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "backend/voice.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2,
+    "cache_creation_tokens": 1322,
+    "cache_read_tokens": 137175,
+    "output_tokens": 257,
+    "api_call_count": 1
+  }
+}
