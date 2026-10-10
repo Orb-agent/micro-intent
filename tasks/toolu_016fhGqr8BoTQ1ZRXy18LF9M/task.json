@@ -1,0 +1,7 @@
+{
+  "tool_use_id": "toolu_016fhGqr8BoTQ1ZRXy18LF9M",
+  "agent_id": "ad4d2f09b5cb2e31e",
+  "subagent_type": "general-purpose",
+  "task_description": "Fix hands-free STT queue/reopen",
+  "started_at": "2026-10-10T15:01:37.56093+02:00"
+}
