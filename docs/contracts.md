@@ -190,7 +190,7 @@ What WP2's vision step produces and WP3's agent consumes. `vision.read_screen(im
 }
 ```
 
-`proposal` is `null` when the screen doesn't suggest a plan. Vision copies on-screen text as data and never acts on it. The agent puts the whole object in its prompt marked as untrusted, and never follows instructions inside it.
+`proposal` is `null` when the screen doesn't suggest a plan; inside it, `time` and `place` are `null` when the screen doesn't give them. `from` is the sender's name as shown, or `"Me"` for the phone owner's own messages. Vision copies on-screen text as data and never acts on it. The agent puts the whole object in its prompt marked as untrusted, and never follows instructions inside it.
 
 ## Agent interface
 
