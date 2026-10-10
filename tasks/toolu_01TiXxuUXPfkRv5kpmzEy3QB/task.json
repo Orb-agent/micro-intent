@@ -1,0 +1,7 @@
+{
+  "tool_use_id": "toolu_01TiXxuUXPfkRv5kpmzEy3QB",
+  "agent_id": "acd6e7ad538d81a2c",
+  "subagent_type": "general-purpose",
+  "task_description": "Simulate team decision on PR #14",
+  "started_at": "2026-10-10T16:30:38.28221+02:00"
+}
