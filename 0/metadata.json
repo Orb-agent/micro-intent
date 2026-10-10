@@ -1,0 +1,60 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K0SBJG34HZ8BE9AEPD2KD1",
+  "session_id": "698d8ae4-1b15-4e82-9e93-6d1a3ac44327",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T13:42:10.475073Z",
+  "branch": "feature/wp1-ios-ui",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "frontend/BeaverAgent/BeaverAgent/ContentView.swift",
+    "frontend/BeaverAgent/BeaverAgent/OrbView.swift"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "95a1fe632c70",
+  "checkpoint_transcript_start": 888,
+  "transcript_lines_at_start": 888,
+  "compact_transcript_start": 136,
+  "token_usage": {
+    "input_tokens": 36,
+    "cache_creation_tokens": 28256,
+    "cache_read_tokens": 6037409,
+    "output_tokens": 11890,
+    "api_call_count": 18
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T13:42:10.226574Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 313,
+    "total_committed": 9,
+    "total_lines_changed": 313,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 8,
+      "user_lines_removed": 405,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 1,
+        ".gitignore": 4,
+        "frontend/BeaverAgent/BeaverAgent/BeaverAgentApp.swift": 1,
+        "frontend/BeaverAgent/BeaverAgent/ContentView.swift": 2
+      },
+      "user_removed_per_file": {
+        "frontend/BeaverAgent/BeaverAgent/BeaverAgentApp.swift": 92,
+        "frontend/BeaverAgent/BeaverAgent/ContentView.swift": 313
+      }
+    }
+  ]
+}
