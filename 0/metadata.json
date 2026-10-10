@@ -1,0 +1,48 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K2H7D0QYAFWX32Z5PFPBVT",
+  "session_id": "cc0e210e-7127-4e05-ab98-28cc91a7abb2",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T14:12:38.984156Z",
+  "branch": "fm/micro-intent-agent-wp3-v1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "backend/agent.py",
+    "backend/evals.py",
+    "backend/tests/test_agent.py"
+  ],
+  "agent": "Antigravity",
+  "model": "",
+  "turn_id": "e6bf7ea64673",
+  "checkpoint_transcript_start": 205,
+  "transcript_lines_at_start": 205,
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T14:12:38.962956Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 0,
+    "total_lines_changed": 0,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 819,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "backend/agent.py": 472,
+        "backend/evals.py": 157,
+        "backend/tests/test_agent.py": 190
+      }
+    }
+  ]
+}
