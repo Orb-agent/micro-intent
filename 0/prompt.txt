@@ -1,0 +1,16 @@
+<!-- reply -->
+> origin/develop
+
+yes pull from
+
+---
+
+we also need to make agent ask how user fills and then adapt/vibe voice to match the mood
+
+---
+
+push it and open a PR to develop
+
+---
+
+update contract, you can do this
