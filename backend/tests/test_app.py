@@ -164,3 +164,26 @@ def test_talking_over_the_mascot_interrupts(client, monkeypatch):
     msgs = receive_turn(ws)
     ctx.__exit__(None, None, None)
     assert kinds(msgs)[:2] == ["transcript", "state:thinking"]
+
+
+def test_interrupt_closes_the_tts_stream(client, monkeypatch):
+    closed = []
+
+    async def endless_speak(text):
+        try:
+            for _ in range(10_000):  # never waits, so the interrupt lands at send()
+                yield "AAAA"
+        finally:
+            await asyncio.sleep(0.1)  # the TTS socket's closing handshake
+            closed.append(True)
+
+    monkeypatch.setattr(server.voice, "speak", endless_speak)
+    ctx, ws = connect(client)
+    ws.send_json({"type": "text", "text": "Can I make it?"})
+    while ws.receive_json()["type"] != "audio":
+        pass
+    ws.send_json({"type": "interrupt"})
+    msgs = receive_turn(ws)
+    assert closed == [True]  # before the idle, not later through GC
+    ctx.__exit__(None, None, None)
+    assert "audio_end" not in kinds(msgs)

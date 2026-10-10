@@ -6,6 +6,7 @@ Protocol and interfaces: docs/contracts.md. Run from backend/:
 
 import asyncio
 import base64
+import contextlib
 import hmac
 import inspect
 import json
@@ -215,10 +216,11 @@ class Session:
             messages = cards_to_a2ui(f"reply-{self.turns}", reply["cards"])
             await self.send({"type": "a2ui", "messages": messages})
         await self.state("speaking")
-        try:
-            async for chunk in voice.speak(reply["say"]):
-                timings.setdefault("first_audio", time.monotonic() - t0)
-                await self.send({"type": "audio", "data": chunk})
+        try:  # aclosing: an interrupt closes the TTS socket now, not when GC finds it
+            async with contextlib.aclosing(voice.speak(reply["say"])) as chunks:
+                async for chunk in chunks:
+                    timings.setdefault("first_audio", time.monotonic() - t0)
+                    await self.send({"type": "audio", "data": chunk})
         except Exception:
             log.exception("TTS failed")  # the reply text and cards are already on screen
         await self.send({"type": "audio_end"})
