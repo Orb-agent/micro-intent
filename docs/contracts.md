@@ -88,6 +88,14 @@ The orb shows `speaking` while the app still has audio queued, even after the se
 
 **Hands-free mode.** Opt in with `"mode": "handsfree"` in `hello`; push-to-talk stays the default. The app streams `audio` for as long as it is connected, also while the mascot speaks, and never sends `audio_end`, so echo cancellation must be on (see [Audio](#audio)) or the mascot hears itself and cuts itself off. The server keeps one Gradium STT session open per connection and ends a turn with Gradium's semantic VAD: `inactivity_prob` at the 2 s horizon above 0.5 for 3 steps in a row, once the turn has words. Then it flushes, sends `transcript` and runs the turn as usual. The first words of each turn cancel the running turn, as a new press does, and send `state: listening`. The server's turn is often over while the app still plays queued audio, so in this mode `state: listening` is the app's cue to stop playback and drop `audio` until the next `reply`. Each hands-free connection holds an STT session the whole time, even in silence, which counts against Gradium's concurrent session limit.
 
+**Proactive turns.** The agent also speaks up on its own about what is on the screen, without a question. When vision has read a new screenshot (`POST /screenshot` or `screen`), the server sends `screen_ok` and then runs a turn in the most recently connected session, with the server's `PROACTIVE` text in place of the user's words and that screenshot's context. It uses the same frames as any turn: `state: thinking`, `searching` with labels, `reply`, `a2ui`, `speaking`, `audio`, `audio_end`, `state: idle`, with no `transcript` before it, since nobody spoke. The agent speaks only if there is something concrete to do, such as a plan on screen to check against the calendar and the trains, and ends with an offer ("Shall I add it?"); anything to add, send or change is only a suggestion in the cards for the user to confirm, never done. With nothing to do, the reply has an empty `say`, and the server sends only `state: idle` after `thinking`. There is no proactive turn:
+
+- while the user holds the orb or talks hands-free, or a turn runs; their own turn takes the screenshot instead;
+- for a reused reading (same bytes, see the screenshot rule in [HTTP](#http)) or a failed one;
+- for a screen already offered: a reading that differs from the last offered one only in `summary` counts as the same screen.
+
+The user interrupts a proactive turn like any other; an interrupted one is not retried. A proactive turn that speaks uses up its screenshot, so a follow-up ("yes, add it") goes on the conversation history, not the screen. `PROACTIVE_SCREEN=0` turns proactive turns off.
+
 **Earlier frames.** `recent` holds the frames before `data`, in the same `mime`, oldest first, about 1 s apart, at most 9; `data` stays the current frame. Each image is at most 8 MB, and all of them together at most 8 MB decoded. If `recent` is malformed or over a limit, the server drops it, logs a warning and keeps `data`; it never drops the current frame. Vision reads all the frames in one call, see [Screen context](#screen-context). `POST /screenshot` stays one frame.
 
 ## HTTP
@@ -97,7 +105,7 @@ The orb shows `speaking` while the app still has audio queued, even after the se
 | `POST /screenshot` | From the iPhone Shortcut. `Authorization: Bearer <APP_TOKEN>`, body is the raw image (`image/jpeg` or `image/png`, max 8 MB). Returns `204` and starts vision |
 | `GET /health` | `{"ok": true, "workspace": "rest" \| "fixture"}` |
 
-**Screenshot rule:** the server keeps only the latest screenshot and its `ScreenContext`. A turn gets the context if the screenshot is less than 120 s old and no earlier turn has used it; if vision is still running, the turn waits for it. A screenshot with the same bytes (and `recent` frames) as the one before reuses its context without calling vision, for up to 120 s after that read began; `screen_ok` is still sent, and a failed read is never reused.
+**Screenshot rule:** the server keeps only the latest screenshot and its `ScreenContext`. A turn gets the context if the screenshot is less than 120 s old and no earlier turn has used it (a [proactive turn](#websocket-ws) that speaks counts); if vision is still running, the turn waits for it. A screenshot with the same bytes (and `recent` frames) as the one before reuses its context without calling vision, for up to 120 s after that read began; `screen_ok` is still sent, and a failed read is never reused.
 
 ## Audio
 
@@ -223,7 +231,8 @@ class Agent:
         """One user turn. Keeps conversation history on self. Never raises for model
         or tool errors: returns a short apology with no cards instead. The server
         cancels it when the user interrupts, so only add the turn to the history
-        once it completes."""
+        once it completes. For a proactive turn, `text` is the server's PROACTIVE
+        instruction, and an empty `say` with no cards means stay silent."""
 ```
 
 ## Tools
@@ -284,6 +293,7 @@ Events cover now to 7 days ahead. `source` is `luma` when the event's descriptio
 | `GOOGLE_MAPS_API_KEY` | WP3 | Optional. Enable Places API (New) and Routes API on the key and restrict it to those two. Without it, the agent has no Maps tools |
 | `WORKSPACE_MODE` | WP3 | `rest` or `fixture` |
 | `MOCK_AGENT` | WP2 | `1` uses `StubAgent` |
+| `PROACTIVE_SCREEN` | WP2 | `1` (default): a new screenshot starts a [proactive turn](#websocket-ws); `0` turns that off |
 
 ## Later, not in the MVP
 
