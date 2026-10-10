@@ -167,11 +167,12 @@ async def screenshot(request: Request) -> Response:
 
 
 class Session:
-    def __init__(self, ws: WebSocket):
+    def __init__(self, ws: WebSocket, handsfree: bool = False):
         self.ws = ws
         self.agent = make_agent()
         self.turns = 0
         self.stt: voice.Transcriber | None = None
+        self.listener = voice.ContinuousTranscriber(self.heard_speech, self.heard_turn) if handsfree else None
         self.turn_task: asyncio.Task | None = None
         self._send_lock = asyncio.Lock()
 
@@ -235,6 +236,17 @@ class Session:
         await self.send({"type": "transcript", "text": text})
         await self.run_turn(text, {"stt": time.monotonic() - t0})
 
+    async def heard_speech(self) -> None:
+        """Hands-free: the user's first words of a turn; talking over the mascot interrupts it."""
+        await self.interrupt()
+        await self.state("listening")
+
+    async def heard_turn(self, text: str) -> None:
+        """Hands-free: Gradium's VAD says the user is done."""
+        await self.interrupt()
+        await self.send({"type": "transcript", "text": text})
+        self.start_turn(self.run_turn(text))
+
     def start_turn(self, coro) -> None:
         """Turns run as tasks so the receive loop can still hear an interrupt."""
         self.turn_task = asyncio.create_task(coro)
@@ -254,7 +266,9 @@ class Session:
 
     async def handle(self, msg: dict) -> None:
         kind = msg.get("type")
-        if kind == "audio" and isinstance(msg.get("data"), str):
+        if kind == "audio" and self.listener is not None and isinstance(msg.get("data"), str):
+            self.listener.push(msg["data"])  # hands-free: the mic never stops, no audio_end
+        elif kind == "audio" and isinstance(msg.get("data"), str):
             if self.stt is None:  # a new press; talking over the mascot interrupts it
                 await self.interrupt()
                 self.stt = voice.Transcriber()
@@ -284,6 +298,8 @@ class Session:
     def close(self) -> None:
         if self.stt is not None:
             self.stt.cancel()
+        if self.listener is not None:
+            self.listener.cancel()
         if self.turn_task is not None:
             self.turn_task.cancel()
 
@@ -296,7 +312,7 @@ async def ws_endpoint(ws: WebSocket):
         if hello.get("type") != "hello" or not token_ok(hello.get("token")):
             await ws.close(code=1008)
             return
-        session = Session(ws)
+        session = Session(ws, handsfree=hello.get("mode") == "handsfree")
         await session.agent.start()
         await session.send({"type": "ready"})
         sessions.add(session)
