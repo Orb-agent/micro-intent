@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K8AX1B19MFBNYBHZ4QS466",
+  "strategy": "manual-commit",
+  "branch": "feature/wp2-proactive-screen",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "backend/.env.example",
+    "docs/contracts.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 6786,
+    "cache_read_tokens": 1069776,
+    "output_tokens": 4060,
+    "api_call_count": 8
+  }
+}
