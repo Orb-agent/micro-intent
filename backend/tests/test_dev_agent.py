@@ -92,7 +92,7 @@ async def test_sbb_then_respond(agent, fake, sbb_requests, monkeypatch):
     seen, on_status = statuses()
 
     assert await agent.turn("Can I make it?", SCREEN, on_status) == DEMO
-    assert seen == ["Checking trains…"]
+    assert seen == ["Checking trains…", "Checking trains…"]  # the prefetch, then the model's own call
 
     params = sbb_requests[0].url.params
     assert (params["from"], params["to"], params["date"], params["time"], params["limit"]) == (
@@ -101,7 +101,8 @@ async def test_sbb_then_respond(agent, fake, sbb_requests, monkeypatch):
 
     user, model, tool = models.calls[1]["contents"]
     assert "<screen_context>" in user.parts[0].text and "Dinner in Bern" in user.parts[0].text
-    assert user.parts[1].text == "Can I make it?"
+    assert "<trains>" in user.parts[1].text and '"IC 8"' in user.parts[1].text  # prefetched for the plan
+    assert user.parts[2].text == "Can I make it?"
     assert model is first.candidates[0].content  # appended unmodified
     (response,) = function_responses(tool)
     assert (response.id, response.name) == ("call-0", "sbb_connections")
@@ -158,3 +159,15 @@ async def test_model_error_returns_apology(agent, fake):
     seen, on_status = statuses()
     assert await agent.turn("Can I make it?", None, on_status) == {"say": dev_agent.SORRY, "cards": []}
     assert agent.history == []
+
+
+async def test_no_train_prefetch_without_a_plan_on_screen(agent, fake, sbb_requests):
+    models = fake(calls(("respond", {"say": "Hi!", "cards": []})))
+    seen, on_status = statuses()
+    screen = {**SCREEN, "proposal": None}
+
+    assert await agent.turn("Hello", screen, on_status) == {"say": "Hi!", "cards": []}
+
+    assert sbb_requests == [] and seen == []
+    (user,) = models.calls[0]["contents"]
+    assert [p.text.split(">")[0] for p in user.parts] == ["<screen_context", "Hello"]

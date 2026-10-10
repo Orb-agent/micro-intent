@@ -11,7 +11,7 @@ import json
 import logging
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import httpx
@@ -25,6 +25,8 @@ CONTEXT = Path(__file__).parent / "fixtures" / "dev_context.json"
 SBB_URL = "https://transport.opendata.ch/v1/connections"
 MAX_STEPS = 3
 MAX_TURNS = 6  # history kept for follow-ups like "and the next train?"
+HOME_STATION = "Zürich HB"
+WALK = timedelta(minutes=10)  # home or office to Zürich HB, as in the prompt
 SORRY = "Sorry, I got my paws tangled there. Could you ask again?"
 ISO = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}"
 
@@ -53,6 +55,10 @@ leave out the conflict card.
 For "and the next train?", call `sbb_connections` again from just after the train you showed.
 Calendar questions get `event` cards with the event's own `source`; flight questions get a \
 `flight` card from the email.
+
+When the turn includes <trains>, that lookup already ran for the plan on screen, with the \
+blocking event and the walk taken into account: answer from it and don't call `sbb_connections` \
+again for the same trip.
 
 Speech recognition mishears names: synthetic voices turn "dinner in Bern" into "dinner and burn". \
 Read odd words as the place, person or event that sounds alike in the screen context or calendar.
@@ -206,6 +212,7 @@ def compact(data: dict) -> dict:
 class DevAgent:
     async def start(self) -> None:
         context = CONTEXT.read_text()
+        self.events = json.loads(context).get("events", [])
         self.prompt = f"{PROMPT}\n\n<context>\nCalendar from now to 7 days ahead, and flight emails:\n{context}</context>"
         self.history: list[list[types.Content]] = []  # one list of contents per completed turn
 
@@ -222,6 +229,8 @@ class DevAgent:
         if screen:
             screen_json = json.dumps(screen, ensure_ascii=False)
             parts.insert(0, types.Part(text=f"<screen_context>\n{screen_json}\n</screen_context>"))
+            if trains := await self._prefetch_trains(screen, now, on_status):
+                parts.insert(1, types.Part(text=f"<trains>\n{json.dumps(trains, ensure_ascii=False)}\n</trains>"))
         new = [types.Content(role="user", parts=parts)]  # this turn; joins the history once it completes
         past = [content for turn in self.history for content in turn]
         retried = False
@@ -281,6 +290,35 @@ class DevAgent:
             thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.LOW),
             automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         )
+
+    async def _prefetch_trains(self, screen: dict, now: datetime, on_status) -> dict | None:
+        """The lookup the model would ask for first, done before the model call: trains to the
+        plan on screen, after the last event that ends before it (+ the walk). Saves one model
+        step, about 3-4 s. None when there's no out-of-town plan with a date and time."""
+        p = screen.get("proposal") or {}
+        place, date, hm = p.get("place"), p.get("date"), p.get("time")
+        if not (isinstance(place, str) and date and hm) or place.lower() in ("zürich", "zurich"):
+            return None
+        try:
+            start = datetime.fromisoformat(f"{date}T{hm}").replace(tzinfo=TZ)
+        except ValueError:
+            return None
+        ends = [
+            end for e in self.events
+            if (end := datetime.fromisoformat(e["end"])) <= start and end.date() == start.date()
+        ]  # fmt: skip
+        after = max(ends) + WALK if ends else start - timedelta(hours=2)
+        after = max(after, now + WALK)
+        args = {"from_station": HOME_STATION, "to_station": place, "depart_after": after.isoformat()}
+        await on_status("Checking trains…")
+        t0 = time.monotonic()
+        try:
+            result = await sbb_connections(**args)
+        except Exception as e:
+            log.warning("train prefetch %s failed: %r", args, e)
+            return None
+        log.info("train prefetch %s took %.2f s", args, time.monotonic() - t0)
+        return {"query": args, **result}
 
     async def _run(self, call: types.FunctionCall) -> dict:
         """Tool errors go back to the model, which can tell the user; they never end the turn."""
