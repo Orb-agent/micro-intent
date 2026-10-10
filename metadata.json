@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K1CCRHZV7KYC9YPDWR17PB",
+  "strategy": "manual-commit",
+  "branch": "fm/micro-intent-agent-wp3-v1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "backend/a2ui.py",
+    "backend/fixtures/cards_a2ui.json",
+    "backend/fixtures/demo_a2ui.json",
+    "backend/tests/test_a2ui.py",
+    "backend/tests/test_app.py",
+    "backend/tests/test_handsfree.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ]
+}
