@@ -1,0 +1,49 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K0EJB1M84DEH3WNV8V8KP0",
+  "strategy": "manual-commit",
+  "branch": "feature/wp1-ios-ui",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "frontend/screenshots/debug-dark.jpg",
+    "frontend/screenshots/debug-light.jpg",
+    "frontend/screenshots/error-dark.jpg",
+    "frontend/screenshots/idle-dark.jpg",
+    "frontend/screenshots/idle-light.jpg",
+    "frontend/screenshots/kinds-dark.jpg",
+    "frontend/screenshots/kinds-light.jpg",
+    "frontend/screenshots/listening-dark.jpg",
+    "frontend/screenshots/listening-light.jpg",
+    "frontend/screenshots/live-badtoken-dark.jpg",
+    "frontend/screenshots/live-reply-dark.jpg",
+    "frontend/screenshots/reply-dark.jpg",
+    "frontend/screenshots/reply-large-dark.jpg",
+    "frontend/screenshots/reply-light.jpg",
+    "frontend/screenshots/screen-dark.jpg",
+    "frontend/screenshots/screen-light.jpg",
+    "frontend/screenshots/searching-dark.jpg",
+    "frontend/screenshots/searching-light.jpg",
+    "frontend/screenshots/settings-dark.jpg",
+    "frontend/screenshots/settings-light.jpg",
+    "frontend/screenshots/speaking-dark.jpg",
+    "frontend/screenshots/speaking-light.jpg",
+    "frontend/screenshots/thinking-dark.jpg",
+    "frontend/screenshots/thinking-light.jpg"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 4,
+    "cache_creation_tokens": 1767,
+    "cache_read_tokens": 650293,
+    "output_tokens": 826,
+    "api_call_count": 2
+  }
+}
