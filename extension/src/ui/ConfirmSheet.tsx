@@ -13,7 +13,10 @@ interface Props {
 export function ConfirmSheet({ title, preview, busy, onConfirm, onCancel }: Props) {
   const cancelRef = useRef<HTMLButtonElement>(null);
   // Focus Cancel, not Confirm, so a stray Enter never approves a write.
-  useEffect(() => cancelRef.current?.focus(), []);
+  useEffect(() => {
+    cancelRef.current?.focus({ preventScroll: true });
+    cancelRef.current?.closest('.mi-confirm')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, []);
   return (
     <motion.div
       className="mi-confirm"

@@ -33,6 +33,7 @@ export function Orb({ state, level = 0, size }: { state: OrbState; level?: numbe
         size={size >= 40 ? 64 : 32}
         theme="dark"
         color={TINT[state]}
+        dotSize={size >= 40 ? 1.7 : 1.3}
         style={{ width: size, height: size }}
         aria-label={state}
       />

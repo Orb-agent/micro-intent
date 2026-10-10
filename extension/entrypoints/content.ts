@@ -186,6 +186,7 @@ export default defineContentScript({
       setLauncher(undefined);
       place(t.rect);
       const { rect: _r, element: _e, ...plain } = t;
+      send({ mi: 'viewport', maxHeight: window.innerHeight - 2 * MARGIN });
       send({ mi: 'open', target: plain });
       render();
       renderHighlight();
@@ -245,7 +246,10 @@ export default defineContentScript({
     document.addEventListener('keyup', onSelect);
 
     window.addEventListener('scroll', () => renderHighlight(), { passive: true, capture: true });
-    window.addEventListener('resize', () => render());
+    window.addEventListener('resize', () => {
+      if (frame) send({ mi: 'viewport', maxHeight: window.innerHeight - 2 * MARGIN });
+      render();
+    });
 
     // Hold Option/Alt on the page to talk while the overlay is open; Escape closes it.
     let holdTimer: number | undefined;

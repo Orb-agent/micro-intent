@@ -4,7 +4,11 @@
 // nor see the traffic, and cannot fake a push-to-talk press or an open.
 import type { OverlayLayout, Target } from '../src/ui/host';
 
-export type ToFrame = { mi: 'open'; target: Target } | { mi: 'ptt'; down: boolean } | { mi: 'hidden' };
+export type ToFrame =
+  | { mi: 'open'; target: Target }
+  | { mi: 'ptt'; down: boolean }
+  | { mi: 'hidden' }
+  | { mi: 'viewport'; maxHeight: number };
 
 export type FromFrame =
   | { mi: 'ready' }

@@ -75,6 +75,7 @@ function createFrameChannel() {
   const openers = new Set<(t: Target) => void>();
   const hiders = new Set<() => void>();
   const ptt = new Set<(down: boolean) => void>();
+  const heights = new Set<(px: number) => void>();
   const pending: FromFrame[] = [];
 
   const post = (msg: FromFrame) => (port ? port.postMessage(msg) : pending.push(msg));
@@ -87,6 +88,7 @@ function createFrameChannel() {
       if (msg.mi === 'open') openers.forEach((fn) => fn(msg.target));
       else if (msg.mi === 'hidden') hiders.forEach((fn) => fn());
       else if (msg.mi === 'ptt') ptt.forEach((fn) => fn(msg.down));
+      else if (msg.mi === 'viewport') heights.forEach((fn) => fn(msg.maxHeight));
     };
     port.postMessage({ mi: 'ready' } satisfies FromFrame);
     pending.splice(0).forEach((m) => port!.postMessage(m));
@@ -102,6 +104,7 @@ function createFrameChannel() {
     onOpen: (fn: (t: Target) => void) => sub(openers, fn),
     onHide: (fn: () => void) => sub(hiders, fn),
     onPushToTalk: (fn: (down: boolean) => void) => sub(ptt, fn),
+    onMaxHeight: (fn: (px: number) => void) => sub(heights, fn),
   };
 }
 
@@ -130,6 +133,7 @@ export function createExtensionHost(): Host {
       onOpen: frame.onOpen,
       onHide: frame.onHide,
       onPushToTalk: frame.onPushToTalk,
+      onMaxHeight: frame.onMaxHeight,
       close: () => frame.post({ mi: 'close' }),
       layout: (layout) => frame.post({ mi: 'layout', layout }),
       drag: (dx, dy) => frame.post({ mi: 'drag', dx, dy }),

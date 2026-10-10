@@ -167,7 +167,8 @@ export class PushToTalk {
     const session = await ai.live.connect({
       model: token.model || DEFAULT_LIVE_MODEL,
       config: {
-        responseModalities: [Modality.TEXT],
+        // The Live model only answers with audio (TEXT is rejected); the reply is never played.
+        responseModalities: [Modality.AUDIO],
         inputAudioTranscription: {},
         realtimeInputConfig: { automaticActivityDetection: { disabled: true } },
         systemInstruction: `Only transcribe what the user says (language: ${lang}). Do not reply.`,

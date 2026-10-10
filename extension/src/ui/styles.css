@@ -87,6 +87,8 @@ svg {
 .mi-root {
   width: calc(var(--w) + 2 * var(--pad));
   padding: var(--pad);
+  /* Re-resolve here: the large-mode tokens are set on this element, not on body. */
+  font-size: var(--fs);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -213,7 +215,71 @@ svg {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  /* Viewport height minus frame padding, pill and the gap below it. */
+  max-height: calc(var(--max-h, 100000px) - 2 * var(--pad) - var(--btn-h) - 24px);
   padding: 16px;
+}
+
+.mi-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  margin: -4px -16px 0;
+  padding: 4px 16px 2px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.mi-scroll:empty {
+  display: none;
+}
+
+/* Fade the edges where cards scroll out of view. Scroll-driven, so it is off when nothing overflows. */
+@property --mi-fade-top {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --mi-fade-bottom {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@keyframes mi-scroll-fade {
+  0% {
+    --mi-fade-top: 0px;
+    --mi-fade-bottom: 32px;
+  }
+  8% {
+    --mi-fade-top: 24px;
+  }
+  92% {
+    --mi-fade-bottom: 32px;
+  }
+  100% {
+    --mi-fade-top: 24px;
+    --mi-fade-bottom: 0px;
+  }
+}
+@supports (animation-timeline: scroll()) {
+  .mi-scroll {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--mi-fade-top),
+      #000 calc(100% - var(--mi-fade-bottom)),
+      transparent 100%
+    );
+    animation: mi-scroll-fade linear both;
+    animation-timeline: scroll(self);
+  }
+}
+
+.mi-chips,
+.mi-input {
+  flex-shrink: 0;
 }
 
 .mi-top {
@@ -380,6 +446,7 @@ svg {
 /* ---- Input ---------------------------------------------------------------------------- */
 
 .mi-input {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -472,7 +539,7 @@ kbd {
 }
 
 .mi-menu-wrap {
-  position: relative;
+  display: contents;
 }
 
 .mi-more {
@@ -492,8 +559,8 @@ kbd {
 
 .mi-menu {
   position: absolute;
-  left: -8px;
-  bottom: 38px;
+  right: 0;
+  bottom: calc(100% + 8px);
   z-index: 5;
   width: 250px;
   padding: 6px;

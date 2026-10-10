@@ -14,7 +14,17 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import type { ActionPayload, ComponentContext } from '@a2ui/web_core/v0_9';
 import { CardEnvContext, type CardEnv, type RunOptions } from './a2ui/catalog';
 import { A2UI_VERSION, type A2uiAction } from './a2ui/protocol';
@@ -74,6 +84,7 @@ export function OverlayApp({ host }: { host: Host }) {
   const [error, setError] = useState<string>();
   const [draft, setDraft] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [maxHeight, setMaxHeight] = useState<number>();
 
   const turnRef = useRef(0);
   const phaseRef = useRef<OrbState>('idle');
@@ -86,6 +97,7 @@ export function OverlayApp({ host }: { host: Host }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     void host.settings.get().then(setSettings);
@@ -371,6 +383,8 @@ export function OverlayApp({ host }: { host: Host }) {
     [host],
   );
 
+  useEffect(() => host.shell.onMaxHeight(setMaxHeight), [host]);
+
   useEffect(
     () => host.shell.onPushToTalk((down) => (down ? void startListening() : stopListening())),
     [host, startListening, stopListening],
@@ -408,6 +422,21 @@ export function OverlayApp({ host }: { host: Host }) {
     };
   }, [close, confirm, menuOpen, rejectConfirm, startListening, stopListening]);
 
+  // The options menu closes on any click outside it, including clicks on the page itself.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const away = (e: PointerEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const blur = () => setMenuOpen(false);
+    window.addEventListener('pointerdown', away);
+    window.addEventListener('blur', blur);
+    return () => {
+      window.removeEventListener('pointerdown', away);
+      window.removeEventListener('blur', blur);
+    };
+  }, [menuOpen]);
+
   // ---- Render ---------------------------------------------------------------------------------
 
   const env: CardEnv = useMemo(() => ({ run, busy: actionBusy, large }), [run, actionBusy, large]);
@@ -418,7 +447,12 @@ export function OverlayApp({ host }: { host: Host }) {
   const orbSize = large ? 52 : 40;
 
   return (
-    <div ref={rootRef} className="mi-root" data-large={large || undefined}>
+    <div
+      ref={rootRef}
+      className="mi-root"
+      data-large={large || undefined}
+      style={maxHeight ? ({ '--max-h': `${maxHeight}px` } as CSSProperties) : undefined}
+    >
       <div
         ref={pillRef}
         className="mi-pill"
@@ -479,59 +513,61 @@ export function OverlayApp({ host }: { host: Host }) {
             transition={{ type: 'spring', stiffness: 420, damping: 40 }}
           >
             <div className="mi-panel-inner">
-              {(bubble || badge) && (
-                <div className="mi-top">
-                  {badge && <span className="mi-badge">{badge}</span>}
-                  {bubble && (
-                    <motion.span
-                      key={phase === 'listening' ? 'live' : bubble}
-                      className="mi-intent"
-                      data-live={phase === 'listening' || undefined}
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                    >
-                      {bubble}
-                    </motion.span>
-                  )}
-                </div>
-              )}
-
-              {(phase === 'thinking' || phase === 'searching') && (
-                <div className="mi-thinking">
-                  <span className="mi-shimmer">
-                    {actionBusy ? 'Doing it…' : filler || (phase === 'searching' ? 'Checking your calendar…' : 'Thinking…')}
-                  </span>
-                </div>
-              )}
-
-              {error && (
-                <div className="mi-error" role="alert">
-                  <TriangleAlert />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <AnimatePresence initial={false}>
-                {confirm && (
-                  <ConfirmSheet
-                    key="confirm"
-                    title={confirm.title}
-                    preview={confirm.preview}
-                    busy={actionBusy}
-                    onConfirm={confirm.run}
-                    onCancel={rejectConfirm}
-                  />
+              <div className="mi-scroll">
+                {(bubble || badge) && (
+                  <div className="mi-top">
+                    {badge && <span className="mi-badge">{badge}</span>}
+                    {bubble && (
+                      <motion.span
+                        key={phase === 'listening' ? 'live' : bubble}
+                        className="mi-intent"
+                        data-live={phase === 'listening' || undefined}
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        {bubble}
+                      </motion.span>
+                    )}
+                  </div>
                 )}
-              </AnimatePresence>
 
-              {say && <p className="mi-say">“{say}”</p>}
-              {a2ui.surfaces.length > 0 && (
-                <div className="mi-result" data-dimmed={confirm ? true : undefined}>
-                  <CardEnvContext.Provider value={env}>
-                    <Surfaces surfaces={a2ui.surfaces} />
-                  </CardEnvContext.Provider>
-                </div>
-              )}
+                {(phase === 'thinking' || phase === 'searching') && (
+                  <div className="mi-thinking">
+                    <span className="mi-shimmer">
+                      {actionBusy ? 'Doing it…' : filler || (phase === 'searching' ? 'Checking your calendar…' : 'Thinking…')}
+                    </span>
+                  </div>
+                )}
+
+                {error && (
+                  <div className="mi-error" role="alert">
+                    <TriangleAlert />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <AnimatePresence initial={false}>
+                  {confirm && (
+                    <ConfirmSheet
+                      key="confirm"
+                      title={confirm.title}
+                      preview={confirm.preview}
+                      busy={actionBusy}
+                      onConfirm={confirm.run}
+                      onCancel={rejectConfirm}
+                    />
+                  )}
+                </AnimatePresence>
+
+                {say && <p className="mi-say">“{say}”</p>}
+                {a2ui.surfaces.length > 0 && (
+                  <div className="mi-result" data-dimmed={confirm ? true : undefined}>
+                    <CardEnvContext.Provider value={env}>
+                      <Surfaces surfaces={a2ui.surfaces} />
+                    </CardEnvContext.Provider>
+                  </div>
+                )}
+              </div>
 
               <div className="mi-chips" role="toolbar" aria-label="Suggestions">
                 {CHIPS.map((chip, i) => (
@@ -572,7 +608,7 @@ export function OverlayApp({ host }: { host: Host }) {
                       {target?.snippet && <span>{target.snippet}</span>}
                     </span>
                   )}
-                  <div className="mi-menu-wrap">
+                  <div className="mi-menu-wrap" ref={menuRef}>
                     <button
                       type="button"
                       className="mi-more"

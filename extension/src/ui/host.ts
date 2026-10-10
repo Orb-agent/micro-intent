@@ -43,6 +43,8 @@ export interface Host {
     onOpen(fn: (target: Target) => void): () => void;
     /** The shell hid the overlay (e.g. Escape on the page); drop any running turn. */
     onHide(fn: () => void): () => void;
+    /** Tallest the overlay may get, so long answers scroll inside it. */
+    onMaxHeight(fn: (px: number) => void): () => void;
     /** Push-to-talk key from the page (the overlay may not have focus). */
     onPushToTalk(fn: (down: boolean) => void): () => void;
     close(): void;
