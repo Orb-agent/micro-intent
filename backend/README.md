@@ -13,18 +13,20 @@ uv run uvicorn app:app --port 8000
 
 The agent is WP3's `agent.py` when it exists, else the prototype `dev_agent.py`. Set `MOCK_AGENT=1` for the fixed demo reply.
 
-## Try it on a Mac
+## Desktop and Chrome
 
-Open the prototype client in desktop Chrome, with your token in the URL fragment (it's stored, then removed from the address bar):
+The desktop client at `/` supports typed questions, push-to-talk, hands-free voice, spoken replies, screen sharing, and cards. Launch it in desktop Chrome with the token in the URL fragment (the client stores it locally, then removes it from the address bar):
 
 ```bash
 open -a "Google Chrome" "http://localhost:8000/#token=$(grep '^APP_TOKEN=' .env | cut -d= -f2-)"
 ```
 
-1. Click the orb once to allow the mic.
+1. Click the orb once to allow the microphone.
 2. Click **Share screen** and pick a screen or window. A frame goes with each question, and the server reads it with Gemini.
-3. Hold the orb or Space while you talk. Click or press again to interrupt the beaver.
-4. **Hands-free** in the menu: just talk; talking over the beaver interrupts it. Use headphones, or it hears itself.
+3. Hold the orb or Space while you talk. Click or press again to interrupt the beaver. You can also type a question and select **Send**.
+4. Select **Hands-free** in the menu to talk without holding the orb. Talking over the beaver interrupts it. Use headphones to prevent feedback.
+
+To use the Chrome toolbar extension, load the repository's `extension/` directory from `chrome://extensions` with Developer mode on. Enter the backend origin and `APP_TOKEN` in the popup, grant access to that server, and select **Open assistant**. The extension opens this same desktop UI in a tab, so voice and text use the same client and `/ws` session.
 
 ## Checks
 

@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Beaver prototype</title>
+<title>Beaver Assistant</title>
 <!--
-  Mac prototype client for the /ws protocol in docs/contracts.md: mic, screen sharing,
-  mascot voice and cards. Stands in for the iPhone app (WP1) so the idea can be tried on
-  a Mac. Open http://localhost:8000/#token=<APP_TOKEN> in desktop Chrome.
+  Desktop and Chrome extension client for the /ws protocol in docs/contracts.md:
+  text, microphone, mascot voice, screen sharing and cards. Open the Chrome extension
+  and launch this desktop UI from the configured backend.
 -->
 <style>
   :root {
@@ -63,7 +63,7 @@
 <body>
 <main>
   <header>
-    <h1>Beaver prototype</h1>
+    <h1>Beaver Assistant</h1>
     <div class="row">
       <span id="conn" class="pill">disconnected</span>
       <select id="mode" title="Voice mode">

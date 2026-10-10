@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Beaver Assistant",
+  "version": "1.0.0",
+  "description": "Open the Beaver desktop assistant with text and voice controls.",
+  "permissions": ["storage"],
+  "optional_host_permissions": [
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Beaver Assistant"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:* http://127.0.0.1:* https://* wss://*"
+  }
+}
