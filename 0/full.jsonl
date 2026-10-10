@@ -144,3 +144,4 @@
 {"type":"agent-name","agentName":"iPhone voice/video ingestion architecture","sessionId":"f1c27adf-0d4f-4a29-9192-d1742af6da60"}
 {"type":"atis-latch","atis":"","sessionId":"f1c27adf-0d4f-4a29-9192-d1742af6da60"}
 {"type":"bridge-session","sessionId":"f1c27adf-0d4f-4a29-9192-d1742af6da60","bridgeSessionId":"cse_0136CqaPBcwvWWtjoLHSYwGZ","lastSequenceNum":0,"ownerAccountUuid":"046bbc36-b149-4da4-b1cc-081db012a211","ownerOrganizationUuid":"2c83c9eb-0d62-4939-be14-f0b514880d0c"}
+{"type":"queue-operation","operation":"enqueue","timestamp":"2026-10-10T12:52:08.465Z","sessionId":"f1c27adf-0d4f-4a29-9192-d1742af6da60","content":"what if i do not want to hold the orb, its should stream always, it this feasible Mic, hold the orb"}
