@@ -15,19 +15,19 @@ public struct EventCardView: View {
             return GlassPillView(
                 iconName: "calendar",
                 text: "Kalender",
-                tintColor: CardTheme.skyBlue
+                tintColor: CardTheme.accentText
             )
         case .luma:
             return GlassPillView(
                 iconName: "ticket.fill",
                 text: "Luma Event",
-                tintColor: CardTheme.purpleAccent
+                tintColor: Color(red: 190/255, green: 140/255, blue: 255/255)
             )
         }
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 20) {
             // Header with source pill and duration
             HStack {
                 sourcePill
@@ -35,7 +35,7 @@ public struct EventCardView: View {
                 GlassPillView(
                     iconName: "clock",
                     text: CardFormatters.formatDuration(from: card.start, to: card.end),
-                    tintColor: Color(white: 0.85)
+                    tintColor: CardTheme.textSecondary
                 )
             }
 
@@ -46,19 +46,19 @@ public struct EventCardView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             // Details rows
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 14) {
                 // Date & Time
-                HStack(spacing: 12) {
+                HStack(spacing: 14) {
                     Circle()
-                        .fill(Color.white.opacity(0.12))
-                        .frame(width: 38, height: 38)
+                        .fill(Color.white.opacity(0.14))
+                        .frame(width: 44, height: 44)
                         .overlay {
                             Image(systemName: "calendar.badge.clock")
-                                .font(.system(size: 16, weight: .bold))
+                                .font(.system(size: 20, weight: .bold))
                                 .foregroundColor(CardTheme.textPrimary)
                         }
 
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 3) {
                         Text("\(CardFormatters.formatShortDate(card.start)) – \(CardFormatters.formatShortDate(card.end))")
                             .font(CardTheme.headlineFont)
                             .foregroundColor(CardTheme.textPrimary)
@@ -71,17 +71,17 @@ public struct EventCardView: View {
 
                 // Location (if present)
                 if let location = card.location, !location.isEmpty {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 14) {
                         Circle()
-                            .fill(Color.white.opacity(0.12))
-                            .frame(width: 38, height: 38)
+                            .fill(CardTheme.dangerSoft)
+                            .frame(width: 44, height: 44)
                             .overlay {
                                 Image(systemName: "mappin.and.ellipse")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(CardTheme.coralRed)
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundColor(CardTheme.danger)
                             }
 
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(location)
                                 .font(CardTheme.headlineFont)
                                 .foregroundColor(CardTheme.textPrimary)
@@ -93,16 +93,16 @@ public struct EventCardView: View {
                     }
                 }
             }
-            .padding(14)
+            .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.white.opacity(0.06))
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(CardTheme.surfaceCard)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(CardTheme.borderSubtle, lineWidth: 1)
             }
 
-            // Large Action Buttons
+            // Large Action Buttons (at least 60pt tall)
             CardActionButtonsView(
                 confirmTitle: "Bestätigen",
                 cancelTitle: "Abbrechen",
@@ -119,7 +119,7 @@ public struct EventCardView: View {
 
 #Preview("Event Card - Dark") {
     ZStack {
-        Color.black.ignoresSafeArea()
+        CardTheme.canvas.ignoresSafeArea()
         EventCardView(card: Card.sampleEvent) { action in
             print("Action tapped: \(action)")
         }

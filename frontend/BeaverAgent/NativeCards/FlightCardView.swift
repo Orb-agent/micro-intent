@@ -10,13 +10,13 @@ public struct FlightCardView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 20) {
             // Header pills: Flight number, Booking reference
             HStack(spacing: 8) {
                 GlassPillView(
                     iconName: "airplane",
                     text: card.flightNumber,
-                    tintColor: CardTheme.skyBlue
+                    tintColor: CardTheme.accentText
                 )
 
                 Spacer()
@@ -25,7 +25,7 @@ public struct FlightCardView: View {
                     GlassPillView(
                         iconName: "tag.fill",
                         text: "Ref: \(ref)",
-                        tintColor: CardTheme.purpleAccent
+                        tintColor: Color(red: 190/255, green: 140/255, blue: 255/255)
                     )
                 }
             }
@@ -33,13 +33,13 @@ public struct FlightCardView: View {
             // Route & Times display
             HStack(alignment: .firstTextBaseline) {
                 // Departure
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(CardFormatters.formatTime(card.departure))
                         .font(CardTheme.timeFont)
                         .foregroundColor(CardTheme.textPrimary)
 
                     Text(card.from)
-                        .font(.system(size: 26, weight: .black, design: .rounded))
+                        .font(.system(size: 32, weight: .heavy, design: .rounded))
                         .foregroundColor(CardTheme.textPrimary)
 
                     Text(CardFormatters.formatShortDate(card.departure))
@@ -50,16 +50,16 @@ public struct FlightCardView: View {
                 Spacer()
 
                 // Airplane Flight Track
-                VStack(spacing: 4) {
+                VStack(spacing: 6) {
                     HStack(spacing: 4) {
                         Circle()
-                            .fill(CardTheme.skyBlue)
+                            .fill(CardTheme.accentText)
                             .frame(width: 6, height: 6)
 
                         Rectangle()
                             .fill(
                                 LinearGradient(
-                                    colors: [CardTheme.skyBlue, CardTheme.skyBlue.opacity(0.3)],
+                                    colors: [CardTheme.accentText, CardTheme.accentText.opacity(0.3)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -67,13 +67,13 @@ public struct FlightCardView: View {
                             .frame(height: 2)
 
                         Image(systemName: "airplane")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(CardTheme.skyBlue)
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(CardTheme.accentText)
 
                         Rectangle()
                             .fill(
                                 LinearGradient(
-                                    colors: [CardTheme.skyBlue.opacity(0.3), CardTheme.skyBlue],
+                                    colors: [CardTheme.accentText.opacity(0.3), CardTheme.accentText],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -81,7 +81,7 @@ public struct FlightCardView: View {
                             .frame(height: 2)
 
                         Circle()
-                            .fill(CardTheme.skyBlue)
+                            .fill(CardTheme.accentText)
                             .frame(width: 6, height: 6)
                     }
                     .frame(width: 110)
@@ -95,13 +95,13 @@ public struct FlightCardView: View {
                 Spacer()
 
                 // Arrival
-                VStack(alignment: .trailing, spacing: 2) {
+                VStack(alignment: .trailing, spacing: 4) {
                     Text(CardFormatters.formatTime(card.arrival))
                         .font(CardTheme.timeFont)
                         .foregroundColor(CardTheme.textPrimary)
 
                     Text(card.to)
-                        .font(.system(size: 26, weight: .black, design: .rounded))
+                        .font(.system(size: 32, weight: .heavy, design: .rounded))
                         .foregroundColor(CardTheme.textPrimary)
 
                     Text(CardFormatters.formatShortDate(card.arrival))
@@ -110,7 +110,7 @@ public struct FlightCardView: View {
                 }
             }
 
-            // Large Action Buttons
+            // Large Action Buttons (at least 60pt tall)
             CardActionButtonsView(
                 confirmTitle: "Bestätigen",
                 cancelTitle: "Abbrechen",
@@ -127,7 +127,7 @@ public struct FlightCardView: View {
 
 #Preview("Flight Card - Dark") {
     ZStack {
-        Color.black.ignoresSafeArea()
+        CardTheme.canvas.ignoresSafeArea()
         FlightCardView(card: Card.sampleFlight) { action in
             print("Action tapped: \(action)")
         }

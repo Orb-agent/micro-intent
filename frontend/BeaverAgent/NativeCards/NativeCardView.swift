@@ -47,10 +47,10 @@ public struct NativeCardListView: View {
 
 #Preview("All Cards - Dark Mode") {
     ScrollView {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             Text("Native SwiftUI Cards")
-                .font(.headline)
-                .foregroundColor(.white)
+                .font(CardTheme.titleFont)
+                .foregroundColor(CardTheme.textPrimary)
                 .padding(.top)
 
             NativeCardListView(cards: Card.allSamples) { actionId in
@@ -59,15 +59,15 @@ public struct NativeCardListView: View {
         }
         .padding()
     }
-    .background(Color.black.ignoresSafeArea())
+    .background(CardTheme.canvas.ignoresSafeArea())
     .preferredColorScheme(.dark)
 }
 
 #Preview("All Cards - Light Mode") {
     ScrollView {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             Text("Native SwiftUI Cards")
-                .font(.headline)
+                .font(CardTheme.titleFont)
                 .foregroundColor(.black)
                 .padding(.top)
 
@@ -83,10 +83,10 @@ public struct NativeCardListView: View {
 
 #Preview("Demo Reply Cards (Conflict + Train)") {
     ScrollView {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             Text("Demo Question Cards")
-                .font(.headline)
-                .foregroundColor(.white)
+                .font(CardTheme.titleFont)
+                .foregroundColor(CardTheme.textPrimary)
                 .padding(.top)
 
             NativeCardListView(cards: Card.demoCards) { actionId in
@@ -95,6 +95,6 @@ public struct NativeCardListView: View {
         }
         .padding()
     }
-    .background(Color(red: 16/255, green: 18/255, blue: 24/255).ignoresSafeArea())
+    .background(CardTheme.canvas.ignoresSafeArea())
     .preferredColorScheme(.dark)
 }

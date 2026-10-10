@@ -84,27 +84,64 @@ extension View {
 // MARK: - Typography & Color Constants
 
 public enum CardTheme {
-    // High contrast typography for older users
-    public static let titleFont: Font = .system(size: 24, weight: .bold, design: .rounded)
-    public static let timeFont: Font = .system(size: 30, weight: .heavy, design: .rounded)
-    public static let stationFont: Font = .system(size: 20, weight: .bold, design: .rounded)
-    public static let headlineFont: Font = .system(size: 18, weight: .semibold, design: .rounded)
-    public static let bodyFont: Font = .system(size: 17, weight: .medium, design: .default)
-    public static let badgeFont: Font = .system(size: 15, weight: .bold, design: .rounded)
-    public static let captionFont: Font = .system(size: 15, weight: .medium, design: .rounded)
-    public static let buttonFont: Font = .system(size: 18, weight: .bold, design: .rounded)
+    // High contrast typography for older users (Strictly >= 17pt per design spec)
+    public static let heroDeparture: Font = .system(size: 52, weight: .heavy, design: .rounded)
+    public static let timeHero: Font = .system(size: 48, weight: .heavy, design: .rounded)
+    public static let timeFont: Font = .system(size: 30, weight: .bold, design: .rounded)
+    public static let titleFont: Font = .system(size: 26, weight: .bold, design: .rounded)
+    public static let stationFont: Font = .system(size: 22, weight: .bold, design: .rounded)
+    public static let headlineFont: Font = .system(size: 19, weight: .semibold, design: .rounded)
+    public static let bodyFont: Font = .system(size: 18, weight: .medium, design: .default)
+    public static let buttonFont: Font = .system(size: 20, weight: .bold, design: .rounded)
+    public static let badgeFont: Font = .system(size: 17, weight: .bold, design: .rounded)
+    public static let captionFont: Font = .system(size: 17, weight: .medium, design: .rounded)
+    public static let metaFont: Font = .system(size: 17, weight: .regular, design: .rounded)
 
-    // Text colors (high contrast for glass cards)
-    public static let textPrimary: Color = .white
-    public static let textSecondary: Color = Color(white: 0.85)
-    public static let textMuted: Color = Color(white: 0.68)
+    // Text colors (matching Theme.swift)
+    public static let textPrimary: Color = Theme.textPrimary
+    public static let textSecondary: Color = Theme.textSecondary
+    public static let textMuted: Color = Theme.textMuted
+    public static let textTertiary: Color = Theme.textTertiary
 
-    // Semantic tints
-    public static let emeraldGreen: Color = Color(red: 42/255, green: 187/255, blue: 118/255)
-    public static let amberYellow: Color = Color(red: 245/255, green: 172/255, blue: 52/255)
-    public static let coralRed: Color = Color(red: 235/255, green: 87/255, blue: 87/255)
-    public static let skyBlue: Color = Color(red: 58/255, green: 154/255, blue: 255/255)
+    // Ground and surfaces
+    public static let canvas: Color = Theme.canvas
+    public static let glassPanel: Color = Theme.glassPanel
+    public static let glassPill: Color = Theme.glassPill
+    public static let borderGlass: Color = Theme.borderGlass
+    public static let surfaceCard: Color = Theme.surfaceCard
+    public static let surfaceControl: Color = Theme.surfaceControl
+    public static let borderSubtle: Color = Theme.borderSubtle
+
+    // Accents & Semantic tints (matching Theme.swift)
+    public static let accent: Color = Theme.accent
+    public static let accentStrong: Color = Theme.accentStrong
+    public static let accentText: Color = Theme.accentText
+    public static let accentSoft: Color = Theme.accentSoft
+    public static let accentBorder: Color = Theme.accentBorder
+
+    public static let successText: Color = Theme.successText
+    public static let successSoft: Color = Theme.successSoft
+    public static let success: Color = Color(hex: 0x22C55E)
+    public static let emeraldGreen: Color = Color(hex: 0x22C55E)
+
+    public static let warnText: Color = Theme.warnText
+    public static let warnSoft: Color = Theme.warnSoft
+    public static let warn: Color = Color(hex: 0xFBBF24)
+    public static let amberYellow: Color = Color(hex: 0xFBBF24)
+
+    public static let dangerText: Color = Theme.dangerText
+    public static let dangerSoft: Color = Theme.dangerSoft
+    public static let danger: Color = Color(hex: 0xEF4444)
+    public static let coralRed: Color = Color(hex: 0xEF4444)
+
+    public static let sbbRed: Color = Color(hex: 0xEB0000)
+    public static let skyBlue: Color = Theme.accentText
     public static let purpleAccent: Color = Color(red: 170/255, green: 102/255, blue: 245/255)
+
+    // Dimensions
+    public static let minButtonHeight: CGFloat = 60
+    public static let cardCornerRadius: CGFloat = Theme.Radius.xxl
+    public static let buttonCornerRadius: CGFloat = Theme.Radius.xl
 }
 
 // MARK: - Formatters (Europe/Zurich TimeZone)
@@ -188,47 +225,47 @@ public struct CardActionButtonsView: View {
 
     public var body: some View {
         HStack(spacing: 14) {
-            // Cancel button (Abbrechen - secondary translucent button)
+            // Cancel button (Abbrechen - secondary translucent button, at least 60pt)
             Button {
                 onAction?(cancelActionId)
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 19, weight: .semibold))
+                        .font(.system(size: 22, weight: .semibold))
                     Text(cancelTitle)
                         .font(CardTheme.buttonFont)
                 }
                 .foregroundColor(CardTheme.textPrimary)
                 .frame(maxWidth: .infinity)
-                .frame(height: 52)
+                .frame(minHeight: CardTheme.minButtonHeight)
                 .background {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        RoundedRectangle(cornerRadius: CardTheme.buttonCornerRadius, style: .continuous)
                             .fill(Color.white.opacity(0.12))
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.22), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: CardTheme.buttonCornerRadius, style: .continuous)
+                            .strokeBorder(CardTheme.borderGlass, lineWidth: 1)
                     }
                 }
             }
             .buttonStyle(CardScaleButtonStyle())
             .accessibilityLabel(cancelTitle)
 
-            // Confirm button (Bestätigen - prominent primary button)
+            // Confirm button (Bestätigen - prominent primary button, at least 60pt)
             Button {
                 onAction?(confirmActionId)
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 22, weight: .bold))
                     Text(confirmTitle)
                         .font(CardTheme.buttonFont)
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .frame(height: 52)
+                .frame(minHeight: CardTheme.minButtonHeight)
                 .background {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        RoundedRectangle(cornerRadius: CardTheme.buttonCornerRadius, style: .continuous)
                             .fill(
                                 LinearGradient(
                                     colors: [
@@ -239,7 +276,7 @@ public struct CardActionButtonsView: View {
                                     endPoint: .bottom
                                 )
                             )
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        RoundedRectangle(cornerRadius: CardTheme.buttonCornerRadius, style: .continuous)
                             .strokeBorder(Color.white.opacity(0.28), lineWidth: 1)
                     }
                 }
@@ -283,17 +320,19 @@ public struct GlassPillView: View {
     }
 
     public var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             if let iconName {
                 Image(systemName: iconName)
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 17, weight: .bold))
             }
             Text(text)
                 .font(CardTheme.badgeFont)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
         }
         .foregroundColor(tintColor)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 7)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
         .background {
             ZStack {
                 Capsule(style: .continuous)
@@ -302,5 +341,6 @@ public struct GlassPillView: View {
                     .strokeBorder(tintColor.opacity(0.35), lineWidth: 1)
             }
         }
+        .fixedSize(horizontal: true, vertical: false)
     }
 }

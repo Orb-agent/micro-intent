@@ -10,22 +10,31 @@ public struct TrainCardView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            // Header pills: Line, Platform, Delay
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 20) {
+            // Header: SBB tile (36 in service red), Train line pill, Delay pill
+            HStack(spacing: 10) {
+                // SBB Tile in service red
+                HStack(spacing: 6) {
+                    Image(systemName: "tram.fill")
+                        .font(.system(size: 17, weight: .bold))
+                    Text("SBB")
+                        .font(CardTheme.badgeFont)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 12)
+                .frame(height: 36)
+                .background {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(CardTheme.sbbRed)
+                }
+                .fixedSize(horizontal: true, vertical: false)
+
+                // Train Line
                 GlassPillView(
                     iconName: "train.side.front.car",
                     text: card.line,
-                    tintColor: CardTheme.skyBlue
+                    tintColor: CardTheme.accentText
                 )
-
-                if let platform = card.platform, !platform.isEmpty {
-                    GlassPillView(
-                        iconName: "tram.fill",
-                        text: "Gleis \(platform)",
-                        tintColor: CardTheme.purpleAccent
-                    )
-                }
 
                 Spacer()
 
@@ -34,77 +43,106 @@ public struct TrainCardView: View {
                         GlassPillView(
                             iconName: "checkmark.circle.fill",
                             text: "Pünktlich",
-                            tintColor: CardTheme.emeraldGreen
+                            tintColor: CardTheme.successText
                         )
                     } else {
                         GlassPillView(
                             iconName: "exclamationmark.circle.fill",
                             text: "+\(delay) Min.",
-                            tintColor: CardTheme.coralRed
+                            tintColor: CardTheme.dangerText
                         )
                     }
                 }
             }
 
-            // Times display
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
+            // Hero Departure Time (48pt+) as the primary visual focus, plus Platform
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Abfahrt")
+                    .font(CardTheme.captionFont)
+                    .foregroundColor(CardTheme.textMuted)
+                    .textCase(.uppercase)
+
+                HStack(alignment: .firstTextBaseline) {
                     Text(CardFormatters.formatTime(card.departure))
-                        .font(CardTheme.timeFont)
+                        .font(CardTheme.heroDeparture)
                         .foregroundColor(CardTheme.textPrimary)
-                    Text(card.from)
-                        .font(CardTheme.stationFont)
-                        .foregroundColor(CardTheme.textSecondary)
-                        .lineLimit(1)
+
+                    Spacer()
+
+                    if let platform = card.platform, !platform.isEmpty {
+                        HStack(spacing: 6) {
+                            Image(systemName: "signpost.right.fill")
+                                .font(.system(size: 17, weight: .bold))
+                            Text("Gleis \(platform)")
+                                .font(CardTheme.titleFont)
+                        }
+                        .foregroundColor(Color(red: 210/255, green: 170/255, blue: 255/255))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color(red: 170/255, green: 102/255, blue: 245/255).opacity(0.20))
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .strokeBorder(Color(red: 170/255, green: 102/255, blue: 245/255).opacity(0.35), lineWidth: 1)
+                        }
+                    }
                 }
 
-                Spacer()
+                Text(card.from)
+                    .font(CardTheme.stationFont)
+                    .foregroundColor(CardTheme.textPrimary)
+                    .lineLimit(1)
+            }
 
-                VStack(spacing: 4) {
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(CardTheme.textMuted)
-
-                    Text(CardFormatters.formatDuration(from: card.departure, to: card.arrival))
-                        .font(CardTheme.captionFont)
-                        .foregroundColor(CardTheme.textMuted)
-                }
-                .padding(.horizontal, 8)
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(CardFormatters.formatTime(card.arrival))
+            // Journey Route: Destination, Arrival & Duration
+            HStack(alignment: .center, spacing: 14) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Ankunft: \(CardFormatters.formatTime(card.arrival))")
                         .font(CardTheme.timeFont)
                         .foregroundColor(CardTheme.textPrimary)
+
                     Text(card.to)
                         .font(CardTheme.stationFont)
                         .foregroundColor(CardTheme.textSecondary)
-                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "clock")
+                            .font(.system(size: 17, weight: .semibold))
+                        Text(CardFormatters.formatDuration(from: card.departure, to: card.arrival))
+                            .font(CardTheme.headlineFont)
+                    }
+                    .foregroundColor(CardTheme.accentText)
+
+                    Text(card.transfers == 0 ? "Direktverbindung" : "\(card.transfers) Umstieg(e)")
+                        .font(CardTheme.captionFont)
+                        .foregroundColor(CardTheme.textMuted)
                 }
             }
+            .padding(16)
+            .background {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(CardTheme.surfaceCard)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(CardTheme.borderSubtle, lineWidth: 1)
+            }
 
-            // Info meta row: Date, Transfers
+            // Info meta row: Date
             HStack(spacing: 16) {
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     Image(systemName: "calendar")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                     Text(CardFormatters.formatShortDate(card.departure))
-                        .font(CardTheme.captionFont)
-                }
-                .foregroundColor(CardTheme.textSecondary)
-
-                HStack(spacing: 6) {
-                    Image(systemName: card.transfers == 0 ? "arrow.right.circle" : "arrow.triangle.swap")
-                        .font(.system(size: 14, weight: .semibold))
-                    Text(card.transfers == 0 ? "Direktverbindung" : "\(card.transfers) Umstieg(e)")
                         .font(CardTheme.captionFont)
                 }
                 .foregroundColor(CardTheme.textSecondary)
             }
             .padding(.horizontal, 4)
 
-            // Large Action Buttons
+            // Large Action Buttons (at least 60pt tall)
             CardActionButtonsView(
                 confirmTitle: "Bestätigen",
                 cancelTitle: "Abbrechen",
@@ -121,7 +159,7 @@ public struct TrainCardView: View {
 
 #Preview("Train Card - Dark") {
     ZStack {
-        Color.black.ignoresSafeArea()
+        CardTheme.canvas.ignoresSafeArea()
         TrainCardView(card: Card.sampleTrain) { action in
             print("Action tapped: \(action)")
         }

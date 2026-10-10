@@ -508,7 +508,7 @@ public enum Card: Codable, Identifiable, Equatable, Hashable, Sendable {
 
 // MARK: - Reply Container
 
-public struct Reply: Codable, Equatable, Sendable {
+public struct CardReply: Codable, Equatable, Sendable {
     public let say: String
     public let cards: [Card]
 
