@@ -7,12 +7,14 @@ From backend/, with the server running:
     uv run python fake_app.py out.wav --url wss://<tunnel>/ws
     uv run python fake_app.py --text "Can I make it?" --interrupt-after 1.0
     uv run python fake_app.py out.wav --handsfree    # then 3 s of silence and no audio_end
+    uv run python fake_app.py --mic                  # live hands-free on the Mac mic (sox); headphones
 """
 
 import argparse
 import array
 import asyncio
 import base64
+import contextlib
 import json
 import os
 import ssl
@@ -40,12 +42,62 @@ async def mic(ws, pcm: bytes) -> None:
         await asyncio.sleep(0.08)
 
 
+SOX_RAW = ["-q", "-t", "raw", "-r", "24000", "-c", "1", "-b", "16", "-e", "signed-integer", "-"]
+
+
+async def live(ws) -> None:
+    """--mic: hands-free on the Mac's mic and speaker through sox, until Ctrl+C.
+    sox has no echo cancellation, so wear headphones or the mascot interrupts itself."""
+    rec = await asyncio.create_subprocess_exec("rec", *SOX_RAW, stdout=asyncio.subprocess.PIPE)
+    player, dropping = None, False
+
+    async def stream_mic() -> None:
+        while True:
+            chunk = base64.b64encode(await rec.stdout.readexactly(CHUNK_BYTES)).decode()
+            await ws.send(json.dumps({"type": "audio", "data": chunk}))
+
+    def stop_playback() -> None:
+        nonlocal player
+        if player is not None:
+            with contextlib.suppress(ProcessLookupError):  # Ctrl+C also reaches sox
+                player.kill()
+        player = None
+
+    sender = asyncio.create_task(stream_mic())
+    print("listening, Ctrl+C to quit")
+    try:
+        async for frame in ws:
+            msg = json.loads(frame)
+            if msg["type"] == "audio":
+                if not dropping:
+                    if player is None:
+                        player = await asyncio.create_subprocess_exec("play", *SOX_RAW, stdin=asyncio.subprocess.PIPE)
+                    player.stdin.write(base64.b64decode(msg["data"]))  # no drain: play paces itself
+                continue
+            print(time.strftime("%H:%M:%S"), json.dumps(msg, ensure_ascii=False)[:160])
+            if msg["type"] == "reply":
+                dropping = False
+            elif msg["type"] == "audio_end" and player is not None:
+                player.stdin.close()  # play drains what it has, then exits
+                player = None
+            elif msg.get("state") == "listening":  # talked over the mascot: stop now, drop audio until the next reply
+                stop_playback()
+                dropping = True
+    finally:
+        sender.cancel()
+        with contextlib.suppress(ProcessLookupError):
+            rec.kill()
+        stop_playback()
+
+
 async def main(args: argparse.Namespace) -> None:
     tls = ssl.create_default_context(cafile=certifi.where()) if args.url.startswith("wss") else None
     async with websockets.connect(args.url, max_size=None, ssl=tls) as ws:
-        mode = {"mode": "handsfree"} if args.handsfree else {}
+        mode = {"mode": "handsfree"} if args.handsfree or args.mic else {}
         await ws.send(json.dumps({"type": "hello", "token": os.environ["APP_TOKEN"]} | mode))
         print(json.loads(await ws.recv()))
+        if args.mic:
+            return await live(ws)
         silence = None
         if args.text:
             await ws.send(json.dumps({"type": "text", "text": args.text}))
@@ -100,4 +152,8 @@ if __name__ == "__main__":
     p.add_argument("--url", default="ws://localhost:8000/ws")
     p.add_argument("--interrupt-after", type=float, help="seconds after first audio")
     p.add_argument("--handsfree", action="store_true", help="hello with mode handsfree, no audio_end")
-    asyncio.run(main(p.parse_args()))
+    p.add_argument("--mic", action="store_true", help="live hands-free from the Mac mic, plays replies")
+    try:
+        asyncio.run(main(p.parse_args()))
+    except KeyboardInterrupt:  # Ctrl+C ends --mic
+        pass
