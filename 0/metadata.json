@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K2Q7N387HCZRPVRA1AYR9T",
+  "session_id": "a9833779-9242-41ac-929c-a598e00579e2",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T14:15:57.822251Z",
+  "branch": "feature/wp3-a2ui-ios",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "3faa04f2b206",
+  "checkpoint_transcript_start": 790,
+  "transcript_lines_at_start": 790,
+  "compact_transcript_start": 95,
+  "token_usage": {
+    "input_tokens": 4,
+    "cache_creation_tokens": 2344,
+    "cache_read_tokens": 417928,
+    "output_tokens": 2027,
+    "api_call_count": 2
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}
