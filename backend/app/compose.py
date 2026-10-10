@@ -11,9 +11,9 @@ from typing import Any
 
 from . import a2ui
 from .calendar_source import ME, CalEvent, busy_and_conflicts, free_slots, get_calendar, overlaps
-from .fmt import parse_dt
+from .fmt import ceil_quarter, parse_dt
 from .sbb import route_url
-from .state import PendingAction, new_id
+from .state import PendingAction, new_id, store
 from .tools import RequestCtx, propose_calendar_bundle, propose_calendar_move
 
 _TEXT = {
@@ -65,14 +65,15 @@ def suggest_move(ctx: RequestCtx, conflict: CalEvent, window: tuple[datetime, da
     duration = conflict.end - conflict.start
     day = conflict.start.date()
     tz = conflict.start.tzinfo
-    floor = max(datetime.combine(day, time(8, 0), tz), ctx.now.replace(second=0, microsecond=0))
+    floor = ceil_quarter(max(datetime.combine(day, time(8, 0), tz), ctx.now))
+    quarter = timedelta(minutes=15)
     latest_end = min(filter(None, [_recommended_departure(ctx), window[0] if window else None, conflict.start]))
-    before = [s for s in free_slots([ME], floor, latest_end, duration) if s[1] <= latest_end]
+    before = [s for s in free_slots([ME], floor, latest_end, duration, quarter) if s[1] <= latest_end]
     if before:
         slot = before[-1]
     else:
-        after_start = max(window[1] if window else conflict.end, floor)
-        after = free_slots([ME], after_start, datetime.combine(day, time(22, 0), tz), duration)
+        after_start = ceil_quarter(max(window[1] if window else conflict.end, floor))
+        after = free_slots([ME], after_start, datetime.combine(day, time(22, 0), tz), duration, quarter)
         if not after:
             return None
         slot = after[0]
@@ -98,12 +99,14 @@ class TurnBuilder:
             self.used.add(chosen.id)
         return chosen
 
-    def _add(self, component: str, props: dict[str, Any], actions: list[PendingAction], data: dict[str, Any] | None = None) -> None:
+    def _add(self, component: str, props: dict[str, Any], actions: list[PendingAction], data: dict[str, Any] | None = None) -> str:
         sid = f"{self.turn_id}_{component[:-4].lower()}_{len(self.components)}"
         for a in actions:
             a.surface_id = sid
+            a.turn_id = self.turn_id
         self.components.append(component)
         self.messages.extend(a2ui.surface(sid, component, props, data))
+        return sid
 
     # ---- cards ----
 
@@ -126,7 +129,9 @@ class TurnBuilder:
         add = self._proposal(action_id, {"calendar_create"}) or (None if already else self._auto_add(ev, window))
         if add:
             props["addAction"] = {"label": add.label, "preview": add.preview, **a2ui.event_action("confirm", action_id=add.id)}
-        self._add("EventCard", props, [add] if add else [])
+        sid = self._add("EventCard", props, [add] if add else [])
+        with store.lock:
+            store.event_cards[self.turn_id] = {"surface_id": sid, "props": props, "event": ev}
 
     def _auto_add(self, ev: dict[str, Any], window: tuple[datetime, datetime]) -> PendingAction:
         """Offer to put the event, plus the recommended train when there is one, into the calendar."""
@@ -277,6 +282,29 @@ class TurnBuilder:
             if p.id not in self.used:
                 {"set_reminder": self.reminder_card, "draft_message": self.message_card}.get(p.tool, self.confirm_card)(p.id)
         return self.messages
+
+
+def refresh_event_card(turn_id: str | None, deleted_surface: str | None) -> list[dict[str, Any]]:
+    """After a confirmed write, re-check the turn's EventCard against the calendar and update it in place."""
+    rec = store.event_cards.get(turn_id or "")
+    if not rec or rec["surface_id"] == deleted_surface:
+        return []
+    window = _event_window(rec["event"])
+    if not window:
+        return []
+    conflicts, already = split_calendar(rec["event"], window)
+    props = dict(rec["props"], availability="conflict" if conflicts else "free", inCalendar=already)
+    add_id = (props.get("addAction") or {}).get("event", {}).get("context", {}).get("action_id")
+    add = store.get_action(add_id) if add_id else None
+    if already or (add_id and (add is None or add.status != "pending")):
+        props.pop("addAction", None)
+    rec["props"] = props
+    return [
+        {
+            "version": a2ui.VERSION,
+            "updateComponents": {"surfaceId": rec["surface_id"], "components": [{"id": "root", "component": "EventCard", **props}]},
+        }
+    ]
 
 
 def build_turn(ctx: RequestCtx, say: str, choices: list[dict[str, Any]], source: str) -> dict[str, Any]:

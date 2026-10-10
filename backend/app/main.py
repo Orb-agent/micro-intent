@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from . import __version__, a2ui, fallback
 from .agent import run_agent
 from .calendar_source import get_calendar, mock_calendar
-from .compose import plain_turn
+from .compose import plain_turn, refresh_event_card
 from .config import settings
 from .fmt import parse_dt
 from .models import A2UIActionMessage, ConfirmRequest, IntentRequest, Profile, ProfileUpdate, VoiceTokenRequest
@@ -148,6 +148,7 @@ def handle_action(name: str, action_id: str, edits: dict[str, Any], surface_id: 
     act.result = results[0] if len(results) == 1 else {"results": results}
     message = " ".join(r.get("message", "") for r in results).strip()
     say = ("Erledigt. " if locale == "de" else "Done. ") + message
+    cards = cards + refresh_event_card(act.turn_id, sid)
     return JSONResponse(
         {"action_id": action_id, "status": "done", "message": message, "result": act.result} | plain_turn(say, "agent", cards)
     )

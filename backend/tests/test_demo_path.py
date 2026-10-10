@@ -67,7 +67,12 @@ def test_demo_path_offline(monkeypatch):
     )
     done = client.post("/action", json=_action("confirm", move_id, surface)).json()
     assert done["status"] == "done"
-    assert done["cards"] == [{"version": "v0.9.1", "deleteSurface": {"surfaceId": surface}}]
+    assert done["cards"][0] == {"version": "v0.9.1", "deleteSurface": {"surfaceId": surface}}
+    # The same turn's EventCard is updated in place: no conflict left.
+    updated = done["cards"][1]["updateComponents"]["components"][0]
+    assert updated["component"] == "EventCard" and updated["availability"] == "free"
+    # Proposed slots sit on quarter hours.
+    assert conflict["move"]["newStart"][14:16] in {"00", "15", "30", "45"}
     assert client.post("/action", json=_action("confirm", move_id, surface)).json()["status"] == "already_done"
 
     # The conflict is gone after the approved move.

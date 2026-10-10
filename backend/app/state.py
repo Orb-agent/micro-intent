@@ -50,6 +50,7 @@ class PendingAction:
     expires_at: datetime
     status: str = "pending"
     surface_id: str | None = None
+    turn_id: str | None = None
     result: dict[str, Any] | None = None
 
 
@@ -60,6 +61,8 @@ class Store:
     actions: dict[str, PendingAction] = field(default_factory=dict)
     reminders: list[dict[str, Any]] = field(default_factory=list)
     outbox: list[dict[str, Any]] = field(default_factory=list)
+    # turn_id -> {"surface_id", "props", "event"} of the turn's EventCard, to refresh it after a confirm.
+    event_cards: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     def load_profile(self) -> None:
         if settings.profile_path and Path(settings.profile_path).exists():
@@ -99,6 +102,7 @@ class Store:
             self.actions.clear()
             self.reminders.clear()
             self.outbox.clear()
+            self.event_cards.clear()
 
 
 store = Store()

@@ -288,7 +288,7 @@ A [turn](#the-turn-contract) plus the outcome:
 
 | `status` | HTTP | Meaning |
 | --- | --- | --- |
-| `done` | 200 | Executed; the surface that carried the action is deleted (`deleteSurface`). For `draft_message`, `result.message_sent.deep_link` is an `sms:`/`wa.me`/`mailto:` link the client may open to actually send. |
+| `done` | 200 | Executed; the surface that carried the action is deleted (`deleteSurface`), and the same turn's `EventCard` comes back as an `updateComponents` with fresh `availability` / `inCalendar` (e.g. `free` after a move). For `draft_message`, `result.message_sent.deep_link` is an `sms:`/`wa.me`/`mailto:` link the client may open to actually send. |
 | `rejected` | 200 | `reject`, `skip` or `keep`; nothing executed; the surface is deleted. |
 | `failed` | 200 | Execution failed; `message` says why. The action stays pending and may be retried. |
 | `already_done` | 200 | This id was already handled; nothing executed again. |
@@ -394,3 +394,4 @@ Call it before each demo run.
 - v1 (2026-10-10): initial contract.
 - v1 (2026-10-10, before any implementation): cards switched from a home-made UI spec to A2UI v0.9.1 with a custom catalog; every turn is `respond(say, cards)`; added `/intent/stream` (orb states + filler) and `/action` (A2UI action messages); `/confirm` kept as shorthand; voice token gained `provider`.
 - v1 (2026-10-10, backend PR): additive only - `EventCard.inCalendar`; `skip`/`keep` may carry an empty `action_id`; Live example uses `responseModalities: ["AUDIO"]` (TEXT is rejected by `gemini-3.8-live`).
+- v1 (2026-10-10, backend PR follow-up): `/action` `done` responses also carry an `updateComponents` for the turn's `EventCard`; proposed move slots sit on quarter hours.

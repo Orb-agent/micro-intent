@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .config import settings
 
@@ -18,6 +18,19 @@ def parse_dt(value: str | datetime) -> datetime:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=settings.tz)
     return dt.astimezone(settings.tz)
+
+
+def ceil_quarter(dt: datetime) -> datetime:
+    """Round up to the next quarter hour (17:19 -> 17:30, 17:15 -> 17:15)."""
+    dt = dt.replace(second=0, microsecond=0)
+    return dt + timedelta(minutes=(-dt.minute) % 15)
+
+
+def round_quarter(dt: datetime) -> datetime:
+    """Round to the nearest quarter hour (17:19 -> 17:15, 17:23 -> 17:30)."""
+    dt = dt.replace(second=0, microsecond=0)
+    down = dt - timedelta(minutes=dt.minute % 15)
+    return down + timedelta(minutes=15) if dt.minute % 15 >= 8 else down
 
 
 def hm(value: str | datetime) -> str:

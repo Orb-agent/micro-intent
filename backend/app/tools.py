@@ -14,7 +14,7 @@ from urllib.parse import quote
 
 from . import sbb
 from .calendar_source import ME, busy_and_conflicts, free_slots, get_calendar
-from .fmt import day_label, hm, parse_dt
+from .fmt import ceil_quarter, day_label, hm, parse_dt, round_quarter
 from .models import Profile
 from .state import PendingAction, store
 
@@ -216,7 +216,7 @@ def shared_free_slot(
     day = datetime.fromisoformat(date).date()
     start = datetime.combine(day, time.fromisoformat(earliest), ctx.now.tzinfo)
     end = datetime.combine(day, time.fromisoformat(latest), ctx.now.tzinfo)
-    start = max(start, ctx.now.replace(second=0, microsecond=0))
+    start = max(start, ceil_quarter(ctx.now))
     slots = free_slots(owners, start, end, timedelta(minutes=max(15, duration_min)))
     items = [{"start": a.isoformat(), "end": b.isoformat()} for a, b in slots[:6]]
     ctx.slots = items
@@ -252,8 +252,8 @@ def propose_calendar_move(ctx: RequestCtx, event_id: str, new_start: str, new_en
     ev = get_calendar().get_event(event_id)
     if ev is None:
         return {"error": f"unknown event_id {event_id}; call calendar_free_busy first"}
-    s = parse_dt(new_start)
-    e = parse_dt(new_end) if new_end else s + (ev.end - ev.start)
+    s = round_quarter(parse_dt(new_start))
+    e = s + ((parse_dt(new_end) - parse_dt(new_start)) if new_end else (ev.end - ev.start))
     de = ctx.locale == "de"
     label = f"{'Verschiebe' if de else 'Move'} {ev.title} {'auf' if de else 'to'} {hm(s)}"
     preview = (
