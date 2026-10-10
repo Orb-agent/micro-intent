@@ -9,6 +9,7 @@ import base64
 import contextlib
 import hmac
 import inspect
+import io
 import json
 import logging
 import os
@@ -21,6 +22,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from PIL import Image
 
 import voice
 
@@ -51,6 +53,7 @@ SCREEN_MAX_AGE = 120  # s; contracts § HTTP, screenshot rule
 # 2026-10-10; past 5 s the turn went without the screen and wandered through 2-3 tool steps to an
 # off-topic answer, slower than waiting.
 VISION_WAIT = 12
+THUMBNAIL_SIZE = 240  # px, long side of the `screen_seen` / `screen_ok` thumbnail
 
 # contracts § Proactive turns: the turn's text when the agent speaks up on its own about a screen.
 PROACTIVE = """(Not the user speaking: they just shared this screen without a question.) \
@@ -123,9 +126,40 @@ async def broadcast(msg: dict) -> None:
             log.warning("could not send %s to a session", msg["type"])
 
 
+def make_thumbnail(image: bytes) -> str | None:
+    """contracts § WebSocket: the screenshot as a small base64 JPEG for the app's "Seeing your
+    screen" chip, or None if the image can't be decoded."""
+    try:
+        with Image.open(io.BytesIO(image)) as img:
+            img.draft("RGB", (THUMBNAIL_SIZE, THUMBNAIL_SIZE))  # JPEG: decode at a smaller scale
+            img.thumbnail((THUMBNAIL_SIZE, THUMBNAIL_SIZE))
+            out = io.BytesIO()
+            img.convert("RGB").save(out, "JPEG", quality=70)
+    except Exception:
+        log.warning("could not make a thumbnail of the screenshot")
+        return None
+    return base64.b64encode(out.getvalue()).decode()
+
+
+async def show_screen(shot: Screenshot) -> str | None:
+    """Tell every session a screenshot arrived (`screen_seen`), before vision has read it."""
+    thumbnail = await asyncio.to_thread(make_thumbnail, shot.image)
+    if thumbnail:
+        await broadcast({"type": "screen_seen", "thumbnail": thumbnail})
+    return thumbnail
+
+
 async def read_latest(shot: Screenshot, reuse: dict | None = None) -> dict | None:
     """Run vision on one screenshot, or take `reuse`, an identical one's reading; tell every
     session, return its ScreenContext or None."""
+    seen = asyncio.create_task(show_screen(shot))  # alongside vision, so the app shows it at once
+    try:
+        return await _read_latest(shot, reuse, seen)
+    finally:
+        seen.cancel()  # a no-op once sent; stops it when a newer screenshot cancels this one
+
+
+async def _read_latest(shot: Screenshot, reuse: dict | None, seen: asyncio.Task) -> dict | None:
     t0 = time.monotonic()
     screen = reuse
     if screen is not None:
@@ -144,7 +178,12 @@ async def read_latest(shot: Screenshot, reuse: dict | None = None) -> dict | Non
         screen = screen if isinstance(screen, dict) else None
     summary = screen.get("summary") if screen else None
     log.info("screenshot %d read in %.2fs: %r", shot.id, time.monotonic() - t0, summary)
-    await broadcast({"type": "screen_ok"} | ({"summary": summary} if summary else {}))
+    thumbnail = await seen  # after `screen_seen`, which the app needs first
+    await broadcast(
+        {"type": "screen_ok"}
+        | ({"summary": summary} if summary else {})
+        | ({"thumbnail": thumbnail} if thumbnail else {})
+    )
     if screen is not None and reuse is None:
         offer_screen(shot, screen)
     return screen

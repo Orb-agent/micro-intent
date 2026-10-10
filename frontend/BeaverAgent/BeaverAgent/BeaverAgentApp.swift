@@ -126,6 +126,12 @@ enum DemoLaunch {
             session.handle(.state(.thinking, label: nil))
             Fixtures.travel.frames.forEach(session.receive)
             session.handle(.state(.idle, label: nil))
+        case "seeing":
+            session.simulateScreenshot()
+            session.handle(.state(.thinking, label: nil))
+            session.handle(.state(.searching, label: "Checking your calendar…"))
+        case "screen-failed":
+            session.receive(Data(#"{"type": "screen_ok"}"#.utf8))
         case "error":
             session.handle(.transcript(question))
             session.handle(.error("Sorry, something went wrong."))

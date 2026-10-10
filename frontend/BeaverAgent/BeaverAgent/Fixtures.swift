@@ -59,7 +59,16 @@ enum Fixtures {
     }
 
     static var screenOK: Data {
-        frame(type: "screen_ok", merging: ["summary": object("screen")["summary"] ?? NSNull()])
+        frame(type: "screen_ok", merging: [
+            "summary": object("screen")["summary"] ?? NSNull(),
+            "thumbnail": object("screen_seen")["thumbnail"] ?? NSNull(),
+        ])
+    }
+
+    /// What the server sends the moment a screenshot arrives (`screen_seen.json`, made from
+    /// backend/fixtures/screen.png by `app.make_thumbnail`).
+    static var screenSeen: Data {
+        frame(type: "screen_seen", merging: object("screen_seen"))
     }
 
     // MARK: - Loading
