@@ -1,0 +1,1 @@
+i put GOOGLE_CLIENT_ID in .env in main repo folder
