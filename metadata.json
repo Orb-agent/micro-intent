@@ -1,0 +1,22 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K2WV13JXAYFHRBB0N979HF",
+  "strategy": "manual-commit",
+  "branch": "fm/micro-intent-ios-cards-v2",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "frontend/BeaverAgent/NativeCards/CardStyle.swift",
+    "frontend/BeaverAgent/NativeCards/ConflictCardView.swift",
+    "frontend/BeaverAgent/NativeCards/EventCardView.swift",
+    "frontend/BeaverAgent/NativeCards/FlightCardView.swift",
+    "frontend/BeaverAgent/NativeCards/TrainCardView.swift"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ]
+}
