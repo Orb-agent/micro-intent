@@ -240,7 +240,7 @@ $("share").addEventListener("click", async () => {
     screenVideo = Object.assign(document.createElement("video"), { srcObject: screenStream, muted: true });
     await screenVideo.play();
     screenStream.getVideoTracks()[0].onended = () => {
-      screenStream = null; clearInterval(ringTimer); ring = []; $("share").textContent = "Share screen"; $("sendScreen").disabled = true; };
+      screenStream = screenVideo = null; clearInterval(ringTimer); ring = []; $("share").textContent = "Share screen"; $("sendScreen").disabled = true; };
     clearInterval(ringTimer); ring = [];
     ringTimer = setInterval(() => { // one frame a second; a still screen adds nothing
       if (!screenVideo.videoWidth) return;
