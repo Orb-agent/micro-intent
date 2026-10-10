@@ -251,10 +251,12 @@ class Session:
         """Hands-free: Gradium's VAD says the user is done."""
         await self.interrupt()
         await self.send({"type": "transcript", "text": text})
-        self.start_turn(self.run_turn(text))
+        await self.start_turn(self.run_turn(text))
 
-    def start_turn(self, coro) -> None:
-        """Turns run as tasks so the receive loop can still hear an interrupt."""
+    async def start_turn(self, coro) -> None:
+        """One turn at a time: cancel the running one first. Turns run as tasks so the
+        receive loop can still hear an interrupt."""
+        await self.interrupt()
         self.turn_task = asyncio.create_task(coro)
 
     async def interrupt(self) -> bool:
@@ -282,10 +284,9 @@ class Session:
             self.stt.push(msg["data"])
         elif kind == "audio_end" and self.stt is not None:
             stt, self.stt = self.stt, None
-            self.start_turn(self.voice_turn(stt))
+            await self.start_turn(self.voice_turn(stt))
         elif kind == "text" and isinstance(msg.get("text"), str):
-            await self.interrupt()
-            self.start_turn(self.run_turn(msg["text"]))
+            await self.start_turn(self.run_turn(msg["text"]))
         elif kind == "screen":
             try:
                 image = base64.b64decode(msg.get("data"), validate=True)

@@ -166,6 +166,21 @@ def test_talking_over_the_mascot_interrupts(client, monkeypatch):
     assert kinds(msgs)[:2] == ["transcript", "state:thinking"]
 
 
+def test_release_replaces_a_text_turn_sent_while_held(client, monkeypatch):
+    async def echo(self, text, screen, on_status):
+        await asyncio.sleep(1)  # both turns would be in here together
+        return {"say": text, "cards": []}
+
+    monkeypatch.setattr(server.StubAgent, "turn", echo)
+    ctx, ws = connect(client)
+    ws.send_json({"type": "audio", "data": "AAAA"})  # press
+    ws.send_json({"type": "text", "text": "Typed while held"})
+    ws.send_json({"type": "audio_end"})  # release: the voice turn replaces the text turn
+    msgs = receive_turn(ws)
+    ctx.__exit__(None, None, None)
+    assert [m["say"] for m in msgs if m["type"] == "reply"] == ["Can I make it?"]
+
+
 def test_interrupt_closes_the_tts_stream(client, monkeypatch):
     closed = []
 
