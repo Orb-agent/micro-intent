@@ -5,7 +5,7 @@ import SwiftUI
 struct FirstRunSheet: View {
     @AppStorage(ProfileKey.hasCompletedFirstRun) private var hasCompletedFirstRun = false
     @AppStorage(ProfileKey.userRole) private var userRoleRaw = UserRole.forMe.rawValue
-    @AppStorage(ProfileKey.helperMode) private var helperMode = false
+    @AppStorage(ProfileKey.helperMode) private var helperMode = ProfileFixtures.defaultHelperMode
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.typeScale) private var type
@@ -17,18 +17,18 @@ struct FirstRunSheet: View {
             header
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 12) {
                     Text("Is this iPhone for you, or for someone you help?")
-                        .font(type.display)
+                        .font(type.answer)
                         .foregroundStyle(Theme.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("Orb Agent adapts its voice, display size, and family helper permissions based on who holds this iPhone.")
+                    Text("Orb Agent adapts voice, display, and helper permissions based on who holds this iPhone.")
                         .font(type.body)
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    VStack(spacing: 14) {
+                    VStack(spacing: 10) {
                         ForEach(UserRole.allCases) { role in
                             RoleCard(
                                 role: role,
@@ -37,11 +37,12 @@ struct FirstRunSheet: View {
                             )
                         }
                     }
-                    .padding(.top, 6)
+                    .padding(.top, 2)
 
                     safetyNotice
                 }
-                .padding(.top, 8)
+                .padding(.top, 2)
+                .padding(.bottom, 24)
             }
             .scrollBounceBehavior(.basedOnSize)
 
@@ -85,13 +86,6 @@ struct FirstRunSheet: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(Theme.accentText)
             Spacer()
-            // Demo indicator
-            Text("Demo stand-in")
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(Theme.textMuted)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(Capsule().fill(Theme.surfaceChip))
         }
     }
 
@@ -113,7 +107,7 @@ struct FirstRunSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(18)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous)
@@ -137,22 +131,22 @@ private struct RoleCard: View {
 
     var body: some View {
         Button(action: onSelect) {
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .top, spacing: 14) {
                 Image(systemName: role.icon)
-                    .font(.system(size: 28, weight: .semibold))
+                    .font(.system(size: 26, weight: .semibold))
                     .foregroundStyle(isSelected ? Theme.accentTextStrong : Theme.textSecondary)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 42, height: 42)
                     .background(Circle().fill(isSelected ? Theme.accentSoft : Theme.surfaceControl))
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text(role.title)
-                            .font(.system(size: 22, weight: .bold))
+                            .font(.system(size: 21, weight: .bold))
                             .foregroundStyle(Theme.textPrimary)
                         Spacer()
                         if isSelected {
                             Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 24, weight: .semibold))
+                                .font(.system(size: 22, weight: .semibold))
                                 .foregroundStyle(Theme.accent)
                         }
                     }
@@ -163,8 +157,8 @@ private struct RoleCard: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(18)
-            .frame(maxWidth: .infinity, minHeight: 90, alignment: .leading)
+            .padding(14)
+            .frame(maxWidth: .infinity, minHeight: 74, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous)
                     .fill(isSelected ? Theme.accentSoft : Theme.surfaceCard)

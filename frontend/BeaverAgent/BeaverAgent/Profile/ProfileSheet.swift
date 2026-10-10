@@ -8,15 +8,8 @@ enum ProfileTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .profile: return "My Profile"
-        case .family: return "Family & Helpers"
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .profile: return "person.crop.circle"
-        case .family: return "person.2"
+        case .profile: return "Profile"
+        case .family: return "Family"
         }
     }
 }
@@ -27,15 +20,13 @@ enum ProfileTab: String, CaseIterable, Identifiable {
 /// All settings are stored locally in @AppStorage for the hackathon demo.
 /// No data is transmitted to the server.
 struct ProfileSheet: View {
-    var initialTab: ProfileTab = .profile
-
     @AppStorage(ProfileKey.homeCity) private var homeCity = ProfileFixtures.defaultHomeCity
     @AppStorage(ProfileKey.travelTrain) private var travelTrain = true
     @AppStorage(ProfileKey.travelBus) private var travelBus = true
     @AppStorage(ProfileKey.travelWalk) private var travelWalk = true
     @AppStorage(ProfileKey.walkingPace) private var walkingPaceRaw = ProfileFixtures.defaultWalkingPace.rawValue
     @AppStorage(ProfileKey.userRole) private var userRoleRaw = UserRole.forMe.rawValue
-    @AppStorage(ProfileKey.helperMode) private var helperMode = true
+    @AppStorage(ProfileKey.helperMode) private var helperMode = ProfileFixtures.defaultHelperMode
     @AppStorage(SettingsKey.largeText) private var largeText = false
 
     @State private var currentTab: ProfileTab = .profile
@@ -45,6 +36,10 @@ struct ProfileSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.typeScale) private var type
+
+    init(initialTab: ProfileTab = .profile) {
+        _currentTab = State(initialValue: initialTab)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -84,59 +79,25 @@ struct ProfileSheet: View {
         .sheet(isPresented: $showFirstRunSheet) {
             FirstRunSheet()
         }
-        .onAppear {
-            currentTab = initialTab
-        }
     }
 
     // MARK: - Header & Tab Bar
 
     private var topBar: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(currentTab == .profile ? "Profile" : "Family & Helpers")
-                    .font(type.display)
-                    .foregroundStyle(Theme.textPrimary)
-            }
+            Text(currentTab == .profile ? "Profile" : "Family")
+                .font(type.display)
+                .foregroundStyle(Theme.textPrimary)
             Spacer()
-            // Demo indicator
-            Text("Demo stand-in")
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(Theme.textMuted)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Capsule().fill(Theme.surfaceChip))
         }
     }
 
     private var tabSelector: some View {
-        HStack(spacing: 10) {
-            ForEach(ProfileTab.allCases) { tab in
-                let selected = currentTab == tab
-                Button {
-                    currentTab = tab
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: tab.icon)
-                            .font(.system(size: 20, weight: .semibold))
-                        Text(tab.title)
-                            .font(.system(size: 18, weight: .semibold))
-                    }
-                    .frame(maxWidth: .infinity, minHeight: max(60, type.control))
-                    .foregroundStyle(selected ? Theme.accentTextStrong : Theme.textSecondary)
-                    .background(
-                        RoundedRectangle(cornerRadius: Theme.Radius.lg, style: .continuous)
-                            .fill(selected ? Theme.accentSoft : Theme.surfaceControl)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Theme.Radius.lg, style: .continuous)
-                            .strokeBorder(selected ? Theme.accentBorder : Theme.borderInput, lineWidth: selected ? 2 : 1)
-                    )
-                }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(selected ? [.isSelected, .isButton] : [.isButton])
-            }
+        Picker("Section", selection: $currentTab) {
+            Text("Profile").tag(ProfileTab.profile)
+            Text("Family").tag(ProfileTab.family)
         }
+        .pickerStyle(.segmented)
     }
 
     // MARK: - Profile Content
@@ -173,7 +134,7 @@ struct ProfileSheet: View {
                 Text(isForMe ? "Setup: For myself" : "Setup: For someone I help")
                     .font(type.bodyStrong)
                     .foregroundStyle(Theme.textPrimary)
-                Text(isForMe ? "Voice and display tailored for direct use" : "Helper mode enabled for Lena")
+                Text(helperMode ? "Lena can help with settings" : "Voice and display tailored for direct use")
                     .font(type.meta)
                     .foregroundStyle(Theme.textMuted)
             }
@@ -474,7 +435,7 @@ struct ProfileSheet: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
-                Toggle("", isOn: $helperMode)
+                Toggle("Family Helper Mode", isOn: $helperMode)
                     .labelsHidden()
                     .tint(Theme.accent)
             }
@@ -561,28 +522,6 @@ struct ProfileSheet: View {
                 }
             }
 
-            Button {
-                // Stand-in action for hackathon demo
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 20, weight: .semibold))
-                    Text("Add Trusted Person")
-                        .font(.system(size: 18, weight: .semibold))
-                }
-                .frame(maxWidth: .infinity, minHeight: max(60, type.control))
-                .foregroundStyle(Theme.textPrimary)
-                .background(
-                    RoundedRectangle(cornerRadius: Theme.Radius.lg, style: .continuous)
-                        .fill(Theme.surfaceControl)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: Theme.Radius.lg, style: .continuous)
-                        .strokeBorder(Theme.borderInput, lineWidth: 1)
-                )
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 4)
         }
     }
 }

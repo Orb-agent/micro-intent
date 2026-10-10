@@ -12,6 +12,9 @@ enum ProfileFixtures {
     /// Default walking pace: comfortable for an older user at arm's length.
     static let defaultWalkingPace = WalkingPace.leisurely
 
+    /// Helper mode starts on so the demo shows Lena as the family helper.
+    static let defaultHelperMode = true
+
     /// Trusted contacts list bundled for the Zurich hackathon demo.
     /// Lena is the daughter and designated family helper.
     static let demoContacts: [TrustedContact] = [
