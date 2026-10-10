@@ -24,7 +24,7 @@ function connect() {
   ws.onopen = () => ws.send(JSON.stringify({ type: "hello", token, mode }));
   ws.onclose = (e) => {
     setConn(e.code === 1008 ? "invalid token" : "reconnecting", false);
-    if (e.code === 1008) { chrome.storage.local.remove("beaverToken"); $("label").textContent = "Update APP_TOKEN in the Orbs popup and reopen this tab."; return; }
+    if (e.code === 1008) { $("label").textContent = "The backend rejected this token. Check that it matches APP_TOKEN in backend/.env, update it in the Orbs popup, then reload this tab."; return; }
     $("label").textContent = `Waiting for backend at ${new URL(server).host}…`;
     setTimeout(connect, 1000);
   };

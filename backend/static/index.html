@@ -141,7 +141,10 @@ try {
   if (token) { localStorage.setItem("beaverToken", token); history.replaceState(null, "", location.pathname); }
   else token = localStorage.getItem("beaverToken");
 } catch {}
-if (!token) token = prompt("APP_TOKEN (from backend/.env)") || "";
+if (!token) {
+  token = (prompt("APP_TOKEN (from backend/.env)") || "").trim();
+  if (token) { try { localStorage.setItem("beaverToken", token); } catch {} }
+}
 
 let ws, ctx, micNode, screenStream, screenVideo;
 let mode = "ptt", talking = false, serverState = "idle", dropAudio = false;
@@ -153,7 +156,7 @@ function connect() {
   ws.onopen = () => ws.send(JSON.stringify({ type: "hello", token, mode }));
   ws.onclose = (e) => {
     setConn(e.code === 1008 ? "invalid token" : "reconnecting", false);
-    if (e.code === 1008) { try { localStorage.removeItem("beaverToken"); } catch {} $("label").textContent = "Invalid app token. Update APP_TOKEN and refresh."; return; }
+    if (e.code === 1008) { $("label").textContent = "The backend rejected this token. Check that it matches APP_TOKEN in backend/.env, then reopen this page with #token=YOUR_APP_TOKEN."; return; }
     $("label").textContent = `Waiting for backend at ${location.host}…`;
     setTimeout(connect, 1000);
   };
