@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_011PQiotxXZLGS9mAgB5BLCV",
+  "agent_id": "a034658f37928b3b5",
+  "subagent_type": "general-purpose",
+  "task_description": "SC2 server accepts recent",
+  "token_usage": {
+    "input_tokens": 38,
+    "cache_creation_tokens": 100472,
+    "cache_read_tokens": 1502668,
+    "output_tokens": 444,
+    "api_call_count": 19
+  },
+  "started_at": "2026-10-10T15:44:19.256189+02:00",
+  "completed_at": "2026-10-10T15:48:37.255565+02:00"
+}

@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K15PZX5SN709MACYSAKN47",
+  "strategy": "manual-commit",
+  "branch": "feature/wp2-screen-clip",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 8,
+    "cache_creation_tokens": 5380,
+    "cache_read_tokens": 663597,
+    "output_tokens": 1469,
+    "api_call_count": 3,
+    "subagent_tokens": {
+      "input_tokens": 10,
+      "cache_creation_tokens": 8515,
+      "cache_read_tokens": 505411,
+      "output_tokens": 421,
+      "api_call_count": 5
+    }
+  }
+}
