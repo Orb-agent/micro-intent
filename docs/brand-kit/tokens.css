@@ -1,0 +1,11 @@
+:root{--orb-black:#111111;--orb-white:#ffffff;--orb-canvas:#fafafa;--orb-surface:#ffffff;--orb-raised:#f4f4f4;--orb-text:#171717;--orb-muted:#666666;--orb-line:#dedede;--orb-selected:rgba(17,17,17,.07);--orb-font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--orb-radius-card:24px;--orb-radius-control:12px;--orb-radius-pill:999px;--orb-shadow:0 8px 32px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);--orb-ease-enter:cubic-bezier(.16,1,.3,1);--orb-ease-exit:cubic-bezier(.4,0,1,1);--orb-ease-standard:cubic-bezier(.4,0,.2,1);--orb-fast:120ms;--orb-normal:200ms;--orb-enter:320ms;--orb-exit:160ms}
+[data-theme=dark]{--orb-canvas:#111111;--orb-surface:#1a1a1a;--orb-raised:#242424;--orb-text:#f5f5f5;--orb-muted:#aaaaaa;--orb-line:#383838;--orb-selected:rgba(255,255,255,.1);--orb-shadow:0 8px 32px rgba(0,0,0,.28)}
+.orb-card{background:var(--orb-surface);color:var(--orb-text);border:1px solid var(--orb-line);border-radius:var(--orb-radius-card);padding:20px;box-shadow:var(--orb-shadow)}
+.orb-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;min-height:44px;border:1px solid var(--orb-line);border-radius:var(--orb-radius-pill);background:var(--orb-surface);color:var(--orb-text)}
+.orb-button{min-height:44px;padding:10px 16px;border:1px solid var(--orb-line);border-radius:var(--orb-radius-control);background:var(--orb-raised);color:var(--orb-text);font:500 14px/20px var(--orb-font);cursor:pointer;transition:background var(--orb-fast) var(--orb-ease-standard),transform var(--orb-fast) var(--orb-ease-standard)}
+.orb-button.primary{background:var(--orb-text);color:var(--orb-surface);border-color:var(--orb-text)}
+.orb-button:active{transform:scale(.98)}
+.orb-button:focus-visible{outline:2px solid var(--orb-text);outline-offset:3px}
+.orb-card-enter{animation:orb-card-in var(--orb-enter) var(--orb-ease-enter) both}
+@keyframes orb-card-in{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}

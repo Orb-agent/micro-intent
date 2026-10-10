@@ -3,8 +3,11 @@ Automated unit & integration tests for the Lumi Backend.
 """
 import httpx
 import pytest
-from httplib2 import Response
-from googleapiclient.errors import HttpError
+try:
+    from httplib2 import Response
+    from googleapiclient.errors import HttpError
+except ImportError:
+    pytest.skip("google-api-python-client / httplib2 not installed", allow_module_level=True)
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 
