@@ -16,7 +16,7 @@ final class WebSocketClient {
 
     private let session = URLSession(configuration: .default)
     private var task: URLSessionWebSocketTask?
-    private var endpoint: (url: URL, token: String)?
+    private var endpoint: (url: URL, token: String, mode: ClientMessage.Mode)?
     private var generation = 0
     private var reconnect: Task<Void, Never>?
 
@@ -40,8 +40,8 @@ final class WebSocketClient {
         return parts.url
     }
 
-    func connect(url: URL, token: String) {
-        endpoint = (url, token)
+    func connect(url: URL, token: String, mode: ClientMessage.Mode) {
+        endpoint = (url, token, mode)
         open()
     }
 
@@ -82,7 +82,7 @@ final class WebSocketClient {
         self.task = task
         status = .connecting
         task.resume()
-        send(.hello(token: endpoint.token))
+        send(.hello(token: endpoint.token, mode: endpoint.mode))
         Task { await receive(on: task, generation: current) }
     }
 

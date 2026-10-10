@@ -6,6 +6,8 @@ struct ContentView: View {
     @Binding var sheet: AppSheet?
 
     @Environment(\.typeScale) private var type
+    @State private var pressing = false
+    @State private var debugHold: Task<Void, Never>?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -87,7 +89,7 @@ struct ContentView: View {
                     .transition(.opacity)
             }
         } else if session.transcript == nil {
-            Welcome(listening: session.orb == .listening)
+            Welcome(listening: session.orb == .listening, handsFree: session.handsFree)
         }
         if let error = session.errorMessage {
             Label(error, systemImage: "exclamationmark.triangle.fill")
@@ -105,12 +107,24 @@ struct ContentView: View {
         VStack(spacing: 6) {
             OrbView(state: session.orb, scale: hasTurn ? 0.72 : 1)
                 .contentShape(Circle())
-                .onLongPressGesture(minimumDuration: 0.5) {
-                    sheet = .debug
-                }
+                .gesture(orbPress)
                 .accessibilityAddTraits(.isButton)
-                .accessibilityHint("Touch and hold to type a question")
+                .accessibilityHint(orbHint)
                 .accessibilityAction(named: "Type a question") { sheet = .debug }
+                .frame(maxWidth: .infinity)
+                .overlay(alignment: .trailing) {
+                    Button {
+                        sheet = .debug
+                    } label: {
+                        Image(systemName: "keyboard")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(width: 48, height: 48)
+                            .glassSurface(.flat, cornerRadius: 24)
+                    }
+                    .padding(.trailing, 20)
+                    .accessibilityLabel("Type a question")
+                }
             OrbLabel(state: session.orb, label: orbLabel)
         }
         .padding(.bottom, 8)
@@ -120,6 +134,34 @@ struct ContentView: View {
     }
 
     private var hasTurn: Bool { session.transcript != nil || session.reply != nil }
+
+    /// Live: hold to talk, tap to stop the mascot (see `AgentSession.orbPressBegan`).
+    /// Demo data: hold to type a question, as before there was a mic.
+    private var orbPress: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { _ in
+                guard !pressing else { return }
+                pressing = true
+                if session.connection == .fixtures {
+                    debugHold = Task {
+                        try? await Task.sleep(for: .seconds(0.5))
+                        if !Task.isCancelled { sheet = .debug }
+                    }
+                } else {
+                    session.orbPressBegan()
+                }
+            }
+            .onEnded { _ in
+                pressing = false
+                debugHold?.cancel()
+                session.orbPressEnded()
+            }
+    }
+
+    private var orbHint: String {
+        if session.connection == .fixtures { return "Touch and hold to type a question" }
+        return session.handsFree ? "Just talk. Tap to stop the answer" : "Touch and hold to talk. Tap to stop the answer"
+    }
 
     private var orbLabel: String? {
         if session.orb == .idle { return "Look and say" }
@@ -136,6 +178,7 @@ enum AppSheet: String, Identifiable {
 
 private struct Welcome: View {
     var listening = false
+    var handsFree = false
     @Environment(\.typeScale) private var type
 
     var body: some View {
@@ -144,7 +187,7 @@ private struct Welcome: View {
                 .font(type.display)
                 .tracking(-0.5)
                 .foregroundStyle(Theme.textPrimary)
-            Text(listening ? "Ask your question, then let go of the orb." : "Look at something on your phone, then hold the orb and ask.")
+            Text(hint)
                 .font(type.body)
                 .foregroundStyle(Theme.textMuted)
                 .fixedSize(horizontal: false, vertical: true)
@@ -152,6 +195,15 @@ private struct Welcome: View {
         .padding(.top, 28)
         .padding(.horizontal, 4)
         .animation(.easeInOut(duration: Theme.Motion.base), value: listening)
+    }
+
+    private var hint: String {
+        switch (listening, handsFree) {
+        case (true, false): "Ask your question, then let go of the orb."
+        case (true, true): "Go ahead. I'll answer when you pause."
+        case (false, false): "Look at something on your phone, then hold the orb and ask."
+        case (false, true): "Look at something on your phone, then just ask."
+        }
     }
 }
 

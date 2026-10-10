@@ -35,7 +35,8 @@ enum ServerMessage {
     case transcript(String)
     case reply(Reply)
     case a2ui([A2uiMessage])
-    case audio
+    /// Base64 PCM, contracts § Audio.
+    case audio(String)
     case audioEnd
     case screenOK(summary: String?)
     case error(String)
@@ -60,7 +61,7 @@ enum ServerMessage {
             // Plain decoder on purpose: A2UI keys are camelCase and data keys must stay untouched.
             return .a2ui(try decoder.decode(A2UIFrame.self, from: data).messages)
         case "audio":
-            return .audio
+            return .audio(try decoder.decode(AudioFrame.self, from: data).data)
         case "audio_end":
             return .audioEnd
         case "screen_ok":
@@ -76,27 +77,44 @@ enum ServerMessage {
     private struct StateFrame: Decodable { let state: String; let label: String? }
     private struct TextFrame: Decodable { let text: String }
     private struct A2UIFrame: Decodable { let messages: [A2uiMessage] }
+    private struct AudioFrame: Decodable { let data: String }
     private struct ScreenFrame: Decodable { let summary: String? }
     private struct ErrorFrame: Decodable { let message: String }
 }
 
 enum ClientMessage: Encodable {
-    case hello(token: String)
+    enum Mode: String { case ptt, handsfree }
+
+    case hello(token: String, mode: Mode)
     case text(String)
+    /// One 80 ms mic chunk, base64 PCM (contracts § Audio).
+    case audio(String)
+    /// Orb released (push-to-talk only).
+    case audioEnd
+    /// Tap while the mascot is talking.
+    case interrupt
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: Key.self)
         switch self {
-        case .hello(let token):
+        case .hello(let token, let mode):
             try container.encode("hello", forKey: .type)
             try container.encode(token, forKey: .token)
+            try container.encode(mode.rawValue, forKey: .mode)
         case .text(let text):
             try container.encode("text", forKey: .type)
             try container.encode(text, forKey: .text)
+        case .audio(let data):
+            try container.encode("audio", forKey: .type)
+            try container.encode(data, forKey: .data)
+        case .audioEnd:
+            try container.encode("audio_end", forKey: .type)
+        case .interrupt:
+            try container.encode("interrupt", forKey: .type)
         }
     }
 
-    private enum Key: String, CodingKey { case type, token, text }
+    private enum Key: String, CodingKey { case type, token, mode, text, data }
 }
 
 /// Minimal JSON tree, used to keep card JSON intact.
