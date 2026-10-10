@@ -108,7 +108,7 @@ def test_schema_error_validation():
 
     # Invalid card kind
     bad_card = {"say": "Hi", "cards": [{"kind": "spaceship"}]}
-    assert "kind must be train, conflict, event or flight" in (schema_error(bad_card, RESPOND_SCHEMA, "respond") or "")
+    assert "kind must be train, conflict, event, flight or link" in (schema_error(bad_card, RESPOND_SCHEMA, "respond") or "")
 
     # Valid SBB args
     assert schema_error(SBB_ARGS, SBB_SCHEMA, "sbb_connections") is None
@@ -232,7 +232,8 @@ async def test_model_error_returns_apology(ag, fake_interactions):
 
 def test_maps_tools_declared_only_with_key(monkeypatch):
     monkeypatch.delenv("GOOGLE_MAPS_API_KEY", raising=False)
-    assert [t["name"] for t in agent.tool_declarations()] == ["sbb_connections", "design_voice", "respond"]
+    monkeypatch.setenv("WORKSPACE_MODE", "fixture")
+    assert [t["name"] for t in agent.tool_declarations()] == ["flights_search", "sbb_connections", "design_voice", "respond"]
     monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "test-key")
     assert {"maps_search_places", "maps_route"} <= {t["name"] for t in agent.tool_declarations()}
 

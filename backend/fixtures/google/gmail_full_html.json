@@ -1,0 +1,31 @@
+{
+ "id": "18f2a1",
+ "threadId": "18f2a1",
+ "snippet": "",
+ "payload": {
+  "mimeType": "multipart/alternative",
+  "headers": [
+   {
+    "name": "Subject",
+    "value": "Your booking K7Q2ZP: Zürich – Lisbon"
+   },
+   {
+    "name": "From",
+    "value": "SWISS <noreply@swiss.com>"
+   },
+   {
+    "name": "Date",
+    "value": "Fri, 9 Oct 2026 10:12:00 +0200"
+   }
+  ],
+  "parts": [
+   {
+    "mimeType": "text/html",
+    "body": {
+     "data": "PGh0bWw-PGhlYWQ-PHN0eWxlPnB7Y29sb3I6cmVkfTwvc3R5bGU-PC9oZWFkPjxib2R5PjxoMT5Cb29raW5nIEs3UTJaUDwvaDE-PHA-RmxpZ2h0IExYIDE4MjAgJmFtcDsgc2VhdCAxNEE8L3A-PHA-WsO8cmljaCBaUkggMDc6MTAgJnJhcnI7IExpc2JvbiBMSVMgMDk6MTU8YnI-VHVlIDIwIE9jdCAyMDI2PC9wPjwvYm9keT48L2h0bWw-",
+     "size": 191
+    }
+   }
+  ]
+ }
+}

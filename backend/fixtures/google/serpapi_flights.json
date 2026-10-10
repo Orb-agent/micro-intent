@@ -1,0 +1,19 @@
+{
+  "search_metadata": {"status": "Success", "google_flights_url": "https://www.google.com/travel/flights?hl=en&curr=CHF&tfs=CBwQAhoeEgoyMDI2LTEwLTIwagcIARIDWlJIcgcIARIDTElT"},
+  "best_flights": [
+    {"flights": [{"departure_airport": {"name": "Zurich Airport", "id": "ZRH", "time": "2026-10-20 07:10"},
+                  "arrival_airport": {"name": "Humberto Delgado Airport", "id": "LIS", "time": "2026-10-20 09:15"},
+                  "duration": 185, "airline": "SWISS", "flight_number": "LX 1820"}],
+     "total_duration": 185, "price": 182, "type": "One way"}
+  ],
+  "other_flights": [
+    {"flights": [{"departure_airport": {"name": "Zurich Airport", "id": "ZRH", "time": "2026-10-20 06:00"},
+                  "arrival_airport": {"name": "Madrid-Barajas", "id": "MAD", "time": "2026-10-20 08:25"},
+                  "duration": 145, "airline": "Iberia", "flight_number": "IB 3471"},
+                 {"departure_airport": {"name": "Madrid-Barajas", "id": "MAD", "time": "2026-10-20 10:00"},
+                  "arrival_airport": {"name": "Humberto Delgado Airport", "id": "LIS", "time": "2026-10-20 10:20"},
+                  "duration": 80, "airline": "Iberia", "flight_number": "IB 3104"}],
+     "layovers": [{"duration": 95, "name": "Madrid-Barajas", "id": "MAD"}],
+     "total_duration": 320, "price": 149, "type": "One way"}
+  ]
+}

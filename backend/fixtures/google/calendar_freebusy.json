@@ -1,0 +1,16 @@
+{
+  "kind": "calendar#freeBusy",
+  "timeMin": "2026-10-15T06:00:00.000Z",
+  "timeMax": "2026-10-15T18:00:00.000Z",
+  "calendars": {
+    "primary": {"busy": [
+      {"start": "2026-10-15T07:00:00Z", "end": "2026-10-15T09:00:00Z"},
+      {"start": "2026-10-15T15:30:00Z", "end": "2026-10-15T15:45:00Z"}
+    ]},
+    "anna@example.com": {"busy": [
+      {"start": "2026-10-15T08:30:00Z", "end": "2026-10-15T11:00:00Z"},
+      {"start": "2026-10-15T12:00:00Z", "end": "2026-10-15T12:20:00Z"}
+    ]},
+    "nobody@example.com": {"errors": [{"domain": "global", "reason": "notFound"}], "busy": []}
+  }
+}

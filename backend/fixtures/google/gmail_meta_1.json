@@ -1,0 +1,22 @@
+{
+ "id": "18f2a1",
+ "threadId": "18f2a1",
+ "snippet": "LX 1820 Zürich &amp; Lisbon, Tue 20 Oct 07:10",
+ "payload": {
+  "mimeType": "multipart/alternative",
+  "headers": [
+   {
+    "name": "Subject",
+    "value": "Your booking K7Q2ZP: Zürich – Lisbon"
+   },
+   {
+    "name": "From",
+    "value": "SWISS <noreply@swiss.com>"
+   },
+   {
+    "name": "Date",
+    "value": "Fri, 9 Oct 2026 10:12:00 +0200"
+   }
+  ]
+ }
+}

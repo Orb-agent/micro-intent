@@ -1,0 +1,14 @@
+{
+  "kind": "calendar#events",
+  "items": [
+    {"id": "e1", "status": "confirmed", "summary": "Call with Acme", "location": "Zoom",
+     "start": {"dateTime": "2026-10-15T15:30:00Z"}, "end": {"dateTime": "2026-10-15T15:45:00Z"},
+     "organizer": {"email": "me@example.com"}},
+    {"id": "e2", "status": "confirmed", "summary": "Hackathon",
+     "description": "RSVP on https://lu.ma/agentic26", "location": "Zürich",
+     "start": {"date": "2026-10-17"}, "end": {"date": "2026-10-19"},
+     "organizer": {"email": "calendar-invite@lu.ma"}},
+    {"id": "e3", "status": "cancelled", "summary": "Old standup",
+     "start": {"dateTime": "2026-10-15T09:00:00+02:00"}, "end": {"dateTime": "2026-10-15T09:15:00+02:00"}}
+  ]
+}

@@ -35,3 +35,13 @@ def test_load_context_sync(monkeypatch):
     data = load_context_sync()
     assert "events" in data
     assert len(data["events"]) >= 5
+
+
+def test_flight_email_body_from_html_only_mail():
+    """Airline confirmations are often HTML only; the preloaded body must not come back empty."""
+    from conftest import google_fixture
+
+    from context import extract_body
+
+    body = extract_body(google_fixture("gmail_full_html.json")["payload"])
+    assert body.startswith("Booking K7Q2ZP\nFlight LX 1820")
