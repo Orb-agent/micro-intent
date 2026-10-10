@@ -424,3 +424,17 @@ async def test_prefetch_ignores_a_morning_event_before_an_evening_plan(ag, fake_
 
     await ag.turn("Can I make it?", SCREEN, on_status)
     assert sbb_requests[0].url.params["time"] == "17:00"
+
+
+def test_small_talk_is_dropped_from_say():
+    assert agent.drop_small_talk("Yes, take the 18:01. How are you feeling today?") == "Yes, take the 18:01."
+    assert agent.drop_small_talk("Yes! How are you? You're in Bern at 18:58.") == "Yes! You're in Bern at 18:58."
+    assert agent.drop_small_talk("Take the 18:01, you're there at 18:58.") == "Take the 18:01, you're there at 18:58."
+    assert agent.drop_small_talk("How are you feeling?") == "How are you feeling?"  # never empty: that means silence
+
+
+@pytest.mark.asyncio
+async def test_turn_drops_the_feelings_question(ag, fake_interactions):
+    fake_interactions(respond("Yes, take the 18:01. How are you feeling today?"))
+    seen, on_status = statuses()
+    assert (await ag.turn("Can I make it?", None, on_status))["say"] == "Yes, take the 18:01."
