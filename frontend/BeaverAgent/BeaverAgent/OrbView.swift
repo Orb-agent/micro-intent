@@ -1,78 +1,22 @@
 import SwiftUI
 
-/// The Orbs breathing ring, rendered at 64 pt in the hero slot and 20 pt inline.
-/// Every state keeps the same fine-line ring; only its wrapper motion changes.
+/// The Orbs breathing ring: thinking-orbs' breathing geometry with the brand kit's per-state
+/// motion (Orb/OrbsIndicator.swift), 64 pt in the hero slot and 20 pt inline.
 struct OrbView: View {
     let state: OrbState
     var scale: CGFloat = 1
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
 
     private var orbSize: CGFloat { Theme.Orb.hero * scale }
+    /// Fixed for every state, so the orb never shifts when its motion changes.
     private var slot: CGFloat { orbSize * 1.2 }
-    private var isInline: Bool { scale < 0.5 }
 
     var body: some View {
-        TimelineView(.animation(paused: reduceMotion || isInline)) { timeline in
-            let time = reduceMotion || isInline ? 0 : timeline.date.timeIntervalSinceReferenceDate
-            let movement = motion(at: time)
-            ZStack {
-                ForEach(0..<48, id: \.self) { index in
-                    Capsule()
-                        .fill(Theme.Orb.ink)
-                        .frame(width: max(1, orbSize * 0.05), height: max(2, orbSize * 0.11))
-                        .offset(y: -orbSize * 0.39)
-                        .rotationEffect(.degrees(Double(index) * 7.5))
-                }
-            }
-            .frame(width: orbSize, height: orbSize)
-            .scaleEffect(movement.scale)
-            .rotationEffect(.degrees(movement.rotation))
+        OrbsIndicator(state: OrbsAppState(state), size: orbSize, dark: colorScheme == .dark)
             .frame(width: slot, height: slot)
-            .animation(.timingCurve(0.4, 0, 0.2, 1, duration: Theme.Motion.base), value: state)
-        }
-        .frame(width: slot, height: slot)
-        .accessibilityElement()
-        .accessibilityLabel(Text(OrbView.title(for: state)))
-    }
-
-    private func motion(at time: Double) -> (scale: CGFloat, rotation: Double) {
-        guard !reduceMotion else { return (1, 0) }
-
-        switch state {
-        case .idle:
-            return (1 + 0.005 * sin(time * 2 * .pi / Theme.Motion.breathe), 0)
-        case .listening:
-            let phase = (time / Theme.Motion.listen).truncatingRemainder(dividingBy: 1)
-            let frames: [(Double, Double)] = [
-                (0, 0.9), (0.16, 1.16), (0.32, 0.94), (0.47, 1.08),
-                (0.61, 0.88), (0.78, 1.2), (0.9, 0.97), (1, 0.9),
-            ]
-            return (interpolatedScale(phase, frames: frames), 0)
-        case .thinking:
-            return (1, time / Theme.Motion.think * 360)
-        case .searching:
-            let phase = (time / Theme.Motion.act).truncatingRemainder(dividingBy: 1)
-            let frames: [(Double, Double)] = [
-                (0, 1), (0.22, 1.12), (0.34, 1), (0.56, 1.12),
-                (0.68, 1), (0.9, 1.12), (1, 1),
-            ]
-            return (interpolatedScale(phase, frames: frames), phase * 360)
-        case .speaking:
-            return (1 + 0.015 * sin(time * 2 * .pi / Theme.Motion.speak), 0)
-        }
-    }
-
-    private func interpolatedScale(_ progress: Double, frames: [(Double, Double)]) -> CGFloat {
-        for index in 1..<frames.count {
-            let start = frames[index - 1]
-            let end = frames[index]
-            if progress <= end.0 {
-                let fraction = (progress - start.0) / (end.0 - start.0)
-                return CGFloat(start.1 + (end.1 - start.1) * fraction)
-            }
-        }
-        return CGFloat(frames[frames.count - 1].1)
+            .accessibilityElement()
+            .accessibilityLabel(Text(OrbView.title(for: state)))
     }
 
     static func title(for state: OrbState) -> String {
