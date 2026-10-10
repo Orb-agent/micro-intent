@@ -13,7 +13,7 @@ import json
 import logging
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -54,6 +54,7 @@ class Screenshot:
     at: float  # time.monotonic() when received
     task: asyncio.Task | None = None  # read_screen in the background; its result is the ScreenContext
     used: bool = False
+    earlier: list[bytes] = field(default_factory=list)  # frames from the seconds before, oldest first
 
 
 # Single user: one latest screenshot, shared by all sessions.
@@ -111,11 +112,12 @@ async def read_latest(shot: Screenshot) -> dict | None:
     if read_screen is None:
         log.warning("vision.py not available, screenshot %d not read", shot.id)
     else:
+        earlier = {"earlier": shot.earlier} if shot.earlier else {}
         try:
             if inspect.iscoroutinefunction(read_screen):
-                screen = await read_screen(shot.image, shot.mime)
+                screen = await read_screen(shot.image, shot.mime, **earlier)
             else:  # a sync read_screen must not block the event loop
-                screen = await asyncio.to_thread(read_screen, shot.image, shot.mime)
+                screen = await asyncio.to_thread(read_screen, shot.image, shot.mime, **earlier)
         except Exception:
             log.exception("vision failed on screenshot %d", shot.id)
         screen = screen if isinstance(screen, dict) else None
@@ -125,14 +127,14 @@ async def read_latest(shot: Screenshot) -> dict | None:
     return screen
 
 
-def store_screenshot(image: bytes, mime: str) -> None:
+def store_screenshot(image: bytes, mime: str, earlier=()) -> None:
     """Keep only the latest screenshot and start reading it."""
     global latest
     if latest and latest.task:
         latest.task.cancel()  # its context is stale now
-    latest = Screenshot(latest.id + 1 if latest else 1, image, mime, time.monotonic())
+    latest = Screenshot(latest.id + 1 if latest else 1, image, mime, time.monotonic(), earlier=list(earlier))
     latest.task = asyncio.create_task(read_latest(latest))
-    log.info("screenshot %d: %d bytes %s", latest.id, len(image), mime)
+    log.info("screenshot %d: %d bytes %s, %d earlier", latest.id, len(image), mime, len(earlier))
 
 
 async def take_screen() -> tuple[Screenshot | None, dict | None]:
