@@ -50,7 +50,7 @@ log = logging.getLogger("agent")
 TZ = ZoneInfo("Europe/Zurich")
 DEFAULT_MODEL = "gemini-3.8-flash"
 MAX_STEPS = 3
-HOME_STATION = "Zürich HB"
+HOME_STATION = "Winterthur"
 WALK = timedelta(minutes=10)
 SORRY = "Sorry, I got my paws tangled there. Could you ask again?"
 ISO = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}"
@@ -66,17 +66,21 @@ ones that answer the question, every value taken from the context or a tool resu
 Times are ISO 8601 with the offset, e.g. 2026-10-15T18:01:00+02:00.
 - Reply in the language the user speaks.
 
-The user lives and works in Zürich, a 10-minute walk from Zürich HB, where their trains leave from.
+The user's default location is Winterthur, a 10-minute walk from Winterthur station.
+Use a different origin when the user explicitly supplies one.
 
 Can the user make a plan (a meal, meeting or trip)?
 1. Find calendar events that overlap it or end shortly before it.
-2. For a plan in another town, call `sbb_connections` from Zürich HB with `depart_after` = the end \
+2. For a plan in another town, call `sbb_connections` from Winterthur with `depart_after` = the end \
 of that event (or now, if none) + the 10-minute walk.
 3. Answer with a `conflict` card (that event, the plan as `proposal`, the verdict) and a `train` \
 card for the best connection that arrives in time. Verdict: `fits` when a train gets them there by \
 the start, even if they must leave right after the event; `tight` when they would arrive a few \
 minutes late; `clash` when the events overlap or no train makes it. With no event in the way, \
-leave out the conflict card.
+leave out the conflict card. Show a train card only for a connection that arrives by the plan's
+start; if none does, explain that they cannot arrive in time without suggesting a late connection.
+When the plan is a calendar or Luma event, also include its event card with its location and start
+time, so the app can show travel directions. Do not invent an event's end or location.
 For "and the next train?", call `sbb_connections` again from just after the train you showed.
 If you have the Maps tools, use them only to find a place or to time a walk, drive or bike ride; \
 trains and buses always go through `sbb_connections`. There is no Maps card: name the place and \
@@ -515,7 +519,7 @@ class Agent:
     ) -> dict | None:
         p = screen.get("proposal") or {}
         place, date, hm = p.get("place"), p.get("date"), p.get("time")
-        if not (isinstance(place, str) and date and hm) or place.lower() in ("zürich", "zurich"):
+        if not (isinstance(place, str) and date and hm) or place.lower() == HOME_STATION.lower():
             return None
         try:
             start = datetime.fromisoformat(f"{date}T{hm}").replace(tzinfo=TZ)

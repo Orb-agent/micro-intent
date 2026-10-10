@@ -140,6 +140,29 @@ async def test_prefetch_skips_all_day_events(ag, fake_interactions, sbb_requests
 
 
 @pytest.mark.asyncio
+async def test_no_conflict_connection_defaults_to_winterthur(ag, monkeypatch):
+    ag.events = []
+    queries = []
+
+    async def connections(**args):
+        queries.append(args)
+        return {"connections": []}
+
+    monkeypatch.setattr(agent, "sbb_connections", connections)
+    _, on_status = statuses()
+    now = agent.datetime(2026, 10, 15, 15, 0, tzinfo=agent.TZ)
+    result = await ag._prefetch_trains(SCREEN, now, on_status)
+    assert result["query"] == {
+        "from_station": "Winterthur", "to_station": "Bern",
+        "depart_after": "2026-10-15T17:00:00+02:00",
+    }
+    assert queries == [result["query"]]
+    # Zurich now needs a connection; Winterthur is the local default.
+    local = {"proposal": {**SCREEN["proposal"], "place": "Winterthur"}}
+    assert await ag._prefetch_trains(local, now, on_status) is None
+
+
+@pytest.mark.asyncio
 async def test_agent_turn_with_tool_call_then_respond(ag, fake_interactions, sbb_requests):
     # Step 0: sbb_connections, Step 1: respond
     i0 = FakeInteraction("i-0", [FakeStep("function_call", "sbb_connections", SBB_ARGS, id="call-sbb")])
