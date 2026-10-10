@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Micro Intent",
+  "version": "1.4.0",
+  "description": "Plan around events from Luma pages with your local Micro Intent app.",
+  "permissions": ["activeTab", "storage"],
+  "optional_host_permissions": [
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://*/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Micro Intent"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://lu.ma/*", "https://luma.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Micro Intent extension preview fixture</title>
+  <style>
+    * { box-sizing:border-box; }
+    body { margin:0;background:#f4f5f4;color:#252c27;font:14px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif; }
+    .warning { padding:8px 15px;background:#fff4dc;color:#77500c;text-align:center;font-size:11px;font-weight:700; }
+    .browser { width:min(1100px,calc(100% - 32px));margin:24px auto;background:white;border:1px solid #e2e5e2;border-radius:13px;overflow:hidden;box-shadow:0 8px 32px #19241a12; }
+    .chrome { height:42px;display:flex;align-items:center;gap:8px;padding:0 14px;background:#f8f9f8;border-bottom:1px solid #e8ebe8; }
+    .chrome span { width:9px;height:9px;border-radius:50%;background:#e8aaa4; }
+    .chrome span:nth-child(2) { background:#e8d19c; }.chrome span:nth-child(3) { background:#a8d4aa; }
+    .url { flex:1;margin-left:9px;padding:5px 10px;border-radius:999px;background:#eceeec;color:#7a827b;font-size:11px; }
+    .page { min-height:570px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:40px;padding:32px 42px; }
+    .list { max-width:650px; }.list h1 { margin:0 0 7px;font-size:26px;letter-spacing:-.04em; }
+    .list p { margin:0 0 20px;color:#777f78;font-size:12px; }
+    .event { display:flex;gap:12px;padding:14px 0;border-top:1px solid #eceeec; }
+    .date { flex:0 0 44px;color:#e05050;text-align:center;font-size:10px;font-weight:800;line-height:1.2; }
+    .date b { display:block;font-size:19px; }
+    .event h2 { margin:0;color:#303832;font-size:14px; }.event small { display:block;margin-top:4px;color:#818982;font-size:11px; }
+    .fake-col { border-left:1px solid #f0f1f0;padding-left:20px;color:#a0a7a1;font-size:11px; }
+    .fake-col b { display:block;margin-bottom:10px;color:#555f57;font-size:12px; }
+    @media(max-width:700px) { .page { grid-template-columns:1fr;padding:24px 20px; }.fake-col { display:none; } }
+  </style>
+</head>
+<body>
+  <div class="warning">Demo-only preview fixture. Planner results are simulated here; no Chrome permissions, account, or calendar is connected.</div>
+  <main class="browser">
+    <div class="chrome"><span></span><span></span><span></span><div class="url">lu.ma/london-design-systems</div></div>
+    <div class="page">
+      <section class="list">
+        <h1>Design Systems &amp; AI: what changes next?</h1>
+        <p>A community meetup for designers and engineers · London</p>
+        <article class="event"><div class="date">OCT<b>14</b></div><div><h2>Design Systems &amp; AI: what changes next?</h2><small>6:30 PM · The Trampery, 239 Old Street, London</small></div></article>
+        <article class="event"><div class="date">OCT<b>21</b></div><div><h2>Building tiny useful agents</h2><small>6:00 PM · Shoreditch Works, London</small></div></article>
+        <article class="event"><div class="date">OCT<b>28</b></div><div><h2>Creative coding social</h2><small>7:00 PM · Hackney, London</small></div></article>
+      </section>
+      <aside class="fake-col"><b>Upcoming</b>Community events and meetups</aside>
+    </div>
+  </main>
+  <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"Event","name":"Design Systems & AI: what changes next?","startDate":"2026-10-14T18:30:00+01:00","endDate":"2026-10-14T20:00:00+01:00","url":"https://lu.ma/london-design-systems","location":{"@type":"Place","name":"The Trampery","address":{"@type":"PostalAddress","streetAddress":"239 Old Street","addressLocality":"London","addressCountry":"UK"}}}
+  </script>
+  <script>
+    // This stub exists only in this fixture. The real extension never mocks Chrome or planner data.
+    window.chrome = {
+      storage: {
+        sync: { get(defaults, callback) { callback({ ...defaults }); } },
+        onChanged: { addListener() {} }
+      },
+      runtime: {
+        getURL(path) { return `/extension/${path}`; },
+        async sendMessage(message) {
+          if (message?.type !== 'MICRO_INTENT_PLAN') return { ok: false, error: 'Unknown preview action.' };
+          return {
+            ok: true,
+            data: {
+              mode: 'demo',
+              conflicts: [{ id: 'fixture', title: 'Focus time', start: '2026-10-14T18:15:00+01:00', end: '2026-10-14T18:45:00+01:00' }],
+              routes: {
+                mapsUrl: 'https://www.google.com/maps/search/?api=1&query=The%20Trampery%2C%20239%20Old%20Street%2C%20London',
+                sbbUrl: 'https://www.sbb.ch/en',
+                flightsUrl: 'https://www.google.com/travel/flights'
+              },
+              summary: 'Preview fixture response.',
+              agents: []
+            }
+          };
+        }
+      }
+    };
+  </script>
+  <script src="./content.js"></script>
+</body>
+</html>

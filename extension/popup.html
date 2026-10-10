@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    * { box-sizing: border-box; }
+    body { width: 330px; margin: 0; padding: 17px; color: #18271d; background: #f7faf7; font: 13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    header { display:flex;align-items:center;gap:9px;margin-bottom:12px; }
+    .orb { width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 32% 25%,#d5ff9f,#45d28a 53%,#167557);box-shadow:0 4px 12px #145c3d35; }
+    h1 { font-size:15px;margin:0;letter-spacing:-.02em; }
+    .info { margin:0 0 13px;color:#647268;font-size:12px; }
+    .state { padding:11px 12px;background:white;border:1px solid #dfe9e0;border-radius:12px;margin-bottom:12px; }
+    .state strong { display:block;margin-bottom:3px; }
+    .state span { color:#66736a;font-size:11px; }
+    .toggle { display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0 13px; }
+    .toggle label { font-weight:650; }
+    input[type=checkbox] { width:18px;height:18px;accent-color:#16734b; }
+    .settings { padding:10px 0 12px;border-top:1px solid #e2ebe3; }
+    .settings label { display:block;font-size:11px;font-weight:700;color:#55645a;margin:8px 0 4px; }
+    .settings input { width:100%;border:1px solid #d7e2d8;border-radius:8px;padding:8px;color:#18271d;background:white;font:12px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    .settings input:focus { outline:2px solid #8bdba4;outline-offset:1px; }
+    .settings-note { margin:5px 0 0;color:#718076;font-size:10px; }
+    button { width:100%;border:0;border-radius:10px;padding:10px 12px;background:#16734b;color:#fff;font-weight:700;font-size:12px;cursor:pointer; }
+    button:hover { background:#105e3c; }
+    button.secondary { margin-top:7px;background:#e6f2e8;color:#176b47; }
+    button.secondary:hover { background:#d7eadb; }
+    #message { min-height:17px;margin:8px 1px 0;color:#66736a;font-size:11px; }
+  </style>
+</head>
+<body>
+  <header><span class="orb" aria-hidden="true"></span><h1>Micro Intent</h1></header>
+  <p class="info">Plan around Luma events with Micro Intent.</p>
+  <div class="state"><strong id="page-state">Checking this tab…</strong><span id="page-detail"></span></div>
+  <div class="toggle"><label for="enabled">Enable the Luma orb</label><input id="enabled" type="checkbox"></div>
+  <div class="settings">
+    <label for="app-url">Micro Intent app URL</label>
+    <input id="app-url" type="url" spellcheck="false" autocomplete="url">
+    <label for="api-url">Planner API URL</label>
+    <input id="api-url" type="url" spellcheck="false" autocomplete="url">
+    <p class="settings-note">Use HTTPS for deployments. HTTP is allowed only for localhost.</p>
+  </div>
+  <button id="save-settings" type="button">Save URLs and grant API access</button>
+  <button class="secondary" id="open-app" type="button">Open Micro Intent</button>
+  <p id="message" role="status"></p>
+  <script src="popup.js"></script>
+</body>
+</html>
