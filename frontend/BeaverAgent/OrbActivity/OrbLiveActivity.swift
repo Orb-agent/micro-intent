@@ -106,6 +106,7 @@ private struct ExpandedDetails: View {
                     .font(.system(size: 15))
                     .foregroundStyle(Ink.text(dark: true))
                     .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             if let verdict = state.verdict {
