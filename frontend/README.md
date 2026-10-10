@@ -1,4 +1,6 @@
-# Frontend: BeaverAgent (iPhone app)
+# Frontend: Orb Agent (iPhone app)
+
+The visible app name is Orb Agent; the Xcode project, target and bundle ID stay `BeaverAgent`.
 
 WP1 from [docs/work-packages.md](../docs/work-packages.md).
 The WebSocket, Cards and A2UI sections of [docs/contracts.md](../docs/contracts.md) are the API.

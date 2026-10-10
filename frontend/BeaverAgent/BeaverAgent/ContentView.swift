@@ -43,7 +43,7 @@ struct ContentView: View {
 
     private var topBar: some View {
         HStack(spacing: 12) {
-            Text("Micro Intent")
+            Text("Orb Agent")
                 .font(.system(size: 20, weight: .bold))
                 .foregroundStyle(Theme.textPrimary)
             Spacer()
