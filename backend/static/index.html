@@ -71,6 +71,12 @@
   .you { color: var(--muted); font-size: 13px; }
   #screenRow { min-height: 0; }
   #cards { display: grid; gap: 10px; }
+  #conflictPopup { position: fixed; z-index: 10; right: 20px; top: 20px; width: min(360px, calc(100vw - 40px)); max-height: min(400px, 48vh); overflow: auto; padding: 16px; border: 1px solid var(--line); border-radius: 24px; background: var(--panel); box-shadow: 0 12px 48px rgb(0 0 0 / .24); animation: card-enter 320ms cubic-bezier(.16,1,.3,1) both; }
+  #conflictPopup header { flex-direction: row; align-items: center; gap: 12px; padding-bottom: 10px; margin-bottom: 12px; }
+  #conflictPopup h2 { margin: 0; font-size: 14px; font-weight: 600; }
+  #dismissConflict { padding: 4px; min-width: 44px; border: 0; background: transparent; font-size: 22px; }
+  #conflictContent .card { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; animation: none; }
+  #conflictContent { display: grid; gap: 16px; --a2ui-color-background: var(--panel); --a2ui-color-surface: var(--panel); --a2ui-color-on-surface: var(--ink); --a2ui-color-on-background: var(--ink); --a2ui-color-primary: var(--ink); --a2ui-color-border: var(--line); --a2ui-font-size: 14px; --a2ui-font-scale: 1.12; --a2ui-border-radius: 12px; }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 20px; display: grid; gap: 8px; box-shadow: 0 8px 32px rgb(0 0 0 / .08), 0 1px 4px rgb(0 0 0 / .04); animation: card-enter 320ms cubic-bezier(.16,1,.3,1) both; }
   .card .kind { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
   .card .big { font-size: 27px; font-weight: 650; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
@@ -226,7 +232,13 @@
   <details id="logDetails"><summary>Connection details</summary><div id="log"></div></details>
 </main>
 
-<script>
+<aside id="conflictPopup" role="region" aria-labelledby="conflictTitle" aria-live="polite" hidden>
+  <header><h2 id="conflictTitle">Calendar needs attention</h2><button id="dismissConflict" type="button" aria-label="Dismiss calendar conflict">×</button></header>
+  <div id="conflictContent"></div>
+</aside>
+
+<script type="module">
+import { attentionIndices, createConflictPopup } from "/static/conflict-ui.mjs";
 "use strict";
 const RATE = 24000, CHUNK = 1920; // 80 ms of 24 kHz mono, contracts § Audio
 const $ = (id) => document.getElementById(id);
@@ -268,8 +280,9 @@ function onMessage(m) {
     case "transcript": $("you").textContent = "You: " + m.text; log("transcript", JSON.stringify(m.text)); break;
     case "reply":
       dropAudio = false; firstAudioLogged = false;
-      $("say").hidden = false; $("say").textContent = m.say; renderCards(m.cards || []); break;
-    case "a2ui": log("a2ui", m.messages.length, "messages (rendered from reply.cards here)"); break;
+      $("say").hidden = false; $("say").textContent = m.say;
+      renderCards(m.cards || []); conflictPopup.setReply(m.cards || []); break;
+    case "a2ui": void conflictPopup.receiveMessages(m.messages); break;
     case "audio": if (!dropAudio) playChunk(m.data); break;
     case "audio_end": break;
     case "screen_ok":
@@ -360,8 +373,9 @@ function release() {
 }
 $("orb").addEventListener("pointerdown", (e) => { e.preventDefault(); press(); });
 for (const ev of ["pointerup", "pointerleave", "pointercancel"]) $("orb").addEventListener(ev, release);
-addEventListener("keydown", (e) => { if (e.code === "Space" && !e.repeat && document.activeElement !== $("text")) { e.preventDefault(); press(); } });
-addEventListener("keyup", (e) => { if (e.code === "Space" && document.activeElement !== $("text")) { e.preventDefault(); release(); } });
+const typingOrControl = (e) => e.target.closest?.("input, textarea, select, button:not(#orb), a, [contenteditable=true]");
+addEventListener("keydown", (e) => { if (e.code === "Space" && !e.repeat && !typingOrControl(e)) { e.preventDefault(); press(); } });
+addEventListener("keyup", (e) => { if (e.code === "Space" && !typingOrControl(e)) { e.preventDefault(); release(); } });
 
 $("mode").addEventListener("change", () => {
   mode = $("mode").value; stopPlayback(); talking = false;
@@ -422,13 +436,16 @@ $("textForm").addEventListener("submit", (e) => {
   send({ type: "text", text: t }); $("you").textContent = "You: " + t; $("text").value = "";
 });
 
-// ---------- Cards (from reply.cards; the iPhone app renders the a2ui messages instead) ----------
+// ---------- Cards and conditional A2UI conflict popup ----------
 const hm = (iso) => iso ? new Date(iso).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Zurich" }) : "";
 const day = (iso) => iso ? new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/Zurich" }) : "";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 function renderCards(cards) {
-  $("cards").innerHTML = cards.map((c) => {
+  const attention = new Set(attentionIndices(cards));
+  $("cards").innerHTML = cards.filter((_, index) => !attention.has(index)).map(cardMarkup).join("");
+}
+function cardMarkup(c) {
     if (c.kind === "train") return `<div class="card"><div class="kind">Train</div>
       <div class="big">${hm(c.departure)} → ${hm(c.arrival)}</div>
       <div>${esc(c.line)} · ${esc(c.from)} → ${esc(c.to)}</div>
@@ -444,9 +461,12 @@ function renderCards(cards) {
       <div>${esc(c.flight_number)} · ${day(c.departure)} ${hm(c.departure)} → ${hm(c.arrival)}</div>
       ${c.booking_ref ? `<div class="meta">Booking ${esc(c.booking_ref)}</div>` : ""}</div>`;
     return `<div class="card"><pre>${esc(JSON.stringify(c, null, 2))}</pre></div>`;
-  }).join("");
 }
 
+const conflictPopup = createConflictPopup({
+  popup: $("conflictPopup"), content: $("conflictContent"), dismissButton: $("dismissConflict"),
+  renderFallback: (cards) => { $("conflictContent").innerHTML = cards.map(cardMarkup).join(""); }, log,
+});
 connect();
 </script>
 </body>

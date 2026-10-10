@@ -19,6 +19,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 import voice
 
@@ -196,6 +197,7 @@ async def take_screen() -> tuple[Screenshot | None, dict | None]:
 
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 
 
 @app.get("/")
