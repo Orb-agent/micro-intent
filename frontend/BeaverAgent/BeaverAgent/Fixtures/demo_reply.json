@@ -1,0 +1,17 @@
+{
+  "say": "Your call ends at quarter to six, and there's a train right after that gets you in just before seven.",
+  "cards": [
+    {
+      "kind": "conflict",
+      "event": {"title": "Call with Acme", "start": "2026-10-15T17:30:00+02:00", "end": "2026-10-15T17:45:00+02:00"},
+      "proposal": {"title": "Dinner in Bern", "start": "2026-10-15T19:00:00+02:00", "place": "Bern"},
+      "verdict": "fits",
+      "note": "Leave right after the call"
+    },
+    {
+      "kind": "train", "line": "IC 8", "from": "Zürich HB", "to": "Bern",
+      "departure": "2026-10-15T18:01:00+02:00", "arrival": "2026-10-15T18:58:00+02:00",
+      "platform": "31", "transfers": 0, "delay_min": 0
+    }
+  ]
+}
