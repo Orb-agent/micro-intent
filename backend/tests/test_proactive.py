@@ -50,7 +50,9 @@ def test_screenshot_starts_a_proactive_turn(client, monkeypatch, fake_interactio
     model = fake_interactions(FakeInteraction("i-0", [FakeStep("function_call", "respond", OFFER)]))
     ctx, ws = connect(client)
     client.post("/screenshot", content=PNG, headers=AUTH)
-    assert ws.receive_json() == {"type": "screen_ok", "summary": SCREEN["summary"]}
+    seen = ws.receive_json()
+    assert seen["type"] == "screen_seen"  # at once, before vision
+    assert ws.receive_json() == {"type": "screen_ok", "summary": SCREEN["summary"], "thumbnail": seen["thumbnail"]}
     msgs = receive_turn(ws)
     ctx.__exit__(None, None, None)
     assert kinds(msgs) == [
@@ -70,10 +72,10 @@ def test_cached_screenshot_starts_no_turn(client, monkeypatch):
     monkeypatch.setattr(server, "make_agent", lambda: agent)
     ctx, ws = connect(client)
     client.post("/screenshot", content=PNG, headers=AUTH)
-    assert ws.receive_json()["type"] == "screen_ok"
+    assert kinds([ws.receive_json(), ws.receive_json()]) == ["screen_seen", "screen_ok"]
     receive_turn(ws)  # the proactive turn
     client.post("/screenshot", content=PNG, headers=AUTH)  # the same bytes: the cached reading
-    assert ws.receive_json()["type"] == "screen_ok"
+    assert kinds([ws.receive_json(), ws.receive_json()]) == ["screen_seen", "screen_ok"]
     ws.send_json({"type": "text", "text": "Thanks"})
     assert kinds(receive_turn(ws))[0] == "state:thinking"
     ctx.__exit__(None, None, None)

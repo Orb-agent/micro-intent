@@ -19,6 +19,8 @@ final class AgentSession {
         let id = UUID()
         let summary: String?
         var thumbnail: Data?
+        /// `screen_seen`: arrived, vision still reading it.
+        var reading = false
     }
 
     /// Where the latest screenshot is in its life: read and waiting for a turn, being
@@ -244,7 +246,11 @@ final class AgentSession {
 
     /// Fixture mode only: what the server sends after the iPhone Shortcut posts a screenshot.
     func simulateScreenshot() {
-        receive(Fixtures.screenOK)
+        receive(Fixtures.screenSeen)
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(0.8))  // vision reading it
+            self?.receive(Fixtures.screenOK)
+        }
     }
 
     // MARK: - Server frames
@@ -309,8 +315,10 @@ final class AgentSession {
             surfaces.forEach { $0.applyAppStyle(typeScale) }
             conflictSurfaces = Self.surfaces(from: ConflictPresentation.messages(messages, including: conflictIndices))
             conflictSurfaces.forEach { $0.applyConflictStyle(typeScale) }
+        case .screenSeen(let thumbnail):
+            showScreen(ScreenNotice(summary: nil, thumbnail: thumbnail, reading: true))
         case .screenOK(let summary, let thumbnail):
-            showScreen(ScreenNotice(summary: summary, thumbnail: thumbnail))
+            showScreen(ScreenNotice(summary: summary, thumbnail: thumbnail ?? screen?.thumbnail))
         case .error(let message):
             errorMessage = message
             awaitingReply = false
@@ -345,10 +353,14 @@ final class AgentSession {
     // MARK: - Private
 
     private func showScreen(_ notice: ScreenNotice) {
+        // A turn that started while vision was reading this screenshot waits for it and uses it.
+        let usedByRunningTurn = screen?.reading == true && screenUse == .inTurn
         screen = notice
-        // A screenshot that arrives mid-turn is for the next turn.
-        screenUse = notice.summary == nil ? .done : .waiting
-        if notice.summary == nil { failedScreen = notice.id }
+        if !usedByRunningTurn {
+            // A screenshot that arrives mid-turn is for the next turn.
+            screenUse = notice.reading || notice.summary != nil ? .waiting : .done
+        }
+        if !notice.reading && notice.summary == nil { failedScreen = notice.id }
         screenExpiry?.cancel()
         screenExpiry = Task { [weak self] in
             try? await Task.sleep(for: Self.failedScreenLifetime)

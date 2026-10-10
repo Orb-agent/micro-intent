@@ -16,7 +16,7 @@ struct ContentView: View {
             topBar
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    if let screen = session.screen {
+                    if let screen = session.screen, !screen.reading {
                         ScreenChip(summary: screen.summary)
                             .transition(.orbsCard(reduceMotion: reduceMotion))
                     }

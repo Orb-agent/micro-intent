@@ -40,6 +40,8 @@ enum ServerMessage {
     case audioEnd
     /// `thumbnail` is a small JPEG of the screenshot, when the server sends one.
     case screenOK(summary: String?, thumbnail: Data?)
+    /// A new screenshot arrived; vision hasn't read it yet.
+    case screenSeen(thumbnail: Data?)
     case error(String)
     case unknown(String)
 
@@ -68,6 +70,9 @@ enum ServerMessage {
         case "screen_ok":
             let frame = try decoder.decode(ScreenFrame.self, from: data)
             return .screenOK(summary: frame.summary, thumbnail: frame.thumbnail.flatMap { Data(base64Encoded: $0) })
+        case "screen_seen":
+            let frame = try decoder.decode(ScreenFrame.self, from: data)
+            return .screenSeen(thumbnail: frame.thumbnail.flatMap { Data(base64Encoded: $0) })
         case "error":
             return .error(try decoder.decode(ErrorFrame.self, from: data).message)
         default:

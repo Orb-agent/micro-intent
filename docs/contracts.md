@@ -36,9 +36,10 @@ sequenceDiagram
   participant G as Gradium
   participant A as Agent (WP3)
   SC->>S: POST /screenshot
+  S->>App: screen_seen {thumbnail}
   S->>V: read_screen(image), in the background
   V-->>S: ScreenContext
-  S->>App: screen_ok {summary}
+  S->>App: screen_ok {summary, thumbnail}
   App->>S: audio × n, then audio_end
   S->>G: stream mic audio, flush
   G-->>S: transcript segments
@@ -79,7 +80,8 @@ JSON text frames only, one object per frame, discriminated by `type`. Audio is b
 | `a2ui` | `messages`: list of A2UI v0.9 messages, see [A2UI](#a2ui) | Right after `reply`, when it has cards |
 | `audio` | `data`: base64 PCM | TTS chunks for the last `reply` |
 | `audio_end` | — | TTS for the last `reply` is complete |
-| `screen_ok` | `summary`?: string | Vision has read a new screenshot; `summary` is missing if vision failed |
+| `screen_seen` | `thumbnail`: base64 JPEG, 240 px on the long side | A new screenshot arrived, sent at once, before vision has read it; the app shows "Seeing your screen" with it. Missing if the image can't be decoded |
+| `screen_ok` | `summary`?: string, `thumbnail`?: as in `screen_seen` | Vision has read a new screenshot; `summary` is missing if vision failed. Always after that screenshot's `screen_seen` |
 | `error` | `message` | Turn failed; the server then sends `state: idle` |
 
 The orb shows `speaking` while the app still has audio queued, even after the server has sent `state: idle`.
