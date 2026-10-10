@@ -173,44 +173,46 @@ public struct ConflictCardView: View {
             }
 
             // One suggested-fix button (at least 60pt tall)
-            Button {
-                onAction?("suggested_fix")
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 22, weight: .bold))
-                    Text(suggestedFixButtonTitle)
-                        .font(CardTheme.buttonFont)
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: CardTheme.minButtonHeight)
-                .background {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: CardTheme.buttonCornerRadius, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        CardTheme.accent,
-                                        CardTheme.accentStrong
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                        RoundedRectangle(cornerRadius: CardTheme.buttonCornerRadius, style: .continuous)
-                            .strokeBorder(CardTheme.accentBorder, lineWidth: 1)
+            if onAction != nil {
+                Button {
+                    onAction?("suggested_fix")
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 22, weight: .bold))
+                        Text(suggestedFixButtonTitle)
+                            .font(CardTheme.buttonFont)
                     }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: CardTheme.minButtonHeight)
+                    .background {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: CardTheme.buttonCornerRadius, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            CardTheme.accent,
+                                            CardTheme.accentStrong
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                            RoundedRectangle(cornerRadius: CardTheme.buttonCornerRadius, style: .continuous)
+                                .strokeBorder(CardTheme.accentBorder, lineWidth: 1)
+                        }
+                    }
+                    .shadow(
+                        color: CardTheme.accent.opacity(0.35),
+                        radius: 12,
+                        x: 0,
+                        y: 4
+                    )
                 }
-                .shadow(
-                    color: CardTheme.accent.opacity(0.35),
-                    radius: 12,
-                    x: 0,
-                    y: 4
-                )
+                .buttonStyle(CardScaleButtonStyle())
+                .accessibilityLabel(suggestedFixButtonTitle)
             }
-            .buttonStyle(CardScaleButtonStyle())
-            .accessibilityLabel(suggestedFixButtonTitle)
         }
         .darkGlassCard()
     }
