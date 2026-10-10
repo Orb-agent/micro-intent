@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K3P36QK01GSFTBF9W9QZGX",
+  "strategy": "manual-commit",
+  "branch": "fm/micro-intent-agent-wp3-v1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".claude/worktrees/voice-design/backend/app.py",
+    ".claude/worktrees/voice-design/backend/dev_agent.py",
+    ".claude/worktrees/voice-design/backend/tests/test_app.py",
+    ".claude/worktrees/voice-design/docs/contracts.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 10159,
+    "cache_read_tokens": 1273638,
+    "output_tokens": 6525,
+    "api_call_count": 8
+  }
+}
