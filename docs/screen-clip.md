@@ -58,7 +58,7 @@ SC1, SC2 and SC3 run in parallel; SC4 runs once they are merged. Commit after ev
 
 | # | Task | Check | Time |
 | --- | --- | --- | --- |
-| 1 | While sharing, grab a frame every 1 s into a ring of the last 9 (same canvas, 1280 wide, JPEG 0.8). Skip a frame whose base64 equals the previous one, so a still screen costs nothing. Clear the ring when sharing stops | Console: the ring holds at most 9 frames; with a still screen it stops growing | 15 min |
+| 1 | While sharing, grab a frame every 1 s into a ring of the last 5 (same canvas, 1280 wide, JPEG 0.8). Skip a frame whose base64 equals the previous one, so a still screen costs nothing. Clear the ring when sharing stops | Console: the ring holds at most 5 frames (the server accepts up to 9); with a still screen it stops growing | 15 min |
 | 2 | `grabScreen` sends `data` = a fresh frame and `recent` = the ring, oldest first, then empties the ring. The log line adds the count and total KB | Share, read a chat, switch to Calendar, ask "Can I make it?": the log shows `screen frame sent (press, 1280x…, 6 earlier, … KB)` and the server logs a screenshot with 6 earlier frames | 15 min |
 
 ## SC4: Latency and evals
