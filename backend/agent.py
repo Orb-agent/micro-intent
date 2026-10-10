@@ -307,11 +307,27 @@ def _step_dict(step: Any) -> dict[str, Any]:
     return dict(step)
 
 
+def _respond_results(calls: list[dict[str, Any]], respond_call: dict[str, Any], out: dict) -> list[dict[str, Any]]:
+    """One function_result per call of the step that called respond; the others never ran."""
+    results = []
+    for c in calls:
+        result = out if c is respond_call else {"error": "not run, the turn ended with respond"}
+        results.append({
+            "type": "function_result",
+            "call_id": c.get("id") or "",
+            "name": c.get("name"),
+            "is_error": "error" in result,
+            "result": json.dumps(result, ensure_ascii=False),
+        })
+    return results
+
+
 class Agent:
     def __init__(self) -> None:
         self.prompt = ""
         self.events: list[dict[str, Any]] = []
         self.last_interaction_id: str | None = None
+        self.pending_results: list[dict[str, Any]] = []
         self.voice_id: str | None = None  # from design_voice or the mood; every later reply is spoken in it
         self.mood: str | None = None
 
@@ -324,6 +340,7 @@ class Agent:
             f"{PROMPT}\n\n<context>\nCalendar from now to 7 days ahead, and flight emails:\n{context_json}\n</context>"
         )
         self.last_interaction_id = None
+        self.pending_results = []
 
     async def turn(
         self,
@@ -387,8 +404,12 @@ class Agent:
             }
 
             if step == 0:
+                turn_input: Any = user_input_str
+                if self.pending_results:
+                    user_step = {"type": "user_input", "content": [{"type": "text", "text": user_input_str}]}
+                    turn_input = [*self.pending_results, user_step]
                 interaction = await gen_client.aio.interactions.create(
-                    input=user_input_str,
+                    input=turn_input,
                     previous_interaction_id=self.last_interaction_id,
                     generation_config=gen_cfg,
                     **common_config,
@@ -461,14 +482,7 @@ class Agent:
                 if err and not retried and not last:
                     retried = True
                     log.warning("invalid respond, retrying: %s", err)
-                    call_id = respond_call.get("id") or ""
-                    results = [{
-                        "type": "function_result",
-                        "call_id": call_id,
-                        "name": "respond",
-                        "is_error": True,
-                        "result": json.dumps({"error": f"{err}. Call respond again with valid cards."}, ensure_ascii=False),
-                    }]
+                    results = _respond_results(calls, respond_call, {"error": f"{err}. Call respond again with valid cards."})
                     interaction = await gen_client.aio.interactions.create(
                         input=results,
                         previous_interaction_id=interaction.id,
@@ -477,8 +491,10 @@ class Agent:
                     )
                     continue
 
-                # Finished turn successfully!
+                # Finished turn successfully! The next turn answers these calls first:
+                # chaining onto an interaction with unanswered calls gets a 400.
                 self.last_interaction_id = interaction.id
+                self.pending_results = _respond_results(calls, respond_call, {"ok": True})
                 say = args.get("say") if isinstance(args, dict) else None
                 if not isinstance(say, str) or not say:
                     return {"say": SORRY, "cards": []}

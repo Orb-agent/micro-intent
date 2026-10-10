@@ -196,6 +196,32 @@ async def test_cancelled_turn_leaves_history_unchanged(ag, fake_interactions):
 
 
 @pytest.mark.asyncio
+async def test_next_turn_answers_the_last_respond_call(ag, fake_interactions):
+    # A chained interaction ending on an unanswered call gets a 400, so turn 2 answers turn 1's calls first.
+    i0 = FakeInteraction("i-0", [
+        FakeStep("function_call", "sbb_connections", SBB_ARGS, id="call-sbb"),
+        FakeStep("function_call", "respond", DEMO, id="call-resp"),
+    ])
+    i1 = FakeInteraction("i-1", [FakeStep("function_call", "respond", DEMO, id="call-resp-2")])
+    inter = fake_interactions(i0, i1)
+    seen, on_status = statuses()
+
+    await ag.turn("Can I make it?", None, on_status)
+    assert inter.calls[0]["input"] == "Can I make it?"
+
+    await ag.turn("And the next train?", None, on_status)
+    sent = inter.calls[1]["input"]
+    assert inter.calls[1]["previous_interaction_id"] == "i-0"
+    assert [(s["type"], s.get("call_id")) for s in sent] == [
+        ("function_result", "call-sbb"), ("function_result", "call-resp"), ("user_input", None)
+    ]
+    assert json.loads(sent[1]["result"]) == {"ok": True} and not sent[1]["is_error"]
+    assert sent[0]["is_error"]
+    assert sent[2]["content"] == [{"type": "text", "text": "And the next train?"}]
+    assert [r["call_id"] for r in ag.pending_results] == ["call-resp-2"]
+
+
+@pytest.mark.asyncio
 async def test_model_error_returns_apology(ag, fake_interactions):
     fake_interactions(RuntimeError("503 Service Unavailable"))
     seen, on_status = statuses()
