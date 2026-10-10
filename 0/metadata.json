@@ -1,0 +1,62 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K1Y1X6VQQKR851K788E4RM",
+  "session_id": "96be4a09-a18f-47fa-b397-33dbc8546a0f",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T14:02:28.934913Z",
+  "branch": "fm/micro-intent-ios-cards-v2",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "frontend/BeaverAgent/BeaverAgent.xcodeproj/project.pbxproj",
+    "frontend/BeaverAgent/NativeCards/CardModels.swift",
+    "frontend/BeaverAgent/NativeCards/CardStyle.swift",
+    "frontend/BeaverAgent/NativeCards/ConflictCardView.swift",
+    "frontend/BeaverAgent/NativeCards/EventCardView.swift",
+    "frontend/BeaverAgent/NativeCards/FlightCardView.swift",
+    "frontend/BeaverAgent/NativeCards/NativeCardView.swift",
+    "frontend/BeaverAgent/NativeCards/TrainCardView.swift"
+  ],
+  "agent": "Antigravity",
+  "model": "",
+  "turn_id": "bc35aa1ebcf7",
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T14:02:28.891053Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 226,
+    "total_committed": 0,
+    "total_lines_changed": 226,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 498,
+      "user_lines_removed": 226,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "frontend/BeaverAgent/BeaverAgent.xcodeproj/project.pbxproj": 7,
+        "frontend/BeaverAgent/NativeCards/CardModels.swift": 1,
+        "frontend/BeaverAgent/NativeCards/CardStyle.swift": 75,
+        "frontend/BeaverAgent/NativeCards/ConflictCardView.swift": 278,
+        "frontend/BeaverAgent/NativeCards/EventCardView.swift": 23,
+        "frontend/BeaverAgent/NativeCards/FlightCardView.swift": 16,
+        "frontend/BeaverAgent/NativeCards/NativeCardView.swift": 10,
+        "frontend/BeaverAgent/NativeCards/TrainCardView.swift": 88
+      },
+      "user_removed_per_file": {
+        "frontend/BeaverAgent/NativeCards/CardModels.swift": 1,
+        "frontend/BeaverAgent/NativeCards/CardStyle.swift": 35,
+        "frontend/BeaverAgent/NativeCards/ConflictCardView.swift": 91,
+        "frontend/BeaverAgent/NativeCards/EventCardView.swift": 23,
+        "frontend/BeaverAgent/NativeCards/FlightCardView.swift": 16,
+        "frontend/BeaverAgent/NativeCards/NativeCardView.swift": 10,
+        "frontend/BeaverAgent/NativeCards/TrainCardView.swift": 50
+      }
+    }
+  ]
+}
