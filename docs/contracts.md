@@ -199,11 +199,12 @@ What WP2's vision step produces and WP3's agent consumes. `vision.read_screen(im
 What WP2's server calls and WP3 implements in `agent.py`. WP2's `StubAgent` has the same shape and returns `demo_reply.json`.
 
 ```python
-from typing import Awaitable, Callable, TypedDict
+from typing import Awaitable, Callable, NotRequired, TypedDict
 
 class Reply(TypedDict):
     say: str          # one or two short sentences, the user's language
     cards: list[dict] # see Cards
+    voice_id: NotRequired[str]  # Gradium voice to speak `say` in; absent: GRADIUM_VOICE_ID
 
 class Agent:
     async def start(self) -> None:
