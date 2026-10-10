@@ -18,10 +18,22 @@ final class AgentSession {
     struct ScreenNotice: Equatable {
         let id = UUID()
         let summary: String?
+        var thumbnail: Data?
     }
 
-    /// How long the screen chip stays up (WP1 task 8).
+    /// Where the latest screenshot is in its life: read and waiting for a turn, being
+    /// thought about in a turn, answered while the answer is still being spoken, or done.
+    enum ScreenUse: Equatable {
+        case waiting, inTurn, answered, done
+    }
+
+    /// How long the screen chip stays up (WP1 task 8), the same 120 s the server keeps a
+    /// screenshot for a turn (contracts § Screenshot rule).
     static let screenChipLifetime: Duration = .seconds(120)
+    /// How long "Couldn't read your screen" stays near the orb.
+    static let failedScreenLifetime: Duration = .seconds(4)
+    /// The latest screenshot could not be read; set for `failedScreenLifetime`.
+    private(set) var failedScreen: UUID?
 
     /// What the orb shows: the server's state, but `speaking` while TTS audio is still
     /// queued, even after the server sent `state: idle` (contracts § WebSocket).
@@ -31,7 +43,9 @@ final class AgentSession {
     }
     private(set) var serverState: OrbState = .idle
     /// TTS audio is queued or playing on the speaker.
-    private(set) var isPlaying = false
+    private(set) var isPlaying = false {
+        didSet { if !isPlaying && screenUse == .answered { screenUse = .done } }
+    }
     /// Hands-free mode (settings): the mic streams the whole time and nobody holds the orb.
     private(set) var handsFree = false
     private(set) var label: String?
@@ -58,6 +72,7 @@ final class AgentSession {
         conflictSurfaces = []
     }
     private(set) var screen: ScreenNotice?
+    private(set) var screenUse: ScreenUse = .done
     private(set) var errorMessage: String?
     /// A turn is running and its reply hasn't arrived yet: the screen shows placeholder
     /// cards instead of the previous turn's answer.
@@ -262,6 +277,15 @@ final class AgentSession {
             if state == .searching, let label, steps.last != label {
                 steps.append(label)
             }
+            if state == .thinking && screenUse == .answered {
+                screenUse = .done
+            }
+            if state == .thinking && screen != nil && screenUse == .waiting {
+                screenUse = .inTurn  // this turn (proactive or the user's) uses the screenshot
+            }
+            if state == .idle && screenUse == .inTurn {
+                screenUse = isPlaying ? .answered : .done
+            }
             serverState = state
             self.label = label
         case .transcript(let text):
@@ -285,8 +309,8 @@ final class AgentSession {
             surfaces.forEach { $0.applyAppStyle(typeScale) }
             conflictSurfaces = Self.surfaces(from: ConflictPresentation.messages(messages, including: conflictIndices))
             conflictSurfaces.forEach { $0.applyConflictStyle(typeScale) }
-        case .screenOK(let summary):
-            showScreen(ScreenNotice(summary: summary))
+        case .screenOK(let summary, let thumbnail):
+            showScreen(ScreenNotice(summary: summary, thumbnail: thumbnail))
         case .error(let message):
             errorMessage = message
             awaitingReply = false
@@ -322,11 +346,18 @@ final class AgentSession {
 
     private func showScreen(_ notice: ScreenNotice) {
         screen = notice
+        // A screenshot that arrives mid-turn is for the next turn.
+        screenUse = notice.summary == nil ? .done : .waiting
+        if notice.summary == nil { failedScreen = notice.id }
         screenExpiry?.cancel()
         screenExpiry = Task { [weak self] in
-            try? await Task.sleep(for: Self.screenChipLifetime)
+            try? await Task.sleep(for: Self.failedScreenLifetime)
+            guard !Task.isCancelled, self?.screen?.id == notice.id else { return }
+            self?.failedScreen = nil
+            try? await Task.sleep(for: Self.screenChipLifetime - Self.failedScreenLifetime)
             guard !Task.isCancelled, self?.screen?.id == notice.id else { return }
             self?.screen = nil
+            if self?.screenUse == .waiting { self?.screenUse = .done }  // too old to be used
         }
     }
 

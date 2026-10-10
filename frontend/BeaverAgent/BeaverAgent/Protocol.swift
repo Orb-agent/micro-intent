@@ -38,7 +38,8 @@ enum ServerMessage {
     /// Base64 PCM, contracts § Audio.
     case audio(String)
     case audioEnd
-    case screenOK(summary: String?)
+    /// `thumbnail` is a small JPEG of the screenshot, when the server sends one.
+    case screenOK(summary: String?, thumbnail: Data?)
     case error(String)
     case unknown(String)
 
@@ -65,7 +66,8 @@ enum ServerMessage {
         case "audio_end":
             return .audioEnd
         case "screen_ok":
-            return .screenOK(summary: try decoder.decode(ScreenFrame.self, from: data).summary)
+            let frame = try decoder.decode(ScreenFrame.self, from: data)
+            return .screenOK(summary: frame.summary, thumbnail: frame.thumbnail.flatMap { Data(base64Encoded: $0) })
         case "error":
             return .error(try decoder.decode(ErrorFrame.self, from: data).message)
         default:
@@ -78,7 +80,7 @@ enum ServerMessage {
     private struct TextFrame: Decodable { let text: String }
     private struct A2UIFrame: Decodable { let messages: [A2uiMessage] }
     private struct AudioFrame: Decodable { let data: String }
-    private struct ScreenFrame: Decodable { let summary: String? }
+    private struct ScreenFrame: Decodable { let summary: String?; let thumbnail: String? }
     private struct ErrorFrame: Decodable { let message: String }
 }
 
