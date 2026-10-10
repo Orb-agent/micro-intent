@@ -13,8 +13,9 @@ const log = (...a) => { const l = $("log"); l.hidden = false; l.textContent += a
 
 let token = "", server = "";
 let ws, ctx, micNode, micStream, screenStream, screenVideo;
-let mode = "ptt", talking = false, serverState = "idle", dropAudio = false;
+let mode = "ptt", talking = false, serverState = "idle", dropAudio = false, configRetry;
 const widgetMode = new URLSearchParams(location.search).has("widget");
+const CONFIG_BOOTSTRAP_URL = "http://localhost:8000";
 let playing = [], nextTime = 0, releasedAt = 0, firstAudioLogged = true;
 
 // ---------- WebSocket ----------
@@ -226,22 +227,33 @@ function renderCards(cards) {
 }
 
 async function initialize() {
-  const settings = await chrome.storage.local.get({ beaverServer: "http://localhost:8000", beaverToken: "", voiceMode: "ptt" });
-  server = settings.beaverServer;
-  token = settings.beaverToken;
+  const settings = await chrome.storage.local.get({ voiceMode: "ptt" });
+  chrome.storage.local.remove(["beaverServer", "beaverToken"]);
   mode = settings.voiceMode === "handsfree" ? "handsfree" : "ptt";
   $("mode").value = mode;
   if (widgetMode) $("label").textContent = mode === "handsfree" ? "Tap to listen" : "Tap to talk";
-  if (!token) {
+
+  try {
+    const response = await fetch(new URL("/extension-config", CONFIG_BOOTSTRAP_URL), { cache: "no-store" });
+    if (!response.ok) throw new Error(`Backend config unavailable (${response.status})`);
+    const config = await response.json();
+    if (typeof config.app_token !== "string" || !config.app_token || typeof config.backend_url !== "string") {
+      throw new Error("Backend configuration is incomplete");
+    }
+    token = config.app_token;
+    server = config.backend_url;
+    clearTimeout(configRetry);
+  } catch {
     setConn("configuration unavailable", false);
     $("label").textContent = "Start the Orbs backend to load assistant configuration.";
+    configRetry = setTimeout(initialize, 2500);
     return;
   }
   connect();
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || (!changes.beaverServer && !changes.beaverToken && !changes.voiceMode)) return;
+  if (area !== "local" || !changes.voiceMode) return;
   if (changes.voiceMode) { mode = changes.voiceMode.newValue === "handsfree" ? "handsfree" : "ptt"; stopAudio(); }
   if (ws) { ws.onclose = null; ws.close(); }
   stopPlayback();

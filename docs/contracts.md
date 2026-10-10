@@ -94,6 +94,7 @@ The orb shows `speaking` while the app still has audio queued, even after the se
 | --- | --- |
 | `POST /screenshot` | From the iPhone Shortcut. `Authorization: Bearer <APP_TOKEN>`, body is the raw image (`image/jpeg` or `image/png`, max 8 MB). Returns `204` and starts vision |
 | `GET /health` | `{"ok": true, "workspace": "rest" \| "fixture"}` |
+| `GET /extension-config` | Desktop/Chrome clients only. `{"backend_url": "https://…", "app_token": "…"}` with `Cache-Control: no-store`; responds `503` when configuration is missing or invalid. Never log or cache the token. |
 
 **Screenshot rule:** the server keeps only the latest screenshot and its `ScreenContext`. A turn gets the context if the screenshot is less than 120 s old and no earlier turn has used it; if vision is still running, the turn waits for it.
 
@@ -255,11 +256,12 @@ Events cover now to 7 days ahead. `source` is `luma` when the event's descriptio
 
 ## Environment
 
-`backend/.env`, never committed; `backend/.env.example` lists them all. The app keeps the server URL and token in its settings sheet, and the Shortcut has the token in its header.
+`backend/.env` or the repo-root `.env`, never committed; `backend/.env.example` lists them all. Desktop and Chrome clients fetch `BACKEND_URL` and `APP_TOKEN` from `/extension-config`; they do not ask for or display either value. The Shortcut still needs `APP_TOKEN` in its authorization header.
 
 | Variable | Used by | Notes |
 | --- | --- | --- |
-| `APP_TOKEN` | WP2, the app, the Shortcut | Any long random string |
+| `APP_TOKEN` | WP2, desktop/Chrome config, the Shortcut | Any long random string; never returned by logs or UI |
+| `BACKEND_URL` | WP2, desktop/Chrome config | HTTP(S) origin used for WebSocket and HTTP requests; defaults to `http://localhost:8000` |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | WP2 vision, WP3 agent | `gemini-3.8-flash` |
 | `GRADIUM_API_KEY`, `GRADIUM_VOICE_ID` | WP2 | Voice: the cloned mascot or a stock voice |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | WP3 | Temporary account only, read-only scopes |

@@ -143,26 +143,21 @@ $("orb").innerHTML = orbMark();
 $("brandMark").innerHTML = orbMark().replace('<svg viewBox="0 0 100 100" aria-hidden="true">', '<g>').replace('</svg>', '</g>');
 const log = (...a) => { const l = $("log"); l.hidden = false; l.textContent += a.join(" ") + "\n"; l.scrollTop = l.scrollHeight; };
 
-// Token: from #token=... once, then remembered.
-let token = new URLSearchParams(location.hash.slice(1)).get("token");
-try {
-  if (token) { localStorage.setItem("beaverToken", token); history.replaceState(null, "", location.pathname); }
-  else token = localStorage.getItem("beaverToken");
-} catch {}
-if (!token) $("label").textContent = "Orbs configuration unavailable. Start the backend to connect.";
-
+let token = "", server = "";
 let ws, ctx, micNode, screenStream, screenVideo;
 let mode = "ptt", talking = false, serverState = "idle", dropAudio = false;
 let playing = [], nextTime = 0, releasedAt = 0, firstAudioLogged = true;
 
 // ---------- WebSocket ----------
 function connect() {
-  ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`);
+  const endpoint = new URL("/ws", server);
+  endpoint.protocol = endpoint.protocol === "https:" ? "wss:" : "ws:";
+  ws = new WebSocket(endpoint);
   ws.onopen = () => ws.send(JSON.stringify({ type: "hello", token, mode }));
   ws.onclose = (e) => {
     setConn(e.code === 1008 ? "invalid token" : "reconnecting", false);
     if (e.code === 1008) { $("label").textContent = "The backend rejected its configured credentials. Check the backend environment configuration."; return; }
-    $("label").textContent = `Waiting for backend at ${location.host}…`;
+    $("label").textContent = `Waiting for backend at ${new URL(server).host}…`;
     setTimeout(connect, 1000);
   };
   ws.onmessage = (e) => onMessage(JSON.parse(e.data));
@@ -342,7 +337,24 @@ function renderCards(cards) {
   }).join("");
 }
 
-if (token) connect();
+async function start() {
+  try { localStorage.removeItem("beaverToken"); } catch {}
+  try {
+    const response = await fetch("/extension-config", { cache: "no-store" });
+    if (!response.ok) throw new Error(`Configuration unavailable (${response.status})`);
+    const config = await response.json();
+    if (typeof config.app_token !== "string" || !config.app_token || typeof config.backend_url !== "string") {
+      throw new Error("Backend configuration is incomplete");
+    }
+    token = config.app_token;
+    server = config.backend_url;
+    connect();
+  } catch {
+    setConn("configuration unavailable", false);
+    $("label").textContent = "Start the Orbs backend to connect.";
+  }
+}
+start();
 </script>
 </body>
 </html>
