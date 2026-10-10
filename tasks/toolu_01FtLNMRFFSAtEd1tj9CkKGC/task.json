@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01FtLNMRFFSAtEd1tj9CkKGC",
+  "agent_id": "afe6c9c8de1d3abdf",
+  "subagent_type": "general-purpose",
+  "task_description": "Fix malformed-frame session drops",
+  "token_usage": {
+    "input_tokens": 40,
+    "cache_creation_tokens": 58449,
+    "cache_read_tokens": 1514457,
+    "output_tokens": 1476,
+    "api_call_count": 20
+  },
+  "started_at": "2026-10-10T15:01:37.5481+02:00",
+  "completed_at": "2026-10-10T15:05:21.863377+02:00"
+}
