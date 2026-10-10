@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4KF3REVKEGKW08NBT8M48PZ",
+  "strategy": "manual-commit",
+  "branch": "feature/wp1-dashboard",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "frontend/BeaverAgent/BeaverAgent/BeaverAgentApp.swift",
+    "frontend/BeaverAgent/BeaverAgent/ContentView.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardFixtures.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardModels.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardStore.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardView.swift"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 6,
+    "cache_creation_tokens": 105240,
+    "cache_read_tokens": 288829,
+    "output_tokens": 617,
+    "api_call_count": 3
+  }
+}

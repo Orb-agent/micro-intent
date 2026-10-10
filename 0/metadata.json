@@ -1,0 +1,57 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4KF3REVKEGKW08NBT8M48PZ",
+  "session_id": "d514440e-1113-4a4a-a29c-36dd525329b5",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T17:52:31.555991Z",
+  "branch": "feature/wp1-dashboard",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "frontend/BeaverAgent/BeaverAgent/BeaverAgentApp.swift",
+    "frontend/BeaverAgent/BeaverAgent/ContentView.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardFixtures.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardModels.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardStore.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardView.swift"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "8d018317b09b",
+  "checkpoint_transcript_start": 237,
+  "transcript_lines_at_start": 237,
+  "compact_transcript_start": 35,
+  "token_usage": {
+    "input_tokens": 6,
+    "cache_creation_tokens": 105240,
+    "cache_read_tokens": 288829,
+    "output_tokens": 617,
+    "api_call_count": 3
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T17:52:31.523223Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 0,
+    "total_lines_changed": 0,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 1,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 1
+      }
+    }
+  ]
+}
