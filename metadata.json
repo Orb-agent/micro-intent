@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K98K81R526E7WB5555K0E1",
+  "strategy": "manual-commit",
+  "branch": "fm/micro-intent-ios-brand-theme-v1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "frontend/BeaverAgent/BeaverAgent/ContentView.swift",
+    "frontend/screenshots/screen/flow-answered-light.jpg",
+    "frontend/screenshots/screen/flow-speaking-light.jpg",
+    "frontend/screenshots/screen/flow-thinking-light.jpg",
+    "frontend/screenshots/screen/screen-dark.jpg",
+    "frontend/screenshots/screen/screen-failed-dark.jpg",
+    "frontend/screenshots/screen/screen-failed-light.jpg",
+    "frontend/screenshots/screen/screen-light.jpg",
+    "frontend/screenshots/screen/seeing-dark.jpg",
+    "frontend/screenshots/screen/seeing-light.jpg"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 8566,
+    "cache_read_tokens": 1192453,
+    "output_tokens": 2346,
+    "api_call_count": 5
+  }
+}
