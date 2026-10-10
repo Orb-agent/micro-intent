@@ -61,9 +61,9 @@ JSON text frames only, one object per frame, discriminated by `type`. Audio is b
 
 | `type` | Fields | When |
 | --- | --- | --- |
-| `hello` | `token` | First frame after connecting |
-| `audio` | `data`: base64 PCM, see [Audio](#audio) | Every 80 ms while the orb is held |
-| `audio_end` | — | Orb released; the server finalizes STT and runs the turn |
+| `hello` | `token`, `mode`?: `ptt` (default) \| `handsfree` | First frame after connecting. For `handsfree`, see **Hands-free mode** below |
+| `audio` | `data`: base64 PCM, see [Audio](#audio) | Every 80 ms while the orb is held; in hands-free mode, all the time |
+| `audio_end` | — | Orb released; the server finalizes STT and runs the turn. Never sent in hands-free mode |
 | `text` | `text` | Typed question (debug field); runs a turn without STT |
 | `screen` | `mime`, `data`: base64 | Optional: an image picked in the app, for rehearsals. Same effect as `POST /screenshot` |
 | `interrupt` | — | Tap while the mascot is talking. Stops the current turn |
@@ -85,6 +85,8 @@ JSON text frames only, one object per frame, discriminated by `type`. Audio is b
 The orb shows `speaking` while the app still has audio queued, even after the server has sent `state: idle`.
 
 **Interrupting.** A new press (its first `audio` frame), a `text`, or an `interrupt` cancels the running turn: the agent call and the TTS stream. A cancelled turn sends no `audio_end`. After `interrupt` the server sends `state: idle`; after a new press, `state: listening`. Gradium generates speech faster than real time, so seconds of audio may already be queued in the app. The app must stop playback the moment it interrupts, and drop `audio` frames until the next `reply`.
+
+**Hands-free mode.** Opt in with `"mode": "handsfree"` in `hello`; push-to-talk stays the default. The app streams `audio` for as long as it is connected, also while the mascot speaks, and never sends `audio_end`, so echo cancellation must be on (see [Audio](#audio)) or the mascot hears itself and cuts itself off. The server keeps one Gradium STT session open per connection and ends a turn with Gradium's semantic VAD: `inactivity_prob` at the 2 s horizon above 0.5 for 3 steps in a row, once the turn has words. Then it flushes, sends `transcript` and runs the turn as usual. The first words of each turn cancel the running turn, as a new press does, and send `state: listening`. The server's turn is often over while the app still plays queued audio, so in this mode `state: listening` is the app's cue to stop playback and drop `audio` until the next `reply`. Each hands-free connection holds an STT session the whole time, even in silence, which counts against Gradium's concurrent session limit.
 
 ## HTTP
 
