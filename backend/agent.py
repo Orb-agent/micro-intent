@@ -373,6 +373,65 @@ def drop_small_talk(say: str) -> str:
     return " ".join(kept) if kept else say
 
 
+_ONES = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen \
+sixteen seventeen eighteen nineteen".split()
+_TENS = {2: "twenty", 3: "thirty", 4: "forty", 5: "fifty"}
+TRAIN_FIELDS = ("line", "from", "to", "departure", "arrival", "transfers", "platform", "delay_min")
+
+
+def _words(n: int) -> str:
+    return _ONES[n] if n < 20 else _TENS[n // 10] + (f" {_ONES[n % 10]}" if n % 10 else "")
+
+
+def _spoken(dt: datetime) -> set[str]:
+    """How `say` may name a departure time: 17:31, 5:31, "five thirty-one", "seventeen oh-one"."""
+    hours = {dt.hour, dt.hour % 12 or 12}
+    out = {f"{h}:{dt.minute:02d}" for h in hours} | {f"{h:02d}:{dt.minute:02d}" for h in hours}
+    minutes = ["o'clock", "hundred", ""] if dt.minute == 0 else (
+        [f"oh {_ONES[dt.minute]}", f"o {_ONES[dt.minute]}"] if dt.minute < 10 else [_words(dt.minute)]
+    )
+    out |= {f"{_words(h)} {m}".strip() for h in hours for m in minutes}
+    return out
+
+
+def _normal(text: str) -> str:
+    return " " + re.sub(r"[^a-z0-9:]+", " ", text.lower().replace("'", "")).strip() + " "
+
+
+def match_trains(cards: list[dict], say: str, connections: list[dict]) -> list[dict]:
+    """Every train card becomes a real connection from this session's timetable lookups, so the
+    card and `say` agree: the one with the card's departure, else the one `say` names, else the
+    card is dropped. Without lookups the cards stay as they are."""
+    if not connections:
+        return cards
+    said = _normal(say)
+
+    def departs(c: dict) -> datetime | None:
+        try:
+            return datetime.fromisoformat(c["departure"])
+        except (KeyError, TypeError, ValueError):
+            return None
+
+    out: list[dict] = []
+    for card in cards:
+        if card.get("kind") != "train":
+            out.append(card)
+            continue
+        dep = departs(card)
+        real = next((c for c in connections if dep and departs(c) == dep), None) or next(
+            (c for c in connections if (d := departs(c)) and any(_normal(x) in said for x in _spoken(d))), None
+        )
+        if real is None:
+            log.warning("train card %s matches no looked-up connection, dropped", card.get("departure"))
+            continue
+        fixed = {"kind": "train", **{k: real[k] for k in TRAIN_FIELDS if real.get(k) is not None}}
+        if fixed["departure"] != card.get("departure"):
+            log.warning("train card %s replaced by the %s connection", card.get("departure"), real["departure"])
+        if fixed not in out:
+            out.append(fixed)
+    return out
+
+
 def _arguments(call: dict[str, Any]) -> dict[str, Any]:
     args = call.get("arguments") or {}
     if isinstance(args, str):
@@ -411,6 +470,7 @@ class Agent:
         # signatures (contracts § Tools).
         self.history: list[dict[str, Any]] = []
         self.declarations: list[dict] = []
+        self.connections: list[dict] = []  # every connection looked up this session, newest first
         self.voice_id: str | None = None  # from design_voice or the mood; every later reply is spoken in it
         self.mood: str | None = None
 
@@ -424,6 +484,7 @@ class Agent:
         )
         self.declarations = tool_declarations(scopes)
         self.history = []
+        self.connections = []
 
     async def turn(
         self,
@@ -518,7 +579,7 @@ class Agent:
             if not err:
                 await self._set_mood(args.get("mood"), on_status)
             log.info("turn completed in %.2f s", time.monotonic() - turn_t0)
-            return {"say": drop_small_talk(say), "cards": cards}
+            return {"say": drop_small_talk(say), "cards": match_trains(cards, say, self.connections)}
 
         raise ValueError(f"no valid respond in {MAX_STEPS} steps")
 
@@ -569,6 +630,7 @@ class Agent:
             log.warning("train prefetch %s failed: %r", args, e)
             return None
         log.info("train prefetch %s took %.2f s", args, time.monotonic() - t0)
+        self.connections[:0] = result.get("connections", [])
         return {"query": args, **result}
 
     async def _run_sbb(self, args: dict[str, Any]) -> dict[str, Any]:
@@ -576,6 +638,7 @@ class Agent:
         try:
             result = await sbb_connections(**args)
             log.info("sbb_connections %s took %.2f s", args, time.monotonic() - t0)
+            self.connections[:0] = result.get("connections", [])
             return result
         except Exception as e:
             log.warning("sbb_connections %s failed: %r", args, e)
