@@ -18,7 +18,7 @@ backend/                # run from here: uv run uvicorn app:app --reload --port 
   .env.example
   app.py  voice.py  vision.py      # WP2
   a2ui.py                          # WP3: cards → A2UI messages
-  agent.py  context.py  tools/sbb.py   # WP3
+  agent.py  context.py  tools/sbb.py  tools/maps.py   # WP3
   fixtures/             # demo_reply.json, cards.json, screen.json, screen.png (WP2); context.json, *_a2ui.json (WP3)
   tests/
 ```
@@ -223,20 +223,24 @@ class Agent:
 
 ## Tools
 
-**Model-facing.** The model sees two functions and must end every turn with `respond`.
+**Model-facing.** The model sees four functions and must end every turn with `respond`. The two Maps functions are declared only when `GOOGLE_MAPS_API_KEY` is set. All four only read.
 
 | Function | Arguments | Returns |
 | --- | --- | --- |
 | `sbb_connections` | `from_station`, `to_station`, `depart_after` (ISO) | `{"connections": [{"line", "from", "to", "departure", "arrival", "platform", "arrival_platform", "transfers", "delay_min", "duration_min"}]}`, at most 4 |
+| `maps_search_places` | `query`, e.g. "quiet restaurant near Bern station" | `{"places": [{"name", "address"}]}`, at most 5 |
+| `maps_route` | `origin`, `destination` (addresses or place names), `mode`: `WALK` \| `DRIVE` \| `BICYCLE` | `{"duration_min", "distance_km"}` |
 | `respond` | `say`, `cards` (see [Cards](#cards)) | Ends the turn |
 
-`sbb_connections` calls `GET https://transport.opendata.ch/v1/connections?from=…&to=…&date=YYYY-MM-DD&time=HH:MM&limit=4` (no key). Map `products[0]` → `line`, `from.platform` → `platform`, `to.platform` → `arrival_platform`, `from.delay` → `delay_min`.
+`sbb_connections` calls `GET https://transport.opendata.ch/v1/connections?from=…&to=…&date=YYYY-MM-DD&time=HH:MM&limit=4` (no key). Map `products[0]` → `line`, `from.platform` → `platform`, `to.platform` → `arrival_platform`, `from.delay` → `delay_min`. Public transport always goes through `sbb_connections`, never `maps_route`.
+
+`maps_search_places` calls Places API (New), `POST https://places.googleapis.com/v1/places:searchText` with `{"textQuery": query, "pageSize": 5}` and `X-Goog-FieldMask: places.displayName,places.formattedAddress`. Map `displayName.text` → `name`, `formattedAddress` → `address`. `maps_route` calls Routes API, `POST https://routes.googleapis.com/directions/v2:computeRoutes` with `{"origin": {"address": …}, "destination": {"address": …}, "travelMode": mode}` and `X-Goog-FieldMask: routes.duration,routes.distanceMeters`. `duration` comes back as a string such as `"1260s"`. Both calls send the key in the `X-Goog-Api-Key` header, never in the URL. The field masks are required, and they keep Places on the cheaper Pro SKU. Since 1 March 2025, new Cloud projects can't enable the legacy Places Text Search and Directions APIs, so don't use those.
 
 **Gemini rules** (`google-genai`, `generate_content`, checked 2026-10-10; they apply to vision too):
 
 - Model `gemini-3.8-flash`, the newest generation, with thinking level `low`; 3.8 rejects `minimal`, and there is no 3.8 Flash-Lite for text. Vision on the demo screen takes 2.1–2.7 s (checked 2026-10-10). `gemini-3.5-flash` was deprecated on 8 October 2026. Don't set temperature; Gemini 3.6 and later ignore it.
 - Declare functions with `parameters_json_schema`. For `cards.items`, use `anyOf` with one object per kind, each with a single-value `enum` on `kind`. Don't use `const`, `oneOf` or `$defs`, keep it shallow, and validate the arguments in code anyway.
-- Function calling mode `ANY` on every step, so the model always calls `sbb_connections` or `respond` and never returns free text. On the last step add `allowed_function_names=["respond"]`.
+- Function calling mode `ANY` on every step, so the model always calls a tool or `respond` and never returns free text. On the last step add `allowed_function_names=["respond"]`.
 - Append `response.candidates[0].content` to the history unmodified; it carries the thought signatures, and dropping them gives a 400. Then add one function response per call, with the call's `id` and `name`, after all the calls.
 - Vision attaches the screenshot as an inline image part at medium media resolution (560 tokens); use high if small chat text comes back wrong.
 
@@ -263,6 +267,7 @@ Events cover now to 7 days ahead. `source` is `luma` when the event's descriptio
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | WP2 vision, WP3 agent | `gemini-3.8-flash` |
 | `GRADIUM_API_KEY`, `GRADIUM_VOICE_ID` | WP2 | Voice: the cloned mascot or a stock voice |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | WP3 | Temporary account only, read-only scopes |
+| `GOOGLE_MAPS_API_KEY` | WP3 | Optional. Enable Places API (New) and Routes API on the key and restrict it to those two. Without it, the agent has no Maps tools |
 | `WORKSPACE_MODE` | WP3 | `rest` or `fixture` |
 | `MOCK_AGENT` | WP2 | `1` uses `StubAgent` |
 
