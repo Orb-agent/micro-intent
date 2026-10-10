@@ -62,6 +62,13 @@ async def _refresh_access_token(client_id: str, client_secret: str, refresh_toke
         return resp.json()["access_token"]
 
 
+try:
+    from services import calendar_service, gmail_service
+except ImportError:
+    calendar_service = None
+    gmail_service = None
+
+
 async def _load_context_rest() -> dict[str, Any]:
     client_id = os.environ.get("GOOGLE_CLIENT_ID", "")
     client_secret = os.environ.get("GOOGLE_CLIENT_SECRET", "")
@@ -80,6 +87,39 @@ async def _load_context_rest() -> dict[str, Any]:
 
     events_list: list[dict[str, Any]] = []
     flight_emails: list[dict[str, Any]] = []
+
+    if calendar_service is not None and gmail_service is not None:
+        try:
+            raw_items = calendar_service.list_events(access_token, max_results=15, time_min=time_min)
+            for item in raw_items:
+                start = item.get("start", {}).get("dateTime") or item.get("start", {}).get("date")
+                end = item.get("end", {}).get("dateTime") or item.get("end", {}).get("date")
+                desc = (item.get("description") or "").lower()
+                organizer = (item.get("organizer", {}).get("email") or "").lower()
+                source = "luma" if ("lu.ma" in desc or "lu.ma" in organizer or "luma" in desc) else "calendar"
+                ev: dict[str, Any] = {
+                    "title": item.get("summary", "Untitled"),
+                    "start": start,
+                    "end": end,
+                    "source": source,
+                }
+                if item.get("location"):
+                    ev["location"] = item["location"]
+                events_list.append(ev)
+
+            raw_msgs = gmail_service.list_messages(access_token, query="flight OR booking", max_results=5)
+            for msg in raw_msgs:
+                msg_full = gmail_service.get_message(access_token, msg["id"])
+                body_text = _extract_body(msg_full.get("payload", {}))[:2000]
+                flight_emails.append({
+                    "subject": msg.get("subject", ""),
+                    "from": msg.get("from", ""),
+                    "date": msg.get("date", ""),
+                    "body": body_text,
+                })
+            return {"events": events_list, "flight_emails": flight_emails}
+        except Exception as exc:
+            log.warning("services modules call failed, falling back to direct REST: %s", exc)
 
     async with httpx.AsyncClient(timeout=10) as http:
         # 1. Calendar events
