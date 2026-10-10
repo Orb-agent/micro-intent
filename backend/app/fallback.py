@@ -16,14 +16,59 @@ from .models import IntentRequest
 from .tools import RequestCtx, propose_draft_message, propose_set_reminder, sbb_connections
 
 _MONTHS = {
-    "jan": 1, "januar": 1, "january": 1, "feb": 2, "februar": 2, "february": 2, "mar": 3, "mär": 3, "märz": 3, "march": 3,
-    "apr": 4, "april": 4, "may": 5, "mai": 5, "jun": 6, "juni": 6, "june": 6, "jul": 7, "juli": 7, "july": 7,
-    "aug": 8, "august": 8, "sep": 9, "sept": 9, "september": 9, "oct": 10, "okt": 10, "oktober": 10, "october": 10,
-    "nov": 11, "november": 11, "dec": 12, "dez": 12, "dezember": 12, "december": 12,
+    "jan": 1,
+    "januar": 1,
+    "january": 1,
+    "feb": 2,
+    "februar": 2,
+    "february": 2,
+    "mar": 3,
+    "mär": 3,
+    "märz": 3,
+    "march": 3,
+    "apr": 4,
+    "april": 4,
+    "may": 5,
+    "mai": 5,
+    "jun": 6,
+    "juni": 6,
+    "june": 6,
+    "jul": 7,
+    "juli": 7,
+    "july": 7,
+    "aug": 8,
+    "august": 8,
+    "sep": 9,
+    "sept": 9,
+    "september": 9,
+    "oct": 10,
+    "okt": 10,
+    "oktober": 10,
+    "october": 10,
+    "nov": 11,
+    "november": 11,
+    "dec": 12,
+    "dez": 12,
+    "dezember": 12,
+    "december": 12,
 }
 _MONTH_RE = "|".join(sorted(_MONTHS, key=len, reverse=True))
 _TIME = r"(\d{1,2})(?::(\d{2}))?\s*(am|pm|AM|PM|a\.m\.|p\.m\.)?"
-_CITIES = ["Zürich", "Zurich", "Winterthur", "Bern", "Basel", "Lausanne", "Genève", "Geneva", "Luzern", "Lucerne", "St. Gallen", "Lugano", "Zug"]
+_CITIES = [
+    "Zürich",
+    "Zurich",
+    "Winterthur",
+    "Bern",
+    "Basel",
+    "Lausanne",
+    "Genève",
+    "Geneva",
+    "Luzern",
+    "Lucerne",
+    "St. Gallen",
+    "Lugano",
+    "Zug",
+]
 _DEFAULT_START, _DEFAULT_END = time(18, 0), time(21, 0)
 
 
@@ -183,7 +228,9 @@ def _say(ctx: RequestCtx, conflicts: list, train: dict[str, Any] | None) -> str:
     parts = []
     if conflicts:
         c = conflicts[0]
-        parts.append(f"Achtung: {c.title} um {hm(c.start)} überschneidet sich." if de else f"Heads up: {c.title} overlaps at {hm(c.start)}.")
+        parts.append(
+            f"Achtung: {c.title} um {hm(c.start)} überschneidet sich." if de else f"Heads up: {c.title} overlaps at {hm(c.start)}."
+        )
     else:
         parts.append("Du hast dann Zeit." if de else "You're free then.")
     if train:

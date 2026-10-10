@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from google import genai
 from google.genai import types
@@ -13,7 +13,7 @@ API_VERSION = "v1alpha"
 
 
 def mint_live_token() -> dict:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expires = now + timedelta(minutes=30)
     new_session_expires = now + timedelta(minutes=1)
     client = genai.Client(api_key=settings.gemini_api_key, http_options={"api_version": API_VERSION})

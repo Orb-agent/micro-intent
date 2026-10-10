@@ -91,8 +91,15 @@ def run_agent(req: IntentRequest, ctx: RequestCtx) -> dict[str, Any]:
             if call["name"] == "respond":
                 continue
             out = call_tool(ctx, call["name"], call.get("arguments") or {})
-            log.info("tool %s(%s) -> %s", call["name"], json.dumps(call.get("arguments"), ensure_ascii=False)[:300], json.dumps(out, ensure_ascii=False)[:300])
-            results.append({"type": "function_result", "call_id": call["id"], "name": call["name"], "result": json.dumps(out, ensure_ascii=False)})
+            log.info(
+                "tool %s(%s) -> %s",
+                call["name"],
+                json.dumps(call.get("arguments"), ensure_ascii=False)[:300],
+                json.dumps(out, ensure_ascii=False)[:300],
+            )
+            results.append(
+                {"type": "function_result", "call_id": call["id"], "name": call["name"], "result": json.dumps(out, ensure_ascii=False)}
+            )
         if respond is not None:
             args = respond.get("arguments") or {}
             choices = [c for c in args.get("cards") or [] if isinstance(c, dict)]

@@ -73,7 +73,8 @@ The event the user looked at, with availability.
 | `start`*, `end` | ISO times. |
 | `location`, `url` | Optional. |
 | `availability`* | `free`, `conflict` or `unknown`. |
-| `addAction` | Optional confirm action: add the event (and the recommended train) to the calendar. Carries `preview`. |
+| `inCalendar`* | `true` if the event is already in the user's calendar (then there is no `addAction`). |
+| `addAction` | Optional confirm action: add the event (and the recommended train) to the calendar. An A2UI `Action` plus `label` and `preview`. |
 
 #### ConflictCard
 
@@ -135,8 +136,8 @@ Generic human checkpoint for any other write action (e.g. create calendar entrie
 | --- | --- | --- |
 | `confirm` | Human approves a write action; only now is it executed. | `action_id`*, optional edits (`body`, `start`, `end`, `text`, `at`). |
 | `reject` | Human declines a write action; nothing is executed. | `action_id`*. |
-| `skip` | ConflictCard: skip the new event. | `action_id` of the move proposal (rejected). |
-| `keep` | ConflictCard: keep both. | `action_id` of the move proposal (rejected). |
+| `skip` | ConflictCard: skip the new event. | `action_id` of the move proposal (rejected); `""` when there is no move proposal. |
+| `keep` | ConflictCard: keep both. | `action_id` of the move proposal (rejected); `""` when there is no move proposal. |
 
 ### Example: demo turn
 
@@ -360,8 +361,10 @@ Client usage (JS SDK `@google/genai`):
 ```js
 const { token, model, api_version } = await (await fetch(`${API}/voice/token`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })).json();
 const ai = new GoogleGenAI({ apiKey: token, httpOptions: { apiVersion: api_version } });
-const session = await ai.live.connect({ model, config: { responseModalities: ["TEXT"], inputAudioTranscription: {} }, callbacks: { /* ... */ } });
+const session = await ai.live.connect({ model, config: { responseModalities: ["AUDIO"], inputAudioTranscription: {} }, callbacks: { /* ... */ } });
 ```
+
+The Live model only answers with audio (`responseModalities: ["TEXT"]` is rejected); for speech-to-text use `inputAudioTranscription` and ignore or mute the audio reply.
 
 The token allows one session start within about a minute (`new_session_expires_at`) and that session may run until `expires_at`.
 Use the input transcription as the `intent` for `POST /intent`.
@@ -390,3 +393,4 @@ Call it before each demo run.
 
 - v1 (2026-10-10): initial contract.
 - v1 (2026-10-10, before any implementation): cards switched from a home-made UI spec to A2UI v0.9.1 with a custom catalog; every turn is `respond(say, cards)`; added `/intent/stream` (orb states + filler) and `/action` (A2UI action messages); `/confirm` kept as shorthand; voice token gained `provider`.
+- v1 (2026-10-10, backend PR): additive only - `EventCard.inCalendar`; `skip`/`keep` may carry an empty `action_id`; Live example uses `responseModalities: ["AUDIO"]` (TEXT is rejected by `gemini-3.8-live`).

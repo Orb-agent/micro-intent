@@ -120,7 +120,8 @@ def handle_action(name: str, action_id: str, edits: dict[str, Any], surface_id: 
     cards = [a2ui.delete_surface(sid)] if sid else []
     if act is not None and act.status != "pending":
         return JSONResponse(
-            {"action_id": action_id, "status": "already_done", "message": f"Already {act.status}.", "result": act.result} | plain_turn("", "agent")
+            {"action_id": action_id, "status": "already_done", "message": f"Already {act.status}.", "result": act.result}
+            | plain_turn("", "agent")
         )
 
     if name != "confirm":
@@ -131,7 +132,9 @@ def handle_action(name: str, action_id: str, edits: dict[str, Any], surface_id: 
 
     with store.lock:
         if act.status != "pending":
-            return JSONResponse({"action_id": action_id, "status": "already_done", "message": f"Already {act.status}."} | plain_turn("", "agent"))
+            return JSONResponse(
+                {"action_id": action_id, "status": "already_done", "message": f"Already {act.status}."} | plain_turn("", "agent")
+            )
         act.status = "running"
     try:
         results = [execute_op(op, edits) for op in act.ops]
@@ -145,7 +148,9 @@ def handle_action(name: str, action_id: str, edits: dict[str, Any], surface_id: 
     act.result = results[0] if len(results) == 1 else {"results": results}
     message = " ".join(r.get("message", "") for r in results).strip()
     say = ("Erledigt. " if locale == "de" else "Done. ") + message
-    return JSONResponse({"action_id": action_id, "status": "done", "message": message, "result": act.result} | plain_turn(say, "agent", cards))
+    return JSONResponse(
+        {"action_id": action_id, "status": "done", "message": message, "result": act.result} | plain_turn(say, "agent", cards)
+    )
 
 
 @app.post("/action")

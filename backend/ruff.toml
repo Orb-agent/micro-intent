@@ -1,0 +1,8 @@
+line-length = 140
+target-version = "py313"
+
+[lint]
+# Broad excepts are deliberate: every external failure must degrade to the scripted demo path.
+select = ["E", "F", "I", "UP", "B"]
+# Long tool descriptions and preview strings; `ruff format` handles code layout.
+ignore = ["E501"]

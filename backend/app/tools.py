@@ -145,7 +145,10 @@ TOOL_DECLARATIONS: list[dict[str, Any]] = [
                                 },
                             },
                             "conflict_event_id": {"type": "string", "description": "ConflictCard: id of the conflicting calendar entry"},
-                            "action_id": {"type": "string", "description": "Proposal shown on this card (move, add, reminder, message, confirm)"},
+                            "action_id": {
+                                "type": "string",
+                                "description": "Proposal shown on this card (move, add, reminder, message, confirm)",
+                            },
                             "title": {"type": "string", "description": "ConfirmCard: short label"},
                         },
                         "required": ["component"],
@@ -232,9 +235,16 @@ def _propose(ctx: RequestCtx, tool: str, label: str, preview: str, ops: list[dic
 def propose_calendar_create(ctx: RequestCtx, title: str, start: str, end: str, location: str | None = None, description: str | None = None):
     s, e = parse_dt(start), parse_dt(end)
     de = ctx.locale == "de"
-    preview = f'{"Erstelle" if de else "Create"} "{title}" {day_label(s, ctx.locale)} {hm(s)}-{hm(e)}' + (f" ({location})" if location else "") + "."
+    preview = (
+        f'{"Erstelle" if de else "Create"} "{title}" {day_label(s, ctx.locale)} {hm(s)}-{hm(e)}'
+        + (f" ({location})" if location else "")
+        + "."
+    )
     label = f"{'Eintragen' if de else 'Add'}: {title}"
-    op = {"tool": "calendar_create", "args": {"title": title, "start": s.isoformat(), "end": e.isoformat(), "location": location, "description": description}}
+    op = {
+        "tool": "calendar_create",
+        "args": {"title": title, "start": s.isoformat(), "end": e.isoformat(), "location": location, "description": description},
+    }
     return _propose(ctx, "calendar_create", label, preview, [op])
 
 
@@ -245,10 +255,10 @@ def propose_calendar_move(ctx: RequestCtx, event_id: str, new_start: str, new_en
     s = parse_dt(new_start)
     e = parse_dt(new_end) if new_end else s + (ev.end - ev.start)
     de = ctx.locale == "de"
-    label = f'{"Verschiebe" if de else "Move"} {ev.title} {"auf" if de else "to"} {hm(s)}'
+    label = f"{'Verschiebe' if de else 'Move'} {ev.title} {'auf' if de else 'to'} {hm(s)}"
     preview = (
         f'{"Verschiebe" if de else "Move"} "{ev.title}" {"von" if de else "from"} {hm(ev.start)}-{hm(ev.end)} '
-        f'{"auf" if de else "to"} {hm(s)}-{hm(e)} {"am" if de else "on"} {day_label(s, ctx.locale)}.'
+        f"{'auf' if de else 'to'} {hm(s)}-{hm(e)} {'am' if de else 'on'} {day_label(s, ctx.locale)}."
     )
     op = {"tool": "calendar_move", "args": {"event_id": event_id, "new_start": s.isoformat(), "new_end": e.isoformat()}}
     return _propose(ctx, "calendar_move", label, preview, [op])
@@ -277,7 +287,18 @@ def propose_calendar_bundle(ctx: RequestCtx, events: list[dict[str, Any]], label
     ops, lines = [], []
     for ev in events:
         s, e = parse_dt(ev["start"]), parse_dt(ev["end"])
-        ops.append({"tool": "calendar_create", "args": {"title": ev["title"], "start": s.isoformat(), "end": e.isoformat(), "location": ev.get("location"), "description": ev.get("description")}})
+        ops.append(
+            {
+                "tool": "calendar_create",
+                "args": {
+                    "title": ev["title"],
+                    "start": s.isoformat(),
+                    "end": e.isoformat(),
+                    "location": ev.get("location"),
+                    "description": ev.get("description"),
+                },
+            }
+        )
         lines.append(f'"{ev["title"]}" {day_label(s, ctx.locale)} {hm(s)}-{hm(e)}')
     verb = "Erstelle" if ctx.locale == "de" else "Create"
     preview = f"{verb} " + (" + ".join(lines)) + "."
