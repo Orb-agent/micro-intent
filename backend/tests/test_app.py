@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
@@ -22,6 +24,12 @@ class FakeTranscriber:
 async def fake_speak(text):
     for chunk in ("AAAA", "BBBB"):
         yield chunk
+
+
+async def slow_speak(text):
+    yield "AAAA"
+    await asyncio.sleep(5)  # long enough to interrupt
+    yield "BBBB"
 
 
 @pytest.fixture
@@ -93,3 +101,29 @@ def test_wrong_token_is_rejected(client):
         with pytest.raises(WebSocketDisconnect) as exc:
             ws.receive_json()
     assert exc.value.code == 1008
+
+
+def speak_slowly_until_first_audio(client, monkeypatch):
+    monkeypatch.setattr(server.voice, "speak", slow_speak)
+    ctx, ws = connect(client)
+    ws.send_json({"type": "text", "text": "Can I make it?"})
+    while ws.receive_json()["type"] != "audio":
+        pass
+    return ctx, ws
+
+
+def test_interrupt_stops_speech(client, monkeypatch):
+    ctx, ws = speak_slowly_until_first_audio(client, monkeypatch)
+    ws.send_json({"type": "interrupt"})
+    assert ws.receive_json() == {"type": "state", "state": "idle"}  # no more audio, no audio_end
+    ctx.__exit__(None, None, None)
+
+
+def test_talking_over_the_mascot_interrupts(client, monkeypatch):
+    ctx, ws = speak_slowly_until_first_audio(client, monkeypatch)
+    ws.send_json({"type": "audio", "data": "AAAA"})
+    assert ws.receive_json() == {"type": "state", "state": "listening"}
+    ws.send_json({"type": "audio_end"})
+    msgs = receive_turn(ws)
+    ctx.__exit__(None, None, None)
+    assert kinds(msgs)[:2] == ["transcript", "state:thinking"]

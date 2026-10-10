@@ -5,6 +5,7 @@ From backend/, with the server running:
     uv run python fake_app.py out.wav
     uv run python fake_app.py --text "Can I make it?"
     uv run python fake_app.py out.wav --url wss://<tunnel>/ws
+    uv run python fake_app.py --text "Can I make it?" --interrupt-after 1.0
 """
 
 import argparse
@@ -43,7 +44,13 @@ async def main(args: argparse.Namespace) -> None:
         while True:
             msg = json.loads(await ws.recv())
             if msg["type"] == "audio":
-                first_audio = first_audio or time.monotonic() - released
+                if first_audio is None:
+                    first_audio = time.monotonic() - released
+                    if args.interrupt_after is not None:
+                        asyncio.get_running_loop().call_later(
+                            args.interrupt_after,
+                            lambda: asyncio.ensure_future(ws.send(json.dumps({"type": "interrupt"}))),
+                        )
                 audio += base64.b64decode(msg["data"])
                 continue
             print(f"{time.monotonic() - released:5.2f}s", json.dumps(msg, ensure_ascii=False)[:160])
@@ -65,4 +72,5 @@ if __name__ == "__main__":
     p.add_argument("wav", nargs="?")
     p.add_argument("--text")
     p.add_argument("--url", default="ws://localhost:8000/ws")
+    p.add_argument("--interrupt-after", type=float, help="seconds after first audio")
     asyncio.run(main(p.parse_args()))

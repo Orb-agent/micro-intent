@@ -73,6 +73,7 @@ class Session:
         self.agent = make_agent()
         self.turns = 0
         self.stt: voice.Transcriber | None = None
+        self.turn_task: asyncio.Task | None = None
         self._send_lock = asyncio.Lock()
 
     async def send(self, msg: dict) -> None:
@@ -116,35 +117,62 @@ class Session:
         timings["total"] = time.monotonic() - t0
         log.info("turn %d %r timings %s", self.turns, text, {k: round(v, 2) for k, v in timings.items()})
 
+    async def voice_turn(self, stt: voice.Transcriber) -> None:
+        t0 = time.monotonic()
+        try:
+            text = await stt.finish()
+        except Exception:
+            log.exception("STT failed")
+            text = ""
+        if not text:
+            await self.send({"type": "error", "message": "Sorry, I didn't catch that."})
+            await self.state("idle")
+            return
+        await self.send({"type": "transcript", "text": text})
+        await self.run_turn(text, {"stt": time.monotonic() - t0})
+
+    def start_turn(self, coro) -> None:
+        """Turns run as tasks so the receive loop can still hear an interrupt."""
+        self.turn_task = asyncio.create_task(coro)
+
+    async def interrupt(self) -> bool:
+        """Cancel the running turn: the agent call and the TTS socket. True if one was running."""
+        task, self.turn_task = self.turn_task, None
+        if task is None or task.done():
+            return False
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+        log.info("turn %d interrupted", self.turns)
+        return True
+
     async def handle(self, msg: dict) -> None:
         kind = msg.get("type")
         if kind == "audio" and isinstance(msg.get("data"), str):
-            if self.stt is None:
+            if self.stt is None:  # a new press; talking over the mascot interrupts it
+                await self.interrupt()
                 self.stt = voice.Transcriber()
                 await self.state("listening")
             self.stt.push(msg["data"])
         elif kind == "audio_end" and self.stt is not None:
             stt, self.stt = self.stt, None
-            t0 = time.monotonic()
-            try:
-                text = await stt.finish()
-            except Exception:
-                log.exception("STT failed")
-                text = ""
-            if not text:
-                await self.send({"type": "error", "message": "Sorry, I didn't catch that."})
-                await self.state("idle")
-                return
-            await self.send({"type": "transcript", "text": text})
-            await self.run_turn(text, {"stt": time.monotonic() - t0})
+            self.start_turn(self.voice_turn(stt))
         elif kind == "text" and isinstance(msg.get("text"), str):
-            await self.run_turn(msg["text"])
+            await self.interrupt()
+            self.start_turn(self.run_turn(msg["text"]))
+        elif kind == "interrupt":
+            if await self.interrupt():
+                await self.state("idle")
         else:
             log.warning("ignored message type %r", kind)
 
     def close(self) -> None:
         if self.stt is not None:
             self.stt.cancel()
+        if self.turn_task is not None:
+            self.turn_task.cancel()
 
 
 @app.websocket("/ws")

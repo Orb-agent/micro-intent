@@ -66,6 +66,7 @@ JSON text frames only, one object per frame, discriminated by `type`. Audio is b
 | `audio_end` | — | Orb released; the server finalizes STT and runs the turn |
 | `text` | `text` | Typed question (debug field); runs a turn without STT |
 | `screen` | `mime`, `data`: base64 | Optional: an image picked in the app, for rehearsals. Same effect as `POST /screenshot` |
+| `interrupt` | — | Tap while the mascot is talking. Stops the current turn |
 
 **Server → app**
 
@@ -82,6 +83,8 @@ JSON text frames only, one object per frame, discriminated by `type`. Audio is b
 | `error` | `message` | Turn failed; the server then sends `state: idle` |
 
 The orb shows `speaking` while the app still has audio queued, even after the server has sent `state: idle`.
+
+**Interrupting.** A new press (its first `audio` frame), a `text`, or an `interrupt` cancels the running turn: the agent call and the TTS stream. A cancelled turn sends no `audio_end`. After `interrupt` the server sends `state: idle`; after a new press, `state: listening`. Gradium generates speech faster than real time, so seconds of audio may already be queued in the app. The app must stop playback the moment it interrupts, and drop `audio` frames until the next `reply`.
 
 ## HTTP
 
@@ -211,7 +214,9 @@ class Agent:
         on_status: Callable[[str], Awaitable[None]],  # tool status, e.g. "Checking trains…"
     ) -> Reply:
         """One user turn. Keeps conversation history on self. Never raises for model
-        or tool errors: returns a short apology with no cards instead."""
+        or tool errors: returns a short apology with no cards instead. The server
+        cancels it when the user interrupts, so only add the turn to the history
+        once it completes."""
 ```
 
 ## Tools
@@ -266,5 +271,4 @@ Each of these fits without breaking the contract above:
 - **Custom A2UI components** (`TrainCard` and so on) through a2ui-swift's `CustomComponentCatalog`, for a richer look than basic `Card`s.
 - **Word-timed highlights:** a `cue` message carrying `card_index` and `at_ms`, from the `start_s` of Gradium's TTS `text` messages.
 - **Filler line:** an extra short `reply` with no cards, spoken while a tool runs.
-- **Barge-in:** an `interrupt` message from the app; the server cancels the turn and closes the TTS socket.
 - **Card actions** (move, skip, keep): A2UI `Button` actions sent back as an `action` message.
