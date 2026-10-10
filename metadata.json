@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K68317W3C4M62FZMCGKNHC",
+  "strategy": "manual-commit",
+  "branch": "feature/wp2-screen-cache",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "backend/app.py",
+    "backend/tests/test_screen.py",
+    "docs/contracts.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 73468,
+    "cache_read_tokens": 705768,
+    "output_tokens": 4506,
+    "api_call_count": 8
+  }
+}
