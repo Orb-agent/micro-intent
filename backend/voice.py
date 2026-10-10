@@ -33,7 +33,12 @@ DEFAULT_VOICE_ID = "JuMRs5W5S52hzuge"  # Cormac: bright, warm, cheerful (flagshi
 END_HORIZON_S = 2.0  # read the `vad` entry with this horizon_s
 END_PROB = 0.5  # its inactivity_prob must be above this...
 END_STEPS = 3  # ...for this many steps in a row, once the turn has text
-REOPEN_AFTER_S = 1.0  # a closed hands-free session reopens on the next audio, at most once a second
+REOPEN_AFTER_S = 1.0
+
+# Gradium keyword boosting, so place names in the demo come out right ("dinner in Bern",
+# not "dinner and burn").
+_PLACES = ["Bern", "Zürich", "Zurich", "Basel", "Luzern", "Geneva", "Lausanne"]
+KEYWORDS = {"words": _PLACES + [p.lower() for p in _PLACES] + ["SBB"], "boost": 3}  # case-sensitive  # a closed hands-free session reopens on the next audio, at most once a second
 
 log = logging.getLogger("voice")
 _client: gradium.client.GradiumClient | None = None
@@ -82,7 +87,7 @@ class Transcriber:
     async def _run(self, language: str) -> str:
         parts: list[str] = []
         async with client().stt_realtime(
-            model_name="default", input_format="pcm", json_config={"language": language}
+            model_name="default", input_format="pcm", json_config={"language": language, "keywords": KEYWORDS}
         ) as stt:
 
             async def send() -> None:
@@ -167,7 +172,7 @@ class ContinuousTranscriber:
     async def _run(self) -> None:
         try:
             async with client().stt_realtime(
-                model_name="default", input_format="pcm", json_config={"language": self._language}
+                model_name="default", input_format="pcm", json_config={"language": self._language, "keywords": KEYWORDS}
             ) as stt:
 
                 async def send() -> None:
