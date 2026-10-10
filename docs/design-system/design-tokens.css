@@ -1,0 +1,211 @@
+/* Micro Intent design tokens v0.1.0
+ * Source: Paper file 'Micro Intent - Hackathon Prototypes', page 'Design System' (derived from Variant D dark-glass overlay)
+ * Generated from design-tokens.json - keep both files in sync.
+ * Modes: default (desktop overlay + iPhone), large ([data-mi-mode="large"]), reduced motion (prefers-reduced-motion)
+ */
+
+:root {
+  --mi-color-canvas: #0B0D12;
+  --mi-color-glass-pill: rgba(22, 24, 32, 0.88);
+  --mi-color-glass-panel: rgba(26, 28, 36, 0.84);
+  --mi-color-glass-sheet: rgba(26, 28, 36, 0.94);
+  --mi-color-glass-fallback: #1A1C24;
+  --mi-color-surface-card: rgba(255, 255, 255, 0.06);
+  --mi-color-surface-chip: rgba(255, 255, 255, 0.08);
+  --mi-color-surface-control: rgba(255, 255, 255, 0.10);
+  --mi-color-surface-input: rgba(255, 255, 255, 0.05);
+  --mi-color-scrim: rgba(8, 9, 12, 0.62);
+  --mi-color-scrim-light: rgba(8, 9, 12, 0.45);
+  --mi-color-border-glass: rgba(255, 255, 255, 0.18);
+  --mi-color-border-input: rgba(255, 255, 255, 0.12);
+  --mi-color-border-subtle: rgba(255, 255, 255, 0.08);
+  --mi-color-border-key: rgba(255, 255, 255, 0.20);
+  --mi-color-text-primary: #FFFFFF;
+  --mi-color-text-secondary: rgba(255, 255, 255, 0.86);
+  --mi-color-text-tertiary: rgba(255, 255, 255, 0.72);
+  --mi-color-text-muted: rgba(255, 255, 255, 0.62);
+  --mi-color-text-placeholder: rgba(255, 255, 255, 0.50);
+  --mi-color-text-faint: rgba(255, 255, 255, 0.35);
+  --mi-color-text-on-light: #0B0D12;
+  --mi-color-accent: #3D63FF;
+  --mi-color-accent-strong: #2448F5;
+  --mi-color-accent-text: #9DBBFF;
+  --mi-color-accent-text-strong: #C9D8FF;
+  --mi-color-accent-soft: rgba(36, 72, 245, 0.16);
+  --mi-color-accent-soft-strong: rgba(61, 99, 255, 0.24);
+  --mi-color-accent-border: rgba(110, 150, 255, 0.35);
+  --mi-color-accent-border-strong: rgba(110, 150, 255, 0.50);
+  --mi-color-success: #22C55E;
+  --mi-color-success-text: #4ADE80;
+  --mi-color-success-soft: rgba(34, 197, 94, 0.16);
+  --mi-color-warn: #FBBF24;
+  --mi-color-warn-text: #FCD34D;
+  --mi-color-warn-soft: rgba(251, 191, 36, 0.16);
+  --mi-color-danger: #EF4444;
+  --mi-color-danger-text: #FCA5A5;
+  --mi-color-danger-soft: rgba(239, 68, 68, 0.16);
+  --mi-color-service-sbb: #EB0000;
+  --mi-gradient-orb: radial-gradient(circle at 34% 28%, #FFFFFF 0%, #CFF4FF 16%, #6FB8FF 44%, #2F6BFF 72%, #1B3BD1 100%);
+  --mi-gradient-orb-idle: radial-gradient(circle at 34% 28%, #FFFFFF 0%, #E4E9F2 40%, #B9C2D6 100%);
+  --mi-gradient-orb-thinking: conic-gradient(from 200deg, #1B3BD1, #6FB8FF, #FFFFFF, #2F6BFF, #1B3BD1);
+  --mi-gradient-orb-halo: radial-gradient(circle, rgba(62, 139, 255, 0.45) 0%, rgba(62, 139, 255, 0.12) 55%, rgba(62, 139, 255, 0) 72%);
+  --mi-effect-blur-panel: blur(30px) saturate(160%);
+  --mi-effect-blur-pill: blur(24px) saturate(150%);
+  --mi-effect-shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 32px 90px rgba(0, 0, 0, 0.60), 0 0 0 1px rgba(0, 0, 0, 0.35);
+  --mi-effect-shadow-pill: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.35);
+  --mi-effect-shadow-sheet: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 -20px 60px rgba(0, 0, 0, 0.50);
+  --mi-effect-shadow-primary: 0 6px 16px rgba(36, 72, 245, 0.40);
+  --mi-effect-glow-orb: inset 0 -3px 6px rgba(10, 20, 90, 0.35), 0 0 14px rgba(62, 139, 255, 0.70);
+  --mi-effect-ring-speaking: 0 0 0 4px var(--mi-color-canvas), 0 0 0 6px rgba(157, 187, 255, 0.55), 0 0 0 14px rgba(157, 187, 255, 0.12);
+  --mi-font-sans: Inter, system-ui, -apple-system, sans-serif;
+  --mi-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --mi-text-answer-size: 21px;
+  --mi-text-answer-line: 28px;
+  --mi-text-answer-weight: 600;
+  --mi-text-answer-tracking: -0.015em;
+  --mi-text-time-size: 18px;
+  --mi-text-time-line: 22px;
+  --mi-text-time-weight: 600;
+  --mi-text-time-tracking: -0.01em;
+  --mi-text-body-strong-size: 14px;
+  --mi-text-body-strong-line: 18px;
+  --mi-text-body-strong-weight: 600;
+  --mi-text-body-strong-tracking: 0em;
+  --mi-text-body-size: 14px;
+  --mi-text-body-line: 20px;
+  --mi-text-body-weight: 500;
+  --mi-text-body-tracking: 0em;
+  --mi-text-button-size: 14px;
+  --mi-text-button-line: 18px;
+  --mi-text-button-weight: 600;
+  --mi-text-button-tracking: 0em;
+  --mi-text-meta-size: 13px;
+  --mi-text-meta-line: 16px;
+  --mi-text-meta-weight: 400;
+  --mi-text-meta-tracking: 0em;
+  --mi-text-label-size: 12px;
+  --mi-text-label-line: 16px;
+  --mi-text-label-weight: 600;
+  --mi-text-label-tracking: 0em;
+  --mi-text-eyebrow-size: 11px;
+  --mi-text-eyebrow-line: 14px;
+  --mi-text-eyebrow-weight: 600;
+  --mi-text-eyebrow-tracking: 0.08em;
+  --mi-space-2: 2px;
+  --mi-space-4: 4px;
+  --mi-space-6: 6px;
+  --mi-space-8: 8px;
+  --mi-space-10: 10px;
+  --mi-space-12: 12px;
+  --mi-space-14: 14px;
+  --mi-space-16: 16px;
+  --mi-space-18: 18px;
+  --mi-space-24: 24px;
+  --mi-space-28: 28px;
+  --mi-space-36: 36px;
+  --mi-space-40: 40px;
+  --mi-radius-xs: 6px;
+  --mi-radius-sm: 10px;
+  --mi-radius-md: 12px;
+  --mi-radius-lg: 16px;
+  --mi-radius-xl: 18px;
+  --mi-radius-2xl: 24px;
+  --mi-radius-3xl: 32px;
+  --mi-radius-full: 9999px;
+  --mi-size-panel-width: 560px;
+  --mi-size-panel-width-min: 480px;
+  --mi-size-panel-width-max: 600px;
+  --mi-size-pill-height: 58px;
+  --mi-size-control: 40px;
+  --mi-size-touch-min: 44px;
+  --mi-size-input-height: 52px;
+  --mi-size-orb: 32px;
+  --mi-size-orb-halo: 44px;
+  --mi-size-orb-hero: 104px;
+  --mi-size-edge-gap: 24px;
+  --mi-size-pill-gap: 8px;
+  --mi-duration-instant: 100ms;
+  --mi-duration-fast: 160ms;
+  --mi-duration-base: 240ms;
+  --mi-duration-panel: 320ms;
+  --mi-duration-sheet: 420ms;
+  --mi-duration-stagger: 40ms;
+  --mi-duration-done-to-idle: 4000ms;
+  --mi-duration-loop-breathe: 4000ms;
+  --mi-duration-loop-listen: 1200ms;
+  --mi-duration-loop-think: 1100ms;
+  --mi-duration-loop-speak: 1600ms;
+  --mi-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --mi-easing-enter: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --mi-easing-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --mi-easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --mi-easing-linear: linear;
+}
+
+/* mode: large */
+[data-mi-mode="large"] {
+  --mi-text-answer-size: 44px;
+  --mi-text-answer-line: 52px;
+  --mi-text-answer-weight: 600;
+  --mi-text-answer-tracking: -0.025em;
+  --mi-text-time-size: 26px;
+  --mi-text-time-line: 32px;
+  --mi-text-time-weight: 600;
+  --mi-text-time-tracking: 0em;
+  --mi-text-body-strong-size: 26px;
+  --mi-text-body-strong-line: 32px;
+  --mi-text-body-strong-weight: 600;
+  --mi-text-body-strong-tracking: 0em;
+  --mi-text-body-size: 20px;
+  --mi-text-body-line: 28px;
+  --mi-text-body-weight: 400;
+  --mi-text-body-tracking: 0em;
+  --mi-text-button-size: 24px;
+  --mi-text-button-line: 30px;
+  --mi-text-button-weight: 600;
+  --mi-text-button-tracking: 0em;
+  --mi-text-meta-size: 18px;
+  --mi-text-meta-line: 22px;
+  --mi-text-meta-weight: 500;
+  --mi-text-meta-tracking: 0em;
+  --mi-text-label-size: 20px;
+  --mi-text-label-line: 24px;
+  --mi-text-label-weight: 600;
+  --mi-text-label-tracking: 0em;
+  --mi-text-eyebrow-size: 16px;
+  --mi-text-eyebrow-line: 20px;
+  --mi-text-eyebrow-weight: 600;
+  --mi-text-eyebrow-tracking: 0.06em;
+  --mi-radius-md: 20px;
+  --mi-radius-xl: 20px;
+  --mi-radius-2xl: 32px;
+  --mi-size-panel-width: 800px;
+  --mi-size-panel-width-min: 640px;
+  --mi-size-panel-width-max: 880px;
+  --mi-size-control: 72px;
+  --mi-size-touch-min: 72px;
+}
+
+/* mode: reducedMotion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --mi-duration-base: 160ms;
+    --mi-duration-panel: 160ms;
+    --mi-duration-sheet: 160ms;
+    --mi-duration-stagger: 0ms;
+    --mi-duration-loop-breathe: 0ms;
+    --mi-duration-loop-listen: 0ms;
+    --mi-duration-loop-think: 0ms;
+    --mi-duration-loop-speak: 0ms;
+    --mi-easing-spring: cubic-bezier(0.2, 0, 0, 1);
+  }
+}
+
+/* mode: noBackdropFilter */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --mi-color-glass-pill: #1A1C24;
+    --mi-color-glass-panel: #1A1C24;
+    --mi-color-glass-sheet: #1A1C24;
+  }
+}
