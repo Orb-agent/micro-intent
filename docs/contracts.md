@@ -6,7 +6,7 @@ The interfaces between the three [work packages](work-packages.md). If something
 
 | Part | Choice |
 | --- | --- |
-| Server | Python 3.11, uv, FastAPI and uvicorn, httpx, `google-genai`, `mcp`, Gradium SDK, python-dotenv, pytest |
+| Server | Python 3.11, uv, FastAPI and uvicorn, httpx, `google-genai`, `gradium`, python-dotenv, pytest |
 | Web | Vite, React, TypeScript, plain CSS, `thinking-orbs` |
 | Hosting | Server on the demo Mac, serving the web build at `/`; a Cloudflare quick tunnel when a phone needs it |
 | Time zone | `Europe/Zurich` everywhere; all times on the wire are ISO 8601 with offset |
@@ -80,7 +80,7 @@ The orb shows `speaking` while the client still has audio queued, even after the
 | Route | Contract |
 | --- | --- |
 | `POST /screenshot` | `Authorization: Bearer <APP_TOKEN>`, body is the raw image (`image/jpeg` or `image/png`, max 8 MB). `204`. Same effect as a `screen` frame |
-| `GET /health` | `{"ok": true, "workspace": "mcp" \| "rest" \| "fixture"}` |
+| `GET /health` | `{"ok": true, "workspace": "rest" \| "fixture"}` |
 | `GET /` | The built web app (`web/dist`) |
 
 The web app reads the token once from the URL fragment (`/#token=…`) and keeps it in `localStorage`.
@@ -180,6 +180,16 @@ class Agent:
 
 `sbb_connections` calls `GET https://transport.opendata.ch/v1/connections?from=…&to=…&date=YYYY-MM-DD&time=HH:MM&limit=4` (no key). Map `products[0]` → `line`, `from.platform` → `platform`, `to.platform` → `arrival_platform`, `from.delay` → `delay_min`.
 
+**Gemini rules** (`google-genai`, `generate_content`, checked 2026-10-10):
+
+- Model `gemini-3.8-flash` with thinking level `low`. `gemini-3.5-flash` was deprecated on 8 October 2026. Don't set temperature; Gemini 3.6 and later ignore it.
+- Declare functions with `parameters_json_schema`. For `cards.items`, use `anyOf` with one object per kind, each with a single-value `enum` on `kind`. Don't use `const`, `oneOf` or `$defs`, keep it shallow, and validate the arguments in code anyway.
+- Function calling mode `ANY` on every step, so the model always calls `sbb_connections` or `respond` and never returns free text. On the last step add `allowed_function_names=["respond"]`.
+- Append `response.candidates[0].content` to the history unmodified; it carries the thought signatures, and dropping them gives a 400. Then add one function response per call, with the call's `id` and `name`, after all the calls.
+- Attach the screenshot as an inline image part at medium media resolution (560 tokens); that's enough to read a chat message.
+
+**Workspace access:** REST with a refresh token for the temporary account. The remote MCP servers (`calendarmcp.googleapis.com/mcp/v1`, `gmailmcp.googleapis.com/mcp/v1`) need Developer Preview enrollment, which takes days, and their terms forbid use in public apps before GA. Switch to them only if we're already enrolled.
+
 **Context.** `context.load_context()` runs once per session and goes into the system prompt as JSON:
 
 ```json
@@ -198,10 +208,10 @@ Events cover now to 7 days ahead. `source` is `luma` when the event's descriptio
 | Variable | Used by | Notes |
 | --- | --- | --- |
 | `APP_TOKEN` | WP2, WP1 via URL fragment | Any long random string |
-| `GEMINI_API_KEY`, `GEMINI_MODEL` | WP3 | Model: Gemini 3.5 Flash |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | WP3 | `gemini-3.8-flash` |
 | `GRADIUM_API_KEY`, `GRADIUM_VOICE_ID` | WP2 | Voice: the cloned mascot or a stock voice |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | WP3 | Temporary account only, read-only scopes |
-| `WORKSPACE_MODE` | WP3 | `mcp`, `rest` or `fixture` |
+| `WORKSPACE_MODE` | WP3 | `rest` or `fixture` |
 | `MOCK_AGENT` | WP2 | `1` uses `StubAgent` |
 
 ## Later, not in the MVP

@@ -75,7 +75,7 @@ Trade-off: Gemini's [Live API](https://cloud.google.com/vertex-ai/generative-ai/
 
 Use the plain Gemini SDK with MCP tools on our own backend; skip ACP.
 
-- **Model:** Gemini 3.5 Flash. Fast, with function calling, built-in Search and Maps grounding, and built-in computer use if we need it later. ([Google](https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-computer-use-gemini-3-5-flash))
+- **Model:** Gemini 3.5 Flash. Fast, with function calling, built-in Search and Maps grounding, and built-in computer use if we need it later. ([Google](https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-computer-use-gemini-3-5-flash)) *Update 10 Oct: `gemini-3.5-flash` was deprecated on 8 Oct; the MVP uses `gemini-3.8-flash`, see [contracts](contracts.md#tools).*
 - **MCP:** the Python and JavaScript SDKs take an MCP session as a tool and run the tool loop automatically (`mcpToTool(client)` in JS). It is experimental and uses MCP tools only, not resources or prompts. ([FastMCP](https://gofastmcp.com/integrations/gemini), [js-genai](https://github.com/googleapis/js-genai))
 - **Turn contract:** every turn ends with a `respond(say, cards)` tool call. `say` goes to Gradium TTS, `cards` to the A2UI renderer, so we never parse free text.
 - **Why not ACP:** the [Agent Client Protocol](https://www.morphllm.com/agent-client-protocol) connects code editors to coding agents such as Gemini CLI or Claude Code. Our client is a voice and cards app, and A2UI already covers agent-to-UI.
@@ -93,7 +93,7 @@ APIs are the source of truth; screen vision only adds context about what the use
 
 | Source | Access | Notes |
 | --- | --- | --- |
-| Gmail, Calendar, Drive | [Google Workspace remote MCP servers](https://developers.google.com/workspace/guides/configure-mcp-servers), one per product, OAuth 2.0 | Developer Preview: the Cloud project must be enrolled or the MCP services never appear. Calendar MCP scopes are read-only. Fallback: REST APIs as Gemini function tools. |
+| Gmail, Calendar, Drive | [Google Workspace remote MCP servers](https://developers.google.com/workspace/guides/configure-mcp-servers), one per product, OAuth 2.0 | Developer Preview: the Cloud project must be enrolled or the MCP services never appear; enrollment takes a couple of days, so the MVP uses REST. Calendar MCP scopes are read-only. Fallback: REST APIs as Gemini function tools. |
 | SBB trains | [transport.opendata.ch](https://www.transport.opendata.ch/docs.html) | No API key, CORS enabled. Connections with platforms and transfers; departure boards with live delays. |
 | Flights | Gmail: a planted confirmation email | No Google Flights API. Amadeus closed its free self-service portal on 17 July 2026; Duffel is self-serve if real search is needed. ([Geekflare](https://geekflare.com/guides/flight-booking-api/)) |
 | Places and maps | Gemini Maps grounding | Built into the model, no extra integration. |
