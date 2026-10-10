@@ -130,7 +130,7 @@ async def run_all_evals() -> bool:
             await agent.start()
             print(f"\n[{name.upper()}] Run {run_idx}/3 starting...")
             try:
-                ok, details, dt = await runner(agent)
+                ok, details, dt = await asyncio.wait_for(runner(agent), timeout=25.0)
                 if name == "demo":
                     demo_times.append(dt)
                 status_str = "PASS" if ok else "FAIL"
@@ -139,6 +139,7 @@ async def run_all_evals() -> bool:
                 print(f"[{name.upper()}] Run {run_idx}/3: {status_str} ({details})")
             except Exception as e:
                 print(f"[{name.upper()}] Run {run_idx}/3: ERROR ({e})")
+            await asyncio.sleep(1.0)
 
     print("\n==================================================")
     print(f"Eval Summary: {passed_runs}/{total_runs} passed")
