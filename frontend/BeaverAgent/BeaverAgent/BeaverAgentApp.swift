@@ -9,6 +9,7 @@ struct BeaverAgentApp: App {
     @AppStorage(SettingsKey.useFixtures) private var useFixtures = true
     @AppStorage(SettingsKey.appearance) private var appearance = Appearance.system
     @AppStorage(SettingsKey.largeText) private var largeText = false
+    @AppStorage(SettingsKey.handsFree) private var handsFree = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
@@ -43,15 +44,17 @@ struct BeaverAgentApp: App {
 
     private var typeScale: TypeScale { largeText ? .large : .regular }
 
-    private var settingsKey: String { "\(useFixtures)|\(serverURL)|\(token)" }
+    private var settingsKey: String { "\(useFixtures)|\(serverURL)|\(token)|\(handsFree)" }
 
     private func applySettings() {
-        session.configure(useFixtures: useFixtures, serverURL: serverURL, token: token)
+        session.configure(useFixtures: useFixtures, serverURL: serverURL, token: token, handsFree: handsFree)
     }
 }
 
 /// Launch arguments for rehearsals and screenshots, e.g.
 /// `-demoScene searching`, `-demoSheet debug`, `-demoAsk "Can I make it?"`.
+/// Live server only: `-demoHold 3` holds the orb for 3 s once connected, `-demoTapAt 9`
+/// taps it 9 s after connecting; with `-micFile` this drives the voice path without a finger.
 @MainActor
 enum DemoLaunch {
     static func apply(to session: AgentSession, sheet: Binding<AppSheet?>) {
@@ -66,6 +69,24 @@ enum DemoLaunch {
             Task {
                 try? await Task.sleep(for: .seconds(2))
                 session.ask(question)
+            }
+        }
+        let hold = defaults.double(forKey: "demoHold")
+        let tapAt = defaults.double(forKey: "demoTapAt")
+        if hold > 0 || tapAt > 0 {
+            Task {
+                while session.connection != .live { try? await Task.sleep(for: .milliseconds(100)) }
+                if hold > 0 {
+                    session.orbPressBegan()
+                    try? await Task.sleep(for: .seconds(hold))
+                    session.orbPressEnded()
+                }
+                if tapAt > hold {
+                    try? await Task.sleep(for: .seconds(tapAt - hold))
+                    session.orbPressBegan()
+                    try? await Task.sleep(for: .milliseconds(80))
+                    session.orbPressEnded()
+                }
             }
         }
     }

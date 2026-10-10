@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-/// The Micro Intent design system for the iPhone app, from the team's design tokens
+/// The Orb Agent design system for the iPhone app, from the team's design tokens
 /// (Paper "Micro Intent - Hackathon Prototypes", page "Design System", variant D dark glass).
 /// Dark values are the tokens as given; the light values are their counterparts so cards
 /// and chrome also read well in light mode.

@@ -6,6 +6,7 @@ enum SettingsKey {
     static let useFixtures = "useFixtures"
     static let appearance = "appearance"
     static let largeText = "largeText"
+    static let handsFree = "handsFree"
 }
 
 enum Appearance: String, CaseIterable, Identifiable {
@@ -28,6 +29,7 @@ struct SettingsSheet: View {
     @AppStorage(SettingsKey.useFixtures) private var useFixtures = true
     @AppStorage(SettingsKey.appearance) private var appearance = Appearance.system
     @AppStorage(SettingsKey.largeText) private var largeText = false
+    @AppStorage(SettingsKey.handsFree) private var handsFree = false
 
     let connection: AgentSession.Connection
     @Environment(\.dismiss) private var dismiss
@@ -65,6 +67,10 @@ struct SettingsSheet: View {
                 }
                 .disabled(useFixtures)
                 .opacity(useFixtures ? 0.55 : 1)
+
+                ToggleRow(title: "Hands-free", detail: "Just talk, no holding. Talk over the answer to stop it", isOn: $handsFree)
+                    .disabled(useFixtures)
+                    .opacity(useFixtures ? 0.55 : 1)
 
                 ToggleRow(title: "Large text", detail: "Bigger answers, cards and buttons", isOn: $largeText)
 
