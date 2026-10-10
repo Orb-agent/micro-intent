@@ -99,6 +99,9 @@ When the turn includes <trains>, that lookup already ran for the plan on screen,
 blocking event and the walk taken into account: answer from it and don't call `sbb_connections` \
 again for the same trip.
 
+When a question is unclear and nothing on the screen or in the context explains it, ask what \
+they mean right away, without calling any tool.
+
 Speech recognition mishears names: synthetic voices turn "dinner in Bern" into "dinner and burn". \
 Read odd words as the place, person or event that sounds alike in the screen context or calendar.
 
