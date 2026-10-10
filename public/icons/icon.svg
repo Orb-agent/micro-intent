@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1c8056"/><stop offset="1" stop-color="#10553a"/></linearGradient>
+    <radialGradient id="orb" cx="32%" cy="25%"><stop stop-color="#efffc7"/><stop offset=".5" stop-color="#8be3a0"/><stop offset="1" stop-color="#43bd80"/></radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="151" fill="url(#orb)"/>
+  <path d="M256 147c13 61 35 83 96 109-61 13-83 35-96 109-13-74-35-96-96-109 61-26 83-48 96-109Z" fill="#fff"/>
+  <circle cx="367" cy="151" r="15" fill="#d6ffc0"/>
+</svg>
