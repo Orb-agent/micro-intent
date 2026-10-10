@@ -11,17 +11,27 @@ CATALOG_ID = "https://a2ui.org/specification/v0_9/basic_catalog.json"
 VERSION = "v0.9"
 
 
-def _format_hm(iso_str: str) -> str:
-    """Format an ISO 8601 timestamp as HH:MM in Europe/Zurich."""
+def _local(iso_str: str) -> datetime | None:
     try:
         dt = datetime.fromisoformat(iso_str)
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=TZ)
-        else:
-            dt = dt.astimezone(TZ)
-        return dt.strftime("%H:%M")
-    except Exception:
-        return iso_str
+    except ValueError:
+        return None
+    return dt.replace(tzinfo=TZ) if dt.tzinfo is None else dt.astimezone(TZ)
+
+
+def _format_hm(iso_str: str) -> str:
+    """Format an ISO 8601 timestamp as HH:MM in Europe/Zurich."""
+    dt = _local(iso_str)
+    return dt.strftime("%H:%M") if dt else iso_str
+
+
+def _format_day(iso_str: str) -> str:
+    """'Sat 17 Oct' in Europe/Zurich: event and flight cards are often about another day."""
+    dt = _local(iso_str)
+    return f"{dt:%a} {dt.day} {dt:%b}" if dt else ""
+
+
+VERDICTS = {"fits": "You can make it", "tight": "Tight, but you can make it", "clash": "That clashes"}
 
 
 def _train_components(idx: int, card: dict[str, Any]) -> list[dict[str, Any]]:
@@ -83,7 +93,7 @@ def _conflict_components(idx: int, card: dict[str, Any]) -> list[dict[str, Any]]
     components = [
         {"id": f"c{idx}", "component": "Card", "child": body_id},
         {"id": body_id, "component": "Column", "children": children},
-        {"id": verdict_id, "component": "Text", "text": f"Plan check · {verdict}", "variant": "h2"},
+        {"id": verdict_id, "component": "Text", "text": VERDICTS.get(verdict, f"Plan check · {verdict}"), "variant": "h2"},
         {"id": ev_id, "component": "Text", "text": f"{ev_title} · {ev_start}–{ev_end}"},
         {"id": prop_id, "component": "Text", "text": f"{prop_title} · {prop_start}{prop_place}"},
     ]
@@ -96,8 +106,12 @@ def _conflict_components(idx: int, card: dict[str, Any]) -> list[dict[str, Any]]
 
 def _event_components(idx: int, card: dict[str, Any]) -> list[dict[str, Any]]:
     title = card.get("title", "")
-    start = _format_hm(str(card.get("start", "")))
-    end = _format_hm(str(card.get("end", "")))
+    start, end = str(card.get("start", "")), str(card.get("end", ""))
+    start_day, end_day = _format_day(start), _format_day(end)
+    if start_day != end_day:
+        when = f"{start_day} {_format_hm(start)} → {end_day} {_format_hm(end)}"
+    else:
+        when = " · ".join(filter(None, [start_day, f"{_format_hm(start)}–{_format_hm(end)}"]))
     location = card.get("location")
     source = "Luma" if card.get("source") == "luma" else "Calendar"
 
@@ -113,7 +127,7 @@ def _event_components(idx: int, card: dict[str, Any]) -> list[dict[str, Any]]:
         {"id": f"c{idx}", "component": "Card", "child": body_id},
         {"id": body_id, "component": "Column", "children": children},
         {"id": title_id, "component": "Text", "text": str(title), "variant": "h2"},
-        {"id": time_id, "component": "Text", "text": f"{start}–{end}"},
+        {"id": time_id, "component": "Text", "text": when},
         {"id": meta_id, "component": "Text", "text": meta, "variant": "caption"},
     ]
 
@@ -122,25 +136,27 @@ def _flight_components(idx: int, card: dict[str, Any]) -> list[dict[str, Any]]:
     from_code = card.get("from", "")
     to_code = card.get("to", "")
     flight_num = card.get("flight_number", "")
-    dep = _format_hm(str(card.get("departure", "")))
+    departure = str(card.get("departure", ""))
+    dep = _format_hm(departure)
     arr = _format_hm(str(card.get("arrival", "")))
     booking_ref = card.get("booking_ref")
+    meta_text = " · ".join(filter(None, [_format_day(departure), booking_ref and f"Booking {booking_ref}"]))
 
     body_id = f"c{idx}-body"
-    route_id = f"c{idx}-route"
-    flight_id = f"c{idx}-flight"
+    time_id = f"c{idx}-time"
+    line_id = f"c{idx}-line"
     meta_id = f"c{idx}-meta"
 
-    children = [route_id, flight_id]
+    children = [time_id, line_id]
     components = [
         {"id": f"c{idx}", "component": "Card", "child": body_id},
         {"id": body_id, "component": "Column", "children": children},
-        {"id": route_id, "component": "Text", "text": f"{from_code} → {to_code}", "variant": "h2"},
-        {"id": flight_id, "component": "Text", "text": f"{flight_num} · {dep} → {arr}"},
+        {"id": time_id, "component": "Text", "text": f"{dep} → {arr}", "variant": "h2"},
+        {"id": line_id, "component": "Text", "text": f"{flight_num} · {from_code} → {to_code}"},
     ]
-    if booking_ref:
+    if meta_text:
         children.append(meta_id)
-        components.append({"id": meta_id, "component": "Text", "text": f"Booking {booking_ref}", "variant": "caption"})
+        components.append({"id": meta_id, "component": "Text", "text": meta_text, "variant": "caption"})
 
     return components
 

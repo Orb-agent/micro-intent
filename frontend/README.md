@@ -54,9 +54,9 @@ The console logs one line per reply (`voice: reply played, … underruns`) and e
 | `CardsView.swift` | A2UI surfaces; `nativeCards` is the switch point for native fallback cards |
 | `OrbView.swift` | Orb states and the status pill |
 | `Theme.swift` | Design tokens from the Paper design system, light and dark |
-| `Fixtures/` | `demo_reply.json`, `cards.json`, `screen.json` from WP2; `demo_a2ui.json`, `cards_a2ui.json` stand in for WP3's files |
+| `Fixtures/` | `demo_reply.json`, `cards.json`, `screen.json` from WP2; `demo_a2ui.json`, `cards_a2ui.json` are copies of WP3's `backend/fixtures/` files |
 
-When WP3 pushes `backend/fixtures/demo_a2ui.json` and `cards_a2ui.json`, copy them over the files in `Fixtures/`.
+When `backend/a2ui.py` changes, regenerate the backend fixtures and copy them over the files in `Fixtures/`.
 
 ## Screenshots and rehearsals
 

@@ -42,7 +42,7 @@
         {
           "id": "c0-time",
           "component": "Text",
-          "text": "09:00\u201318:00"
+          "text": "Sat 17 Oct 09:00 \u2192 Sun 18 Oct 18:00"
         },
         {
           "id": "c0-meta",
@@ -59,26 +59,26 @@
           "id": "c1-body",
           "component": "Column",
           "children": [
-            "c1-route",
-            "c1-flight",
+            "c1-time",
+            "c1-line",
             "c1-meta"
           ]
         },
         {
-          "id": "c1-route",
+          "id": "c1-time",
           "component": "Text",
-          "text": "ZRH \u2192 LIS",
+          "text": "07:10 \u2192 10:15",
           "variant": "h2"
         },
         {
-          "id": "c1-flight",
+          "id": "c1-line",
           "component": "Text",
-          "text": "LX 1820 \u00b7 07:10 \u2192 10:15"
+          "text": "LX 1820 \u00b7 ZRH \u2192 LIS"
         },
         {
           "id": "c1-meta",
           "component": "Text",
-          "text": "Booking K7Q2ZP",
+          "text": "Tue 20 Oct \u00b7 Booking K7Q2ZP",
           "variant": "caption"
         }
       ]
