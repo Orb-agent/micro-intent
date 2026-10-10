@@ -11,6 +11,7 @@
 -->
 <style>
   :root {
+    color-scheme: light dark;
     --bg: #f6f5f2; --panel: #fff; --ink: #1d1d1b; --muted: #6b6a66; --line: #e4e2dc;
     --red: #111; --listening: #111; --thinking: #111; --searching: #111; --speaking: #111;
     --orb-bg: #fff; --orb-ink: #111;
@@ -21,9 +22,9 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink);
          font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; }
-  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 16px; }
+  main { width: min(100%, 1040px); min-height: 100svh; margin: 0 auto; padding: 28px 24px 36px; display: grid; grid-template-rows: auto minmax(430px, 1fr) auto auto; gap: 22px; }
   header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
-  h1 { font-size: 18px; margin: 0; }
+  h1 { font-size: 19px; letter-spacing: -.02em; margin: 0; }
   .wordmark { display: inline-flex; align-items: center; gap: 9px; }
   .wordmark svg { width: 28px; height: 28px; color: var(--ink); }
   .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -31,13 +32,22 @@
   button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px;
            padding: 6px 14px; cursor: pointer; }
   button:disabled { opacity: .5; cursor: default; }
-  .pill { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
-  .pill.ok { color: var(--listening); border-color: currentColor; }
-  .stage { display: grid; justify-items: center; gap: 10px; padding: 24px 0 8px; }
-  #orb { display: grid; place-items: center; width: 132px; height: 132px; border-radius: 50%;
-         border: 1px solid var(--line); background: var(--orb-bg); color: var(--orb-ink);
-         box-shadow: 0 0 0 0 transparent; transition: transform .15s; touch-action: none; }
-  #orb svg { width: 78%; height: 78%; }
+  select { min-height: 38px; padding: 7px 32px 7px 13px; border: 1px solid var(--line); border-radius: 999px; background-color: var(--panel); color: var(--ink); }
+  .top-controls { justify-content: flex-end; gap: 9px; }
+  .top-controls button { min-height: 38px; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px; white-space: nowrap; }
+  .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #bd8c36; }
+  .pill.ok { color: var(--ink); border-color: var(--line); }
+  .pill.ok::before { background: #4d9a70; }
+  .stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 38px 22px; border: 1px solid var(--line); border-radius: 28px; background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--panel) 72%, transparent), var(--bg) 78%); text-align: center; }
+  .stage-intro { margin-bottom: 13px; }
+  .eyebrow { margin: 0 0 10px; color: var(--muted); font-size: 11px; font-weight: 650; letter-spacing: .15em; text-transform: uppercase; }
+  .stage h2 { margin: 0; font-size: clamp(25px, 3vw, 34px); line-height: 1.15; letter-spacing: -.045em; font-weight: 570; }
+  .stage-subtitle { margin: 10px 0 0; color: var(--muted); }
+  #orb { display: grid; place-items: center; width: 166px; height: 166px; flex: 0 0 auto; border-radius: 50%;
+         border: 0; background: transparent; color: var(--orb-ink); padding: 0;
+         transition: transform .15s; touch-action: none; }
+  #orb svg { width: 88%; height: 88%; filter: drop-shadow(0 0 12px color-mix(in srgb, currentColor 10%, transparent)); }
   #orb:active { transform: scale(.96); }
   #orb[data-state="listening"] svg { animation: orbit 3s linear infinite; }
   #orb[data-state="thinking"] svg { animation: breathe 1.5s ease-in-out infinite; }
@@ -46,10 +56,11 @@
   @keyframes orbit { to { transform: rotate(360deg); } }
   @keyframes breathe { 50% { transform: scale(.9); opacity: .68; } }
   @media (prefers-reduced-motion: reduce) { #orb svg { animation: none !important; } }
-  #label { color: var(--muted); min-height: 1.4em; }
+  #label { color: var(--ink); min-height: 1.4em; font-weight: 550; }
   .hint { color: var(--muted); font-size: 13px; text-align: center; }
-  .bubble { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px 16px; }
-  .you { color: var(--muted); }
+  .bubble { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 17px; }
+  .you { color: var(--muted); padding: 0 4px; }
+  #you:empty, #cards:empty { display: none; }
   #cards { display: grid; gap: 12px; }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: grid; gap: 4px; }
   .card .kind { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
@@ -60,15 +71,30 @@
   #screenThumb { max-width: 160px; border-radius: 8px; border: 1px solid var(--line); display: none; }
   #log { font: 12px/1.5 ui-monospace, Menlo, monospace; color: var(--muted); white-space: pre-wrap;
          max-height: 180px; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
-  form { display: flex; gap: 8px; } form input { flex: 1; min-width: 0; border: 1px solid var(--line);
-         background: var(--panel); border-radius: 999px; padding: 6px 14px; }
+  #log[hidden] { display: none; }
+  form { display: flex; gap: 9px; padding: 9px; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); }
+  form input { flex: 1; min-width: 0; min-height: 48px; border: 0; outline: 0; background: transparent; border-radius: 14px; padding: 8px 14px; }
+  form input::placeholder { color: var(--muted); opacity: .8; }
+  form button { min-width: 86px; border: 0; background: var(--ink); color: var(--bg); font-weight: 600; }
+  form button:hover { opacity: .82; }
+  @media (max-width: 640px) {
+    main { min-height: 100svh; padding: 16px 14px 24px; grid-template-rows: auto minmax(390px, 1fr) auto auto; gap: 14px; }
+    header { align-items: flex-start; }
+    .top-controls { justify-content: flex-start; width: 100%; }
+    .top-controls button, .top-controls select { font-size: 12px; }
+    .stage { border-radius: 22px; padding: 28px 14px; }
+    #orb { width: 146px; height: 146px; }
+    form { padding: 6px; }
+    form input { min-height: 44px; padding-inline: 9px; }
+    form button { min-width: 72px; }
+  }
 </style>
 </head>
 <body>
 <main>
   <header>
     <div class="wordmark"><svg id="brandMark" viewBox="0 0 100 100" aria-hidden="true"></svg><h1>Orbs</h1></div>
-    <div class="row">
+    <div class="row top-controls">
       <span id="conn" class="pill">disconnected</span>
       <select id="mode" title="Voice mode">
         <option value="ptt">Push to talk</option>
@@ -80,9 +106,10 @@
   </header>
 
   <section class="stage">
-    <button id="orb" data-state="idle" aria-label="Hold to talk"></button>
+    <div class="stage-intro"><p class="eyebrow">Orbs · personal assistant</p><h2>What’s on your mind?</h2><p class="stage-subtitle">Talk naturally, or type a question below.</p></div>
+    <button id="orb" data-state="idle" aria-label="Enable microphone, then hold to talk"></button>
     <div id="label"></div>
-    <div class="hint" id="hint">Click the orb to start. Then hold it, or hold Space, while you talk.</div>
+    <div class="hint" id="hint">Select the orb to enable your microphone. Then hold it, or hold Space, while you talk.</div>
   </section>
 
   <div class="row"><img id="screenThumb" alt="Last screen frame sent"><span id="screenSummary" class="pill" hidden></span></div>
@@ -90,8 +117,8 @@
   <div id="say" class="bubble" hidden></div>
   <div id="cards"></div>
 
-  <form id="textForm"><input id="text" placeholder="Or type a question…" autocomplete="off"><button>Send</button></form>
-  <div id="log"></div>
+  <form id="textForm"><input id="text" aria-label="Your question" placeholder="Ask Orbs anything…" autocomplete="off"><button>Send</button></form>
+  <div id="log" hidden></div>
 </main>
 
 <script>
@@ -106,7 +133,7 @@ function orbMark() {
 }
 $("orb").innerHTML = orbMark();
 $("brandMark").innerHTML = orbMark().replace('<svg viewBox="0 0 100 100" aria-hidden="true">', '<g>').replace('</svg>', '</g>');
-const log = (...a) => { const l = $("log"); l.textContent += a.join(" ") + "\n"; l.scrollTop = l.scrollHeight; };
+const log = (...a) => { const l = $("log"); l.hidden = false; l.textContent += a.join(" ") + "\n"; l.scrollTop = l.scrollHeight; };
 
 // Token: from #token=... once, then remembered.
 let token = new URLSearchParams(location.hash.slice(1)).get("token");
@@ -125,8 +152,9 @@ function connect() {
   ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`);
   ws.onopen = () => ws.send(JSON.stringify({ type: "hello", token, mode }));
   ws.onclose = (e) => {
-    setConn(e.code === 1008 ? "bad token" : "disconnected", false);
-    if (e.code === 1008) { try { localStorage.removeItem("beaverToken"); } catch {} return; }
+    setConn(e.code === 1008 ? "invalid token" : "reconnecting", false);
+    if (e.code === 1008) { try { localStorage.removeItem("beaverToken"); } catch {} $("label").textContent = "Invalid app token. Update APP_TOKEN and refresh."; return; }
+    $("label").textContent = `Waiting for backend at ${location.host}…`;
     setTimeout(connect, 1000);
   };
   ws.onmessage = (e) => onMessage(JSON.parse(e.data));
@@ -136,7 +164,7 @@ function setConn(text, ok) { $("conn").textContent = text; $("conn").classList.t
 
 function onMessage(m) {
   switch (m.type) {
-    case "ready": setConn(mode === "handsfree" ? "connected · hands-free" : "connected", true); break;
+    case "ready": setConn(mode === "handsfree" ? "connected · hands-free" : "connected", true); $("label").textContent = "Ready when you are"; break;
     case "state":
       serverState = m.state; $("label").textContent = m.label || "";
       if (m.state === "listening" && mode === "handsfree") { stopPlayback(); grabScreen("speech"); }
@@ -275,6 +303,8 @@ function grabScreen(why) {
 // ---------- Text ----------
 $("textForm").addEventListener("submit", (e) => {
   e.preventDefault(); const t = $("text").value.trim(); if (!t) return;
+  if (!ws || ws.readyState !== WebSocket.OPEN) { $("label").textContent = "Waiting for the backend. Keep it running, then try again."; return; }
+  if (!ws || ws.readyState !== WebSocket.OPEN) { $("label").textContent = "Waiting for the backend. Keep it running, then try again."; return; }
   ensureCtx(); stopPlayback(); grabScreen("text"); releasedAt = performance.now();
   send({ type: "text", text: t }); $("you").textContent = "You: " + t; $("text").value = "";
 });

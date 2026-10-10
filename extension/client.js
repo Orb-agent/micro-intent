@@ -9,7 +9,7 @@ function orbMark() {
 }
 $("orb").innerHTML = orbMark();
 $("brandMark").innerHTML = orbMark().replace('<svg viewBox="0 0 100 100" aria-hidden="true">', '<g>').replace('</svg>', '</g>');
-const log = (...a) => { const l = $("log"); l.textContent += a.join(" ") + "\n"; l.scrollTop = l.scrollHeight; };
+const log = (...a) => { const l = $("log"); l.hidden = false; l.textContent += a.join(" ") + "\n"; l.scrollTop = l.scrollHeight; };
 
 let token = "", server = "";
 let ws, ctx, micNode, screenStream, screenVideo;
@@ -23,8 +23,9 @@ function connect() {
   ws = new WebSocket(endpoint);
   ws.onopen = () => ws.send(JSON.stringify({ type: "hello", token, mode }));
   ws.onclose = (e) => {
-    setConn(e.code === 1008 ? "bad token" : "disconnected", false);
-    if (e.code === 1008) { chrome.storage.local.remove("beaverToken"); return; }
+    setConn(e.code === 1008 ? "invalid token" : "reconnecting", false);
+    if (e.code === 1008) { chrome.storage.local.remove("beaverToken"); $("label").textContent = "Update APP_TOKEN in the Orbs popup and reopen this tab."; return; }
+    $("label").textContent = `Waiting for backend at ${new URL(server).host}…`;
     setTimeout(connect, 1000);
   };
   ws.onmessage = (e) => onMessage(JSON.parse(e.data));
@@ -34,7 +35,7 @@ function setConn(text, ok) { $("conn").textContent = text; $("conn").classList.t
 
 function onMessage(m) {
   switch (m.type) {
-    case "ready": setConn(mode === "handsfree" ? "connected · hands-free" : "connected", true); break;
+    case "ready": setConn(mode === "handsfree" ? "connected · hands-free" : "connected", true); $("label").textContent = "Ready when you are"; break;
     case "state":
       serverState = m.state; $("label").textContent = m.label || "";
       if (m.state === "listening" && mode === "handsfree") { stopPlayback(); grabScreen("speech"); }
@@ -159,6 +160,7 @@ function grabScreen(why) {
 // ---------- Text ----------
 $("textForm").addEventListener("submit", (e) => {
   e.preventDefault(); const t = $("text").value.trim(); if (!t) return;
+  if (!ws || ws.readyState !== WebSocket.OPEN) { $("label").textContent = "Waiting for the backend. Keep it running, then try again."; return; }
   ensureCtx(); stopPlayback(); grabScreen("text"); releasedAt = performance.now();
   send({ type: "text", text: t }); $("you").textContent = "You: " + t; $("text").value = "";
 });
