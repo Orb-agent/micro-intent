@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 TZ = ZoneInfo("Europe/Zurich")
@@ -161,6 +163,27 @@ def _flight_components(idx: int, card: dict[str, Any]) -> list[dict[str, Any]]:
     return components
 
 
+def _link_components(idx: int, card: dict[str, Any]) -> list[dict[str, Any]]:
+    """A titled link, e.g. a prefilled Google Flights search. a2ui-swift renders inline Markdown
+    in Text, so the caption is a tappable link; only https links become one."""
+    url = str(card.get("url", ""))
+    children = [f"c{idx}-title"]
+    components = [
+        {"id": f"c{idx}", "component": "Card", "child": f"c{idx}-body"},
+        {"id": f"c{idx}-body", "component": "Column", "children": children},
+        {"id": f"c{idx}-title", "component": "Text", "text": str(card.get("title", "")), "variant": "h2"},
+    ]
+    if card.get("detail"):
+        children.append(f"c{idx}-detail")
+        components.append({"id": f"c{idx}-detail", "component": "Text", "text": str(card["detail"])})
+    if url.startswith("https://") and not re.search(r"[\s()<>]", url):
+        host = urlsplit(url).hostname or url
+        label = "Open in Google Flights" if host == "www.google.com" and urlsplit(url).path.startswith("/travel/flights") else f"Open {host}"
+        children.append(f"c{idx}-meta")
+        components.append({"id": f"c{idx}-meta", "component": "Text", "text": f"[{label}]({url})", "variant": "caption"})
+    return components
+
+
 def cards_to_a2ui(reply_id: str, cards: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Convert reply cards into A2UI v0.9 basic catalog messages (contracts § A2UI)."""
     card_ids = [f"c{i}" for i in range(len(cards))]
@@ -178,6 +201,8 @@ def cards_to_a2ui(reply_id: str, cards: list[dict[str, Any]]) -> list[dict[str, 
             components.extend(_event_components(i, card))
         elif kind == "flight":
             components.extend(_flight_components(i, card))
+        elif kind == "link":
+            components.extend(_link_components(i, card))
         else:
             # Fallback for unrecognized card kind
             body_id = f"c{i}-body"

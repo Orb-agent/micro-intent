@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import base64
 import json
 import logging
 import os
@@ -15,6 +14,8 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
+from tools.gmail import extract_body
+
 log = logging.getLogger(__name__)
 
 TZ = ZoneInfo("Europe/Zurich")
@@ -24,27 +25,6 @@ DEV_FIXTURES_PATH = Path(__file__).parent / "fixtures" / "dev_context.json"
 OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
 CALENDAR_EVENTS_URL = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
 GMAIL_MESSAGES_URL = "https://www.googleapis.com/gmail/v1/users/me/messages"
-
-
-def _extract_body(payload: dict[str, Any]) -> str:
-    """Extract plain text body from Gmail payload parts, base64url decoded."""
-    body_data = payload.get("body", {}).get("data")
-    if body_data:
-        try:
-            return base64.urlsafe_b64decode(body_data.encode()).decode("utf-8", errors="replace")
-        except Exception:
-            pass
-
-    for part in payload.get("parts", []):
-        if part.get("mimeType") == "text/plain" and part.get("body", {}).get("data"):
-            try:
-                return base64.urlsafe_b64decode(part["body"]["data"].encode()).decode("utf-8", errors="replace")
-            except Exception:
-                pass
-        sub = _extract_body(part)
-        if sub:
-            return sub
-    return ""
 
 
 async def _refresh_access_token(client_id: str, client_secret: str, refresh_token: str) -> str:
@@ -138,7 +118,7 @@ async def _load_context_rest() -> dict[str, Any]:
                 subject = h_map.get("subject", "")
                 from_hdr = h_map.get("from", "")
                 date_hdr = h_map.get("date", "")
-                body_text = _extract_body(data.get("payload", {}))[:2000]
+                body_text = extract_body(data.get("payload", {}))[:2000]
 
                 flight_emails.append({
                     "subject": subject,

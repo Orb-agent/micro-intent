@@ -79,3 +79,10 @@ async def test_route_rejects_transit(google):
         with pytest.raises(ValueError):
             await maps_route("Zürich HB", "Bern", "TRANSIT", client=client)
     assert requests == []
+
+
+async def test_not_configured(no_google):
+    from tools.google_auth import NotConfigured
+
+    with pytest.raises(NotConfigured):
+        await maps_search_places("Bundeshaus Bern")

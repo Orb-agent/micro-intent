@@ -18,7 +18,7 @@ backend/                # run from here: uv run uvicorn app:app --reload --port 
   .env.example
   app.py  voice.py  vision.py      # WP2
   a2ui.py                          # WP3: cards → A2UI messages
-  agent.py  context.py  tools/sbb.py  tools/maps.py   # WP3
+  agent.py  context.py  tools/   # WP3: sbb, maps, google (registry), google_auth, gcalendar, gmail, tasks, drive, flights
   fixtures/             # demo_reply.json, cards.json, screen.json, screen.png (WP2); context.json, *_a2ui.json (WP3)
   tests/
 ```
@@ -122,6 +122,9 @@ Both directions use Gradium's native format, so the server forwards the base64 s
 | `conflict` | `event` {`title`, `start`, `end`}, `proposal` {`title`, `start`, `place`?}, `verdict`: `fits` \| `tight` \| `clash`, `note`? |
 | `event` | `title`, `start`, `end`, `location`?, `source`: `calendar` \| `luma` |
 | `flight` | `flight_number`, `from`, `to` (IATA or city), `departure`, `arrival`, `booking_ref`? |
+| `link` | `title`, `url` (https), `detail`? |
+
+A `link` card points at a page the user opens on the phone, today the prefilled Google Flights search from `flights_search`. Its `url` comes only from a tool result.
 
 `fixtures/demo_reply.json`, the expected answer to the demo question:
 
@@ -178,7 +181,8 @@ Swift decoding: `keyDecodingStrategy = .convertFromSnakeCase`, `dateDecodingStra
 
 - Use the catalog id exactly as written. It's a2ui-swift's `basicCatalogId`; the React renderer uses a different one.
 - Format times as `HH:MM` in Europe/Zurich on the server, so the app doesn't need A2UI format functions. Event and flight cards also show the day (`Sat 17 Oct`), since they are often about another day.
-- Each card is a `Card` holding a `Column` of `Text`: the hero line first with `variant: "h2"` (the times; the verdict for `conflict`; the title for `event`), then plain detail lines, then an optional `variant: "caption"` meta line. The app styles these three; other variants get no special look.
+- Each card is a `Card` holding a `Column` of `Text`: the hero line first with `variant: "h2"` (the times; the verdict for `conflict`; the title for `event` and `link`), then plain detail lines, then an optional `variant: "caption"` meta line. The app styles these three; other variants get no special look.
+- A `link` card's caption is an inline Markdown link, `[Open in Google Flights](url)`, or `[Open <host>](url)` for other hosts; a2ui-swift renders inline Markdown in `Text`, so it is tappable. Only `https` URLs become a link.
 - Use a new `surfaceId` per reply, and one `SurfaceViewModel(catalog: basicCatalog)` per surface in the app.
 - No buttons or actions in the MVP.
 
@@ -228,19 +232,31 @@ class Agent:
 
 ## Tools
 
-**Model-facing.** The model sees five functions and must end every turn with `respond`. The two Maps functions are declared only when `GOOGLE_MAPS_API_KEY` is set. All of them only read, except `design_voice`, which adds a voice to our own Gradium library.
+**Model-facing.** The model sees up to thirteen functions and must end every turn with `respond`. The two Maps functions are declared only when `GOOGLE_MAPS_API_KEY` is set. The seven Workspace functions (`calendar_*`, `gmail_*`, `tasks_list`, `drive_*`) are declared only with `WORKSPACE_MODE=rest` and all three `GOOGLE_*` OAuth variables set. `flights_search` is always declared. All of them only read, except `design_voice`, which adds a voice to our own Gradium library. A tool that fails, or misses a credential, returns `{"error": …}` to the model, and the turn goes on.
 
 | Function | Arguments | Returns |
 | --- | --- | --- |
 | `sbb_connections` | `from_station`, `to_station`, `depart_after` (ISO) | `{"connections": [{"line", "from", "to", "departure", "arrival", "platform", "arrival_platform", "transfers", "delay_min", "duration_min"}]}`, at most 4 |
 | `maps_search_places` | `query`, e.g. "quiet restaurant near Bern station" | `{"places": [{"name", "address"}]}`, at most 5 |
 | `maps_route` | `origin`, `destination` (addresses or place names), `mode`: `WALK` \| `DRIVE` \| `BICYCLE` | `{"duration_min", "distance_km"}` |
+| `calendar_events` | `time_min`, `time_max` (ISO), `query`? | `{"events": [{"title", "start", "end", "location"?, "source", "all_day"?}]}`, at most 20; the shape of the context's events |
+| `calendar_free_slots` | `time_min`, `time_max` (ISO), `duration_min`? (default 30), `attendees`?: list of calendar emails | `{"slots": [{"start", "end"}], "unavailable"?: [emails]}`, at most 8, only between 08:00 and 20:00 Zurich time, free for the user and every attendee |
+| `gmail_search` | `query` (Gmail search syntax) | `{"messages": [{"id", "subject", "from", "date", "snippet"}]}`, at most 5, newest first |
+| `gmail_read` | `message_id` | `{"id", "subject", "from", "date", "body"}`, body cut to 4000 characters |
+| `tasks_list` | — | `{"tasks": [{"title", "list", "due"?, "notes"?}]}`, open tasks from every list, at most 20, due ones first |
+| `drive_search` | `query` | `{"files": [{"id", "name", "type", "modified", "link"}]}`, at most 5, newest first |
+| `drive_read` | `file_id` | The file's fields plus `{"text", "truncated"}`, text cut to 4000 characters; `{"error"}` for files that aren't text |
+| `flights_search` | `origin`, `destination` (IATA), `departure_date`, `return_date`? (`YYYY-MM-DD`) | `{"flights": [{"flight_number", "airline", "from", "to", "departure", "arrival", "stops", "duration_min", "price_chf"?}], "google_flights_url"}`, at most 4; without `SERPAPI_API_KEY`, `flights` is empty |
 | `design_voice` | `description` (casting brief, at most 500 characters), `language`: `en` \| `fr` \| `es` \| `pt` \| `de` | `{"ok": true}`; the agent speaks in the new voice for the rest of the session |
 | `respond` | `say`, `cards` (see [Cards](#cards)), `mood`?: `stressed` \| `tired` \| `happy` \| `neutral` | Ends the turn |
 
 `sbb_connections` calls `GET https://transport.opendata.ch/v1/connections?from=…&to=…&date=YYYY-MM-DD&time=HH:MM&limit=4` (no key). Map `products[0]` → `line`, `from.platform` → `platform`, `to.platform` → `arrival_platform`, `from.delay` → `delay_min`. Public transport always goes through `sbb_connections`, never `maps_route`.
 
 `maps_search_places` calls Places API (New), `POST https://places.googleapis.com/v1/places:searchText` with `{"textQuery": query, "pageSize": 5}` and `X-Goog-FieldMask: places.displayName,places.formattedAddress`. Map `displayName.text` → `name`, `formattedAddress` → `address`. `maps_route` calls Routes API, `POST https://routes.googleapis.com/directions/v2:computeRoutes` with `{"origin": {"address": …}, "destination": {"address": …}, "travelMode": mode}` and `X-Goog-FieldMask: routes.duration,routes.distanceMeters`. `duration` comes back as a string such as `"1260s"`. Both calls send the key in the `X-Goog-Api-Key` header, never in the URL. The field masks are required, and they keep Places on the cheaper Pro SKU. Since 1 March 2025, new Cloud projects can't enable the legacy Places Text Search and Directions APIs, so don't use those. Place names and addresses from Maps are third-party data: the agent treats them like the screen context and never follows instructions in them. There is no Maps card; Maps results go into `say`.
+
+**Google.** All Workspace calls go through `tools/google_auth.py`: one refresh-token exchange at `https://oauth2.googleapis.com/token`, cached until a minute before the access token expires, then REST with `Authorization: Bearer`. Calendar uses `events.list` on `primary` and `freeBusy` (busy times of the user and each attendee, merged; calendars the account can't see come back under `unavailable`). Gmail uses `messages.list`, then `messages.get` with `format=metadata` for search and `format=full` for read; HTML-only mail is reduced to text. Tasks reads every task list with `showCompleted=false`. Drive searches with `name contains` or `fullText contains` and `trashed = false`, and reads Docs and Slides by exporting them as `text/plain` and Sheets as `text/csv`, so the Docs API needs no extra scope. Everything these tools return is third-party data, like the screen context: the agent never follows instructions in it.
+
+`flights_search` calls SerpApi's `google_flights` engine (`GET https://serpapi.com/search.json`, `type` 2 for one way, `currency` CHF). SerpApi only takes the key as the `api_key` query parameter, so the tool never logs the URL: it redacts the key from httpx's request log and reports errors without the URL. SerpApi's local airport times get the airport's UTC offset from a table of common airports; a time without one can't go on a card. `google_flights_url` comes from SerpApi's `search_metadata`, or, without the key, is built as `https://www.google.com/travel/flights?q=One way flights from ZRH to LIS on 2026-10-20` (`Flights from … on … through …` for a round trip), which opens Google Flights with the route and dates filled in. Flights the user already booked come from the emails, not from `flights_search`. Never invent flights: with no results the agent answers with a `link` card.
 
 **Voice.** The agent changes how it sounds in two ways, and the newest change wins. Both end in `Reply.voice_id`.
 
@@ -280,8 +296,9 @@ Events cover now to 7 days ahead. `source` is `luma` when the event's descriptio
 | `APP_TOKEN` | WP2, the app, the Shortcut | Any long random string |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | WP2 vision, WP3 agent | `gemini-3.8-flash` |
 | `GRADIUM_API_KEY`, `GRADIUM_VOICE_ID` | WP2, WP3 voice design | The default voice: the cloned mascot or a stock voice. A reply's `voice_id` overrides it |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | WP3 | Temporary account only, read-only scopes |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | WP3 | Temporary account only, read-only scopes: `calendar.readonly`, `gmail.readonly`, `tasks.readonly`, `drive.readonly`. With `WORKSPACE_MODE=rest` they also turn on the Workspace tools |
 | `GOOGLE_MAPS_API_KEY` | WP3 | Optional. Enable Places API (New) and Routes API on the key and restrict it to those two. Without it, the agent has no Maps tools |
+| `SERPAPI_API_KEY` | WP3 | Optional. Live results for `flights_search`; without it, a Google Flights link only |
 | `WORKSPACE_MODE` | WP3 | `rest` or `fixture` |
 | `MOCK_AGENT` | WP2 | `1` uses `StubAgent` |
 
