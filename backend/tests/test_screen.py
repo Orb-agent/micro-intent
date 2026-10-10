@@ -141,6 +141,25 @@ def test_old_screenshot_is_not_used(client, agent):
     assert agent.screens == [None]
 
 
+def test_turn_moves_on_to_a_newer_screenshot(monkeypatch):
+    async def read(image, mime):
+        if image == b"A":
+            await asyncio.sleep(5)  # slow; cancelled when B arrives
+        return {"summary": image.decode()}
+
+    async def turn_while_b_arrives():
+        server.store_screenshot(b"A", "image/png")
+        turn = asyncio.create_task(server.take_screen())
+        await asyncio.sleep(0)  # the turn now waits on A
+        server.store_screenshot(b"B", "image/png")
+        return await turn
+
+    monkeypatch.setattr(server, "read_screen", read)
+    monkeypatch.setattr(server, "latest", None)
+    shot, screen = asyncio.run(turn_while_b_arrives())
+    assert (shot.id, screen) == (2, {"summary": "B"})
+
+
 def test_vision_failure(client, agent, monkeypatch):
     monkeypatch.setattr(server, "read_screen", failing_read_screen)
     ctx, ws = connect(client)

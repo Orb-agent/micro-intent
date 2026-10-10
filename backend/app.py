@@ -131,10 +131,14 @@ async def take_screen() -> tuple[Screenshot | None, dict | None]:
 
     The caller marks it used once its turn completes, so a turn the user interrupts
     leaves the screen for the question they ask next."""
-    shot = latest
-    if shot is None or shot.used or time.monotonic() - shot.at > SCREEN_MAX_AGE:
-        return None, None
-    await asyncio.wait({shot.task}, timeout=VISION_WAIT)  # never cancels the vision task
+    deadline = time.monotonic() + VISION_WAIT
+    while True:
+        shot = latest
+        if shot is None or shot.used or time.monotonic() - shot.at > SCREEN_MAX_AGE:
+            return None, None
+        await asyncio.wait({shot.task}, timeout=max(0, deadline - time.monotonic()))  # never cancels the vision task
+        if shot is latest or not shot.task.cancelled():
+            break  # else a newer screenshot cancelled it: wait on that one, same deadline
     if not shot.task.done() or shot.task.cancelled():
         log.warning("screenshot %d not read within %ds, turn goes without it", shot.id, VISION_WAIT)
         return None, None
