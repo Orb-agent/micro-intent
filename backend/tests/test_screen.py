@@ -1,3 +1,4 @@
+import base64
 import json
 
 import pytest
@@ -59,3 +60,24 @@ def test_screen_ok_reaches_session(client):
     assert ws.receive_json() == {"type": "screen_ok", "summary": SCREEN["summary"]}
     ctx.__exit__(None, None, None)
     assert server.sessions == set()
+
+
+def test_screen_frame(client, monkeypatch):
+    seen = []
+    monkeypatch.setattr(server, "read_screen", lambda image, mime: seen.append((image, mime)) or SCREEN)
+    ctx, ws = connect(client)
+    ws.send_json({"type": "screen", "mime": "image/png", "data": base64.b64encode(PNG).decode()})
+    assert ws.receive_json() == {"type": "screen_ok", "summary": SCREEN["summary"]}
+    ctx.__exit__(None, None, None)
+    assert seen == [(PNG, "image/png")]
+
+
+def test_bad_screen_frames_are_ignored(client):
+    ctx, ws = connect(client)
+    ws.send_json({"type": "screen", "mime": "image/png", "data": "not base64!"})
+    ws.send_json({"type": "screen", "mime": "image/gif", "data": base64.b64encode(PNG).decode()})
+    ws.send_json({"type": "screen", "mime": "image/png"})
+    ws.send_json({"type": "text", "text": "hi"})
+    assert ws.receive_json() == {"type": "state", "state": "thinking"}  # no screen_ok
+    ctx.__exit__(None, None, None)
+    assert server.latest is None

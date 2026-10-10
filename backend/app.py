@@ -5,6 +5,7 @@ Protocol and interfaces: docs/contracts.md. Run from backend/:
 """
 
 import asyncio
+import base64
 import hmac
 import inspect
 import json
@@ -244,6 +245,15 @@ class Session:
         elif kind == "text" and isinstance(msg.get("text"), str):
             await self.interrupt()
             self.start_turn(self.run_turn(msg["text"]))
+        elif kind == "screen":
+            try:
+                image = base64.b64decode(msg.get("data"), validate=True)
+            except (TypeError, ValueError):
+                image = b""
+            if msg.get("mime") in SCREEN_MIMES and 0 < len(image) <= SCREEN_MAX_BYTES:
+                store_screenshot(image, msg["mime"])
+            else:
+                log.warning("ignored screen frame: bad mime, base64 or size")
         elif kind == "interrupt":
             if await self.interrupt():
                 await self.state("idle")
