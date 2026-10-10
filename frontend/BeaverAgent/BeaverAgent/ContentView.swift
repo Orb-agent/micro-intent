@@ -39,6 +39,15 @@ struct ContentView: View {
             orbDock
         }
         .background(AppBackground())
+        .overlay(alignment: .topTrailing) {
+            if !session.conflictCards.isEmpty {
+                ConflictNotice(surfaces: session.conflictSurfaces, cards: session.conflictCards,
+                               dismiss: session.dismissConflict)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 72)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
     }
 
     // MARK: - Top bar
@@ -81,7 +90,7 @@ struct ContentView: View {
             MascotBubble(say: reply.say, steps: session.steps)
                 .id(reply.say)
                 .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
-            CardsView(surfaces: session.surfaces, cards: reply.cards)
+            CardsView(surfaces: session.surfaces, cards: session.inlineCards)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             if session.orb == .idle {
                 // After the cards, never over them.

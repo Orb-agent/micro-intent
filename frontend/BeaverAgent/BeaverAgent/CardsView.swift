@@ -7,6 +7,7 @@ import SwiftUI
 struct CardsView: View {
     let surfaces: [SurfaceViewModel]
     let cards: [CardPayload]
+    var compact = false
 
     var body: some View {
         if !surfaces.isEmpty {
@@ -17,6 +18,7 @@ struct CardsView: View {
             }
             .a2uiCatalogItem(.card) { context in
                 guard let child = context.node.children.first else { return nil }
+                if compact { return AnyView(context.buildChild(child)) }
                 return AnyView(GlassCard { context.buildChild(child) })
             }
 
@@ -61,6 +63,13 @@ private struct GlassCard<Content: View>: View {
 }
 
 extension SurfaceViewModel {
+    func applyConflictStyle(_ type: TypeScale = .regular) {
+        applyAppStyle(type)
+        var style = a2uiStyle
+        style.textStyles["h2"] = .init(font: type.bodyStrong, color: Theme.textPrimary)
+        a2uiStyle = style
+    }
+
     /// Maps the text variants the server uses onto the type scale: `h2` is the hero
     /// line (a time or verdict), `body` the detail, `caption` the meta line.
     func applyAppStyle(_ type: TypeScale = .regular) {
