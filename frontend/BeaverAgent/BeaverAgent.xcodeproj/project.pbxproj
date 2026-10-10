@@ -8,11 +8,47 @@
 
 /* Begin PBXBuildFile section */
 		B1A2C3D4E5F60718293A4B01 /* A2UISwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = B1A2C3D4E5F60718293A4B02 /* A2UISwiftUI */; };
+		B1A2C3D4E5F60718293A4C01 /* OrbActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A4C10 /* OrbActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B1A2C3D4E5F60718293A4C05 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B1A2C3D4E5F60718293A4B60 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B1A2C3D4E5F60718293A4C50;
+			remoteInfo = OrbActivityExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B1A2C3D4E5F60718293A4C31 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B1A2C3D4E5F60718293A4C01 /* OrbActivityExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		B1A2C3D4E5F60718293A4B10 /* BeaverAgent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeaverAgent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B1A2C3D4E5F60718293A4C10 /* OrbActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OrbActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B1A2C3D4E5F60718293A4C22 /* Exceptions for "OrbActivity" folder in "OrbActivityExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B1A2C3D4E5F60718293A4C50 /* OrbActivityExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B1A2C3D4E5F60718293A4B20 /* BeaverAgent */ = {
@@ -23,6 +59,19 @@
 		B1A2C3D4E5F60718293A4B21 /* NativeCards */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = NativeCards;
+			sourceTree = "<group>";
+		};
+		B1A2C3D4E5F60718293A4C20 /* OrbActivity */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B1A2C3D4E5F60718293A4C22 /* Exceptions for "OrbActivity" folder in "OrbActivityExtension" target */,
+			);
+			path = OrbActivity;
+			sourceTree = "<group>";
+		};
+		B1A2C3D4E5F60718293A4C21 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -36,6 +85,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B1A2C3D4E5F60718293A4C30 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -44,6 +100,8 @@
 			children = (
 				B1A2C3D4E5F60718293A4B20 /* BeaverAgent */,
 				B1A2C3D4E5F60718293A4B21 /* NativeCards */,
+				B1A2C3D4E5F60718293A4C21 /* Shared */,
+				B1A2C3D4E5F60718293A4C20 /* OrbActivity */,
 				B1A2C3D4E5F60718293A4B41 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -52,6 +110,7 @@
 			isa = PBXGroup;
 			children = (
 				B1A2C3D4E5F60718293A4B10 /* BeaverAgent.app */,
+				B1A2C3D4E5F60718293A4C10 /* OrbActivityExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -66,14 +125,17 @@
 				B1A2C3D4E5F60718293A4B51 /* Sources */,
 				B1A2C3D4E5F60718293A4B30 /* Frameworks */,
 				B1A2C3D4E5F60718293A4B52 /* Resources */,
+				B1A2C3D4E5F60718293A4C31 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B1A2C3D4E5F60718293A4C06 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				B1A2C3D4E5F60718293A4B20 /* BeaverAgent */,
 				B1A2C3D4E5F60718293A4B21 /* NativeCards */,
+				B1A2C3D4E5F60718293A4C21 /* Shared */,
 			);
 			name = BeaverAgent;
 			packageProductDependencies = (
@@ -82,6 +144,29 @@
 			productName = BeaverAgent;
 			productReference = B1A2C3D4E5F60718293A4B10 /* BeaverAgent.app */;
 			productType = "com.apple.product-type.application";
+		};
+		B1A2C3D4E5F60718293A4C50 /* OrbActivityExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B1A2C3D4E5F60718293A4C70 /* Build configuration list for PBXNativeTarget "OrbActivityExtension" */;
+			buildPhases = (
+				B1A2C3D4E5F60718293A4C51 /* Sources */,
+				B1A2C3D4E5F60718293A4C30 /* Frameworks */,
+				B1A2C3D4E5F60718293A4C52 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B1A2C3D4E5F60718293A4C20 /* OrbActivity */,
+				B1A2C3D4E5F60718293A4C21 /* Shared */,
+			);
+			name = OrbActivityExtension;
+			packageProductDependencies = (
+			);
+			productName = OrbActivityExtension;
+			productReference = B1A2C3D4E5F60718293A4C10 /* OrbActivityExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -94,6 +179,9 @@
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					B1A2C3D4E5F60718293A4B50 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					B1A2C3D4E5F60718293A4C50 = {
 						CreatedOnToolsVersion = 26.3;
 					};
 				};
@@ -116,12 +204,20 @@
 			projectRoot = "";
 			targets = (
 				B1A2C3D4E5F60718293A4B50 /* BeaverAgent */,
+				B1A2C3D4E5F60718293A4C50 /* OrbActivityExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		B1A2C3D4E5F60718293A4B52 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B1A2C3D4E5F60718293A4C52 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -138,7 +234,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B1A2C3D4E5F60718293A4C51 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B1A2C3D4E5F60718293A4C06 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B1A2C3D4E5F60718293A4C50 /* OrbActivityExtension */;
+			targetProxy = B1A2C3D4E5F60718293A4C05 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		B1A2C3D4E5F60718293A4B62 /* Debug */ = {
@@ -201,8 +312,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "BeaverAgent-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Orb Agent";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Hold the orb and ask a question. Your voice is sent to the Orb Agent server to understand it.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -231,8 +344,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "BeaverAgent-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Orb Agent";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Hold the orb and ask a question. Your voice is sent to the Orb Agent server to understand it.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -244,6 +359,60 @@
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = ch.microintent.BeaverAgent;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		B1A2C3D4E5F60718293A4C72 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OrbActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Orb Agent";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.microintent.BeaverAgent.OrbActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B1A2C3D4E5F60718293A4C73 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OrbActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Orb Agent";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.microintent.BeaverAgent.OrbActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -269,6 +438,15 @@
 			buildConfigurations = (
 				B1A2C3D4E5F60718293A4B72 /* Debug */,
 				B1A2C3D4E5F60718293A4B73 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B1A2C3D4E5F60718293A4C70 /* Build configuration list for PBXNativeTarget "OrbActivityExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B1A2C3D4E5F60718293A4C72 /* Debug */,
+				B1A2C3D4E5F60718293A4C73 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
