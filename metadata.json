@@ -3,7 +3,7 @@
   "checkpoint_id": "01M4K1BK9MYF87T1B4HMX37DE4",
   "strategy": "manual-commit",
   "branch": "feature/wp2-screen-clip",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "docs/contracts.md"
   ],
@@ -14,13 +14,27 @@
       "compact_transcript": "/0/transcript.jsonl",
       "content_hash": "/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/1/metadata.json",
+      "transcript": "/1/full.jsonl",
+      "compact_transcript": "/1/transcript.jsonl",
+      "content_hash": "/1/content_hash.txt",
+      "prompt": "/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 4,
-    "cache_creation_tokens": 32881,
-    "cache_read_tokens": 116658,
-    "output_tokens": 337,
-    "api_call_count": 2
+    "input_tokens": 10,
+    "cache_creation_tokens": 36660,
+    "cache_read_tokens": 570464,
+    "output_tokens": 1746,
+    "api_call_count": 4,
+    "subagent_tokens": {
+      "input_tokens": 4,
+      "cache_creation_tokens": 1112,
+      "cache_read_tokens": 238508,
+      "output_tokens": 42,
+      "api_call_count": 2
+    }
   }
 }

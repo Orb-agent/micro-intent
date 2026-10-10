@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01BZ3Mc1DFQKwc4L5fEBWddv",
+  "agent_id": "a565f0563bbe264a7",
+  "subagent_type": "general-purpose",
+  "task_description": "SC1 vision reads frames",
+  "token_usage": {
+    "input_tokens": 68,
+    "cache_creation_tokens": 120030,
+    "cache_read_tokens": 3087678,
+    "output_tokens": 1894,
+    "api_call_count": 34
+  },
+  "started_at": "2026-10-10T15:44:19.257415+02:00",
+  "completed_at": "2026-10-10T15:51:50.488912+02:00"
+}
