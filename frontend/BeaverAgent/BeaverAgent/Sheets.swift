@@ -7,6 +7,12 @@ enum SettingsKey {
     static let appearance = "appearance"
     static let largeText = "largeText"
     static let handsFree = "handsFree"
+
+    /// Offline replay is a hidden fallback: unless set by hand, it is on only while no
+    /// server URL is set.
+    static func replays(_ useFixtures: Bool?, serverURL: String) -> Bool {
+        useFixtures ?? serverURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 }
 
 enum Appearance: String, CaseIterable, Identifiable {
@@ -26,10 +32,11 @@ enum Appearance: String, CaseIterable, Identifiable {
 struct SettingsSheet: View {
     @AppStorage(SettingsKey.serverURL) private var serverURL = ""
     @AppStorage(SettingsKey.token) private var token = ""
-    @AppStorage(SettingsKey.useFixtures) private var useFixtures = true
+    @AppStorage(SettingsKey.useFixtures) private var useFixtures: Bool?
     @AppStorage(SettingsKey.appearance) private var appearance = Appearance.system
     @AppStorage(SettingsKey.largeText) private var largeText = false
     @AppStorage(SettingsKey.handsFree) private var handsFree = false
+    @State private var showsAdvanced = false
 
     let connection: AgentSession.Connection
     @Environment(\.dismiss) private var dismiss
@@ -38,8 +45,6 @@ struct SettingsSheet: View {
     var body: some View {
         SheetScaffold(title: "Settings") {
             VStack(alignment: .leading, spacing: 22) {
-                ToggleRow(title: "Use demo data", detail: "Replays saved answers, no server needed", isOn: $useFixtures)
-
                 VStack(alignment: .leading, spacing: 14) {
                     LabeledField(title: "Server URL") {
                         TextField("https://….trycloudflare.com", text: $serverURL)
@@ -53,7 +58,7 @@ struct SettingsSheet: View {
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
                     }
-                    if !useFixtures {
+                    if !replays {
                         HStack(spacing: 10) {
                             ConnectionBadge(connection: connection)
                             if case .offline(let reason) = connection {
@@ -65,12 +70,12 @@ struct SettingsSheet: View {
                         }
                     }
                 }
-                .disabled(useFixtures)
-                .opacity(useFixtures ? 0.55 : 1)
+                .disabled(replays)
+                .opacity(replays ? 0.55 : 1)
 
                 ToggleRow(title: "Hands-free", detail: "Just talk, no holding. Talk over the answer to stop it", isOn: $handsFree)
-                    .disabled(useFixtures)
-                    .opacity(useFixtures ? 0.55 : 1)
+                    .disabled(replays)
+                    .opacity(replays ? 0.55 : 1)
 
                 ToggleRow(title: "Large text", detail: "Bigger answers, cards and buttons", isOn: $largeText)
 
@@ -85,11 +90,26 @@ struct SettingsSheet: View {
                         }
                     }
                 }
+
+                DisclosureGroup(isExpanded: $showsAdvanced) {
+                    ToggleRow(title: "Offline replay", detail: "Replays saved answers without a server", isOn: replaysBinding)
+                        .padding(.top, 10)
+                } label: {
+                    Text("Advanced")
+                        .eyebrow(type, color: Theme.textMuted)
+                }
+                .tint(Theme.textMuted)
             }
         } actions: {
             Button("Done") { dismiss() }
                 .buttonStyle(BigButtonStyle(kind: .primary))
         }
+    }
+
+    private var replays: Bool { SettingsKey.replays(useFixtures, serverURL: serverURL) }
+
+    private var replaysBinding: Binding<Bool> {
+        Binding(get: { replays }, set: { useFixtures = $0 })
     }
 }
 
@@ -123,9 +143,9 @@ struct DebugSheet: View {
                         simulateScreenshot()
                         dismiss()
                     } label: {
-                        Label("Pretend a screenshot arrived", systemImage: "camera.viewfinder")
+                        Label("Read the current screen", systemImage: "camera.viewfinder")
                             .font(type.label)
-                            .foregroundStyle(Theme.accentText)
+                            .foregroundStyle(Theme.textPrimary)
                             .frame(minHeight: Theme.Size.touchMin)
                     }
                 }
@@ -151,8 +171,8 @@ struct DebugSheet: View {
 
 // MARK: - Building blocks
 
-/// Solid bottom sheet (radius 24) with a large title,
-/// content, and big buttons at the bottom.
+/// Bottom sheet with a large title, content, and big buttons at the bottom: the system
+/// Liquid Glass sheet on iOS 26, a solid sheet (radius 24) before.
 private struct SheetScaffold<Content: View, Actions: View>: View {
     let title: String
     @ViewBuilder var content: Content
@@ -175,11 +195,20 @@ private struct SheetScaffold<Content: View, Actions: View>: View {
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 12)
-        .presentationBackground {
-            Theme.glassSheet
-        }
-        .presentationCornerRadius(Theme.Radius.xxxl)
+        .modifier(SheetBackground())
         .presentationDragIndicator(.visible)
+    }
+}
+
+private struct SheetBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content
+        } else {
+            content
+                .presentationBackground { Theme.glassSheet }
+                .presentationCornerRadius(Theme.Radius.xxxl)
+        }
     }
 }
 
