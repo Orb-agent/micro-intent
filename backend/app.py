@@ -6,14 +6,16 @@ Protocol and interfaces: docs/contracts.md. Run from backend/:
 
 import asyncio
 import hmac
+import inspect
 import json
 import logging
 import os
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 
 import voice
 
@@ -29,6 +31,31 @@ try:  # WP3 ships a2ui.py; until then we send `reply` only.
     from a2ui import cards_to_a2ui
 except ImportError:
     cards_to_a2ui = None
+
+try:  # vision.py is written in parallel; without it every screenshot reads as None.
+    from vision import read_screen
+except ImportError:
+    read_screen = None
+
+SCREEN_MIMES = {"image/jpeg", "image/png"}
+SCREEN_MAX_BYTES = 8 * 1024 * 1024
+SCREEN_MAX_AGE = 120  # s; contracts § HTTP, screenshot rule
+VISION_WAIT = 5  # s a turn waits for a running vision call
+
+
+@dataclass
+class Screenshot:
+    id: int
+    image: bytes
+    mime: str
+    at: float  # time.monotonic() when received
+    task: asyncio.Task | None = None  # read_screen in the background; its result is the ScreenContext
+    used: bool = False
+
+
+# Single user: one latest screenshot, shared by all sessions.
+latest: Screenshot | None = None
+sessions: set["Session"] = set()
 
 
 class StubAgent:
@@ -59,12 +86,67 @@ def token_ok(token: object) -> bool:
     return bool(expected) and isinstance(token, str) and hmac.compare_digest(token, expected)
 
 
+async def broadcast(msg: dict) -> None:
+    for session in list(sessions):
+        try:
+            await session.send(msg)
+        except Exception:
+            log.warning("could not send %s to a session", msg["type"])
+
+
+async def read_latest(shot: Screenshot) -> dict | None:
+    """Run vision on one screenshot, tell every session, return its ScreenContext or None."""
+    t0 = time.monotonic()
+    screen = None
+    if read_screen is None:
+        log.warning("vision.py not available, screenshot %d not read", shot.id)
+    else:
+        try:
+            screen = await asyncio.to_thread(read_screen, shot.image, shot.mime)
+            if inspect.isawaitable(screen):  # in case read_screen is async
+                screen = await screen
+        except Exception:
+            log.exception("vision failed on screenshot %d", shot.id)
+        screen = screen if isinstance(screen, dict) else None
+    summary = screen.get("summary") if screen else None
+    log.info("screenshot %d read in %.2fs: %r", shot.id, time.monotonic() - t0, summary)
+    await broadcast({"type": "screen_ok"} | ({"summary": summary} if summary else {}))
+    return screen
+
+
+def store_screenshot(image: bytes, mime: str) -> None:
+    """Keep only the latest screenshot and start reading it."""
+    global latest
+    if latest and latest.task:
+        latest.task.cancel()  # its context is stale now
+    latest = Screenshot(latest.id + 1 if latest else 1, image, mime, time.monotonic())
+    latest.task = asyncio.create_task(read_latest(latest))
+    log.info("screenshot %d: %d bytes %s", latest.id, len(image), mime)
+
+
 app = FastAPI()
 
 
 @app.get("/health")
 async def health():
     return {"ok": True, "workspace": os.environ.get("WORKSPACE_MODE", "fixture")}
+
+
+@app.post("/screenshot", status_code=204)
+async def screenshot(request: Request) -> Response:
+    scheme, _, token = request.headers.get("authorization", "").partition(" ")
+    if scheme.lower() != "bearer" or not token_ok(token):
+        raise HTTPException(401)
+    mime = request.headers.get("content-type", "").split(";")[0].strip().lower()
+    if mime not in SCREEN_MIMES:
+        raise HTTPException(415)
+    image = bytearray()
+    async for chunk in request.stream():  # count bytes; Content-Length can lie
+        image += chunk
+        if len(image) > SCREEN_MAX_BYTES:
+            raise HTTPException(413)
+    store_screenshot(bytes(image), mime)
+    return Response(status_code=204)
 
 
 class Session:
@@ -186,12 +268,14 @@ async def ws_endpoint(ws: WebSocket):
         session = Session(ws)
         await session.agent.start()
         await session.send({"type": "ready"})
+        sessions.add(session)
         try:
             while True:
                 msg = await ws.receive_json()
                 if isinstance(msg, dict):
                     await session.handle(msg)
         finally:
+            sessions.discard(session)
             session.close()
     except WebSocketDisconnect:
         pass
