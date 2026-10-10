@@ -60,6 +60,8 @@ BLOCKING = timedelta(hours=2)
 HOME_STATION = "Winterthur"
 WALK = timedelta(minutes=10)
 SORRY = "Sorry, I got my paws tangled there. Could you ask again?"
+# Small talk the prompt forbids but models still add ("How are you feeling today?"): dropped in code.
+SMALL_TALK = re.compile(r"feel|how are you|how're you|how is your day|small talk", re.I)
 ISO = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}"
 
 PROMPT = """You are a friendly Swiss beaver, the mascot of a voice assistant on the user's iPhone. \
@@ -364,6 +366,13 @@ def _step_dict(step: Any) -> dict[str, Any]:
     return dict(step)
 
 
+def drop_small_talk(say: str) -> str:
+    """`say` without its small-talk sentences; unchanged if every sentence is small talk."""
+    sentences = re.split(r"(?<=[.!?])\s+", say.strip())
+    kept = [x for x in sentences if not SMALL_TALK.search(x)]
+    return " ".join(kept) if kept else say
+
+
 def _arguments(call: dict[str, Any]) -> dict[str, Any]:
     args = call.get("arguments") or {}
     if isinstance(args, str):
@@ -509,7 +518,7 @@ class Agent:
             if not err:
                 await self._set_mood(args.get("mood"), on_status)
             log.info("turn completed in %.2f s", time.monotonic() - turn_t0)
-            return {"say": say, "cards": cards}
+            return {"say": drop_small_talk(say), "cards": cards}
 
         raise ValueError(f"no valid respond in {MAX_STEPS} steps")
 
