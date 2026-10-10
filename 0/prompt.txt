@@ -192,3 +192,11 @@ The day-one checks decide which fallbacks we need, so run them before writing ap
 - [Neowin: Gemini agent on Android](https://www.neowin.net/news/googles-new-gemini-agent-on-android-can-now-use-3rd-party-apps-to-run-errands-for-you/) · [DroidRun](https://github.com/ClawMobile/droidrun) · [Cua](https://github.com/JanSystemic/cua) · [mirroir-mcp](https://ai.g2.com/marketplace/tools/iphone-mirroir-mcp) · [Jean Galea: WebDriverAgent](https://jeangalea.com/control-automate-iphone-webdriveragent/)
 - [Apple forums: ARKit eye tracking](https://developer.apple.com/forums/thread/803872)
 </pasted_content id="c013">
+
+---
+
+Okay, Please first think about the contracts, apis and etc, then  Please think which WPS we can have to split work across the team., i suggest modules/feautres, then we need for each wp plan for the agents
+
+---
+
+we have 3 devs only, so this is mvp, not extremely complex product and we have 3 hous max for parallel work. Commit then everything into the develop branch.
