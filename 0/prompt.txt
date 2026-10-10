@@ -1,0 +1,11 @@
+do you have continious memory of graph and brain in entire
+
+---
+
+<!-- reply 1 -->
+> “Brain”: Entire doesn’t have one. There’s no brain command in the main CLI, in labs, or among the plugins (graph is the only plugin installed). The closest things are:
+> 
+> Session checkpoints. Entire saves each session’s prompt and transcript in .entire/metadata/<session-id>/ and syncs checkpoints to origin. It’s tracking 3 sessions right now, including this one. I can search them with entire search, entire recap or entire checkpoint, but only when I run those commands. Nothing feeds them into my context automatically.
+> entire why / entire blame / entire experts (labs). These show which session or prompt produced a given line of code.
+
+i suggest you to use this
