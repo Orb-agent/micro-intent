@@ -1,0 +1,290 @@
+:root {
+  color-scheme: dark;
+  --ink: rgba(255, 255, 255, 0.94);
+  --ink-2: rgba(255, 255, 255, 0.66);
+  --ink-3: rgba(255, 255, 255, 0.42);
+  --line: rgba(255, 255, 255, 0.12);
+  --fs: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  width: 340px;
+  background: #16171b;
+  color: var(--ink);
+  font: var(--fs) / 1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+
+main[data-large] {
+  --fs: 17px;
+}
+
+main[data-large] ~ *,
+body:has(main[data-large]) {
+  width: 400px;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 35%, #2c2f38, #121318 75%);
+  border: 1px solid var(--line);
+}
+
+.logo svg {
+  width: 22px;
+  height: 22px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.15em;
+  font-weight: 650;
+}
+
+header p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.9em;
+}
+
+h2 {
+  margin: 0 0 6px;
+  color: var(--ink-3);
+  font-size: 0.78em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button svg {
+  width: 16px;
+  height: 16px;
+}
+
+button.primary {
+  height: 42px;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: linear-gradient(180deg, #2457e6, #1a44c2);
+  font-weight: 600;
+}
+
+button.primary:hover {
+  background: linear-gradient(180deg, #2b5ff0, #1d4bd4);
+}
+
+kbd {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.16);
+  font: inherit;
+  font-size: 0.82em;
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.switch[data-disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.switch span {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.switch small {
+  color: var(--ink-3);
+  font-size: 0.85em;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.switch i {
+  position: relative;
+  width: 36px;
+  height: 21px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  transition: background 0.2s;
+}
+
+.switch i::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+}
+
+.switch input:checked + i {
+  background: #2b5ff0;
+}
+
+.switch input:checked + i::after {
+  transform: translateX(15px);
+}
+
+.switch input:focus-visible + i {
+  outline: 2px solid #a9c1ff;
+  outline-offset: 2px;
+}
+
+.row {
+  display: flex;
+  gap: 6px;
+}
+
+.row input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.25);
+  outline: 0;
+}
+
+.row input:focus {
+  border-color: rgba(169, 193, 255, 0.6);
+}
+
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+
+.seg button {
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 0.9em;
+}
+
+.seg button[aria-checked='true'] {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--ink);
+}
+
+.health {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 0;
+  color: var(--ink-2);
+  font-size: 0.88em;
+  overflow-wrap: anywhere;
+}
+
+.health i {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-3);
+}
+
+.health.ok i {
+  background: #6ee7a8;
+}
+
+.health.mock i {
+  background: #ffcb6b;
+}
+
+.health.down i {
+  background: #ff8a8a;
+}
+
+.buttons {
+  flex-direction: row;
+}
+
+.buttons button {
+  flex: 1;
+}
+
+.note {
+  margin: -6px 0 0;
+  color: var(--ink-2);
+  font-size: 0.88em;
+}
