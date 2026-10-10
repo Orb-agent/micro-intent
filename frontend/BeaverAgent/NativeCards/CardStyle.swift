@@ -223,7 +223,12 @@ public struct CardActionButtonsView: View {
         self.onAction = onAction
     }
 
+    /// No buttons without a handler: the MVP has no card actions (contracts § A2UI).
     public var body: some View {
+        if onAction != nil { buttons }
+    }
+
+    private var buttons: some View {
         HStack(spacing: 14) {
             // Cancel button (secondary translucent button, at least 60pt)
             Button {
