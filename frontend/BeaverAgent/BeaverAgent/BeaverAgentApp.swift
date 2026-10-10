@@ -10,6 +10,7 @@ struct BeaverAgentApp: App {
     @AppStorage(SettingsKey.appearance) private var appearance = Appearance.system
     @AppStorage(SettingsKey.largeText) private var largeText = false
     @AppStorage(SettingsKey.handsFree) private var handsFree = false
+    @AppStorage(ProfileKey.hasCompletedFirstRun) private var hasCompletedFirstRun = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
@@ -28,6 +29,12 @@ struct BeaverAgentApp: App {
                         .presentationDetents([.medium, .large])
                     case .travel:
                         if let plan = session.travelPlan { TravelSheet(plan: plan) }
+                    case .profile:
+                        ProfileSheet(initialTab: .profile)
+                    case .family:
+                        ProfileSheet(initialTab: .family)
+                    case .onboarding:
+                        FirstRunSheet()
                     }
                 }
                 .preferredColorScheme(appearance.colorScheme)
@@ -35,6 +42,9 @@ struct BeaverAgentApp: App {
                 .task {
                     applySettings()
                     DemoLaunch.apply(to: session, sheet: $sheet)
+                    if !hasCompletedFirstRun && UserDefaults.standard.string(forKey: "demoScene") == nil && sheet == nil {
+                        sheet = .onboarding
+                    }
                 }
                 .onChange(of: settingsKey) { applySettings() }
                 .onChange(of: session.replyRevision) {
