@@ -2,6 +2,7 @@
 Lumi Agent Engine: Gemini orchestration with Google Workspace, Google Maps, and Google Flights tool calling.
 """
 import os
+from functools import cached_property
 from typing import Dict, Any, List, Optional
 from google import genai
 from google.genai import types
@@ -377,9 +378,13 @@ class LumiAgent:
 
     def __init__(self, api_key: Optional[str] = None, model_name: str = "gemini-2.5-flash"):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        self.client = genai.Client(api_key=self.api_key)
         self.model_name = os.getenv("GEMINI_MODEL") or model_name
         self.workspace_tool = build_workspace_tool()
+
+    @cached_property
+    def client(self) -> genai.Client:
+        """Built on first use, so the app imports without GEMINI_API_KEY."""
+        return genai.Client(api_key=self.api_key)
 
     def run(self, prompt: str, access_token: str, max_turns: int = 5) -> Dict[str, Any]:
         """
