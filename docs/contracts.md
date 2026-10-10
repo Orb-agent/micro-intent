@@ -46,9 +46,9 @@ sequenceDiagram
   S->>A: turn(text, screen, on_status)
   A-->>S: on_status("Checking trains…")
   S->>App: state searching + label
-  A-->>S: Reply {say, cards}
+  A-->>S: Reply {say, cards, voice_id?}
   S->>App: reply, a2ui, state speaking
-  S->>G: TTS say
+  S->>G: TTS say, in voice_id if set
   G-->>S: audio chunks
   S->>App: audio × n, audio_end, state idle
 ```
@@ -73,7 +73,7 @@ JSON text frames only, one object per frame, discriminated by `type`. Audio is b
 | `type` | Fields | When |
 | --- | --- | --- |
 | `ready` | — | After a valid `hello` |
-| `state` | `state`: `idle` \| `listening` \| `thinking` \| `searching` \| `speaking`; `label`?: string | On every change; `label` is the tool status, e.g. "Checking trains…" |
+| `state` | `state`: `idle` \| `listening` \| `thinking` \| `searching` \| `speaking`; `label`?: string | On every change; `label` is the tool status, free text: "Checking trains…", "Designing a voice…", "Tuning my voice…" |
 | `transcript` | `text` | Final transcript of the user's turn |
 | `reply` | `say`, `cards`: see [Cards](#cards) | Before any of the turn's audio |
 | `a2ui` | `messages`: list of A2UI v0.9 messages, see [A2UI](#a2ui) | Right after `reply`, when it has cards |
@@ -108,7 +108,7 @@ Both directions use Gradium's native format, so the server forwards the base64 s
 
 **iPhone side:** audio session `.playAndRecord` with `.defaultToSpeaker`, or iOS plays through the quiet earpiece while the mic is on. Turn on echo cancellation with `inputNode.setVoiceProcessingEnabled(true)` before reading the input format. Convert the input with `AVAudioConverter` to Int16 at 24 kHz mono. Play through an `AVAudioPlayerNode` on the same engine, converting each chunk to a Float32 24 kHz buffer.
 
-**Gradium facts the server relies on** ([docs](https://docs.gradium.ai/api-reference/introduction)): auth header `x-api-key`; STT at `wss://api.gradium.ai/api/speech/asr`, TTS at `wss://api.gradium.ai/api/speech/tts`; the Python SDK is `pip install gradium`. STT needs `json_config.language` (`en` for the demo, `any` to auto-detect). STT sends `text` segments, not partial and final flags. On push-to-talk release the server sends `flush`, waits for `flushed`, and joins the segments into the transcript. TTS has no cancel message: closing the socket stops it. The free plan allows 2 TTS and 3 STT sessions at once, which is tight with 3 devs testing; the $13 XS plan raises that to 5 and 20.
+**Gradium facts the server relies on** ([docs](https://docs.gradium.ai/api-reference/introduction)): auth header `x-api-key`; STT at `wss://api.gradium.ai/api/speech/asr`, TTS at `wss://api.gradium.ai/api/speech/tts`; the Python SDK is `pip install gradium`. STT needs `json_config.language` (`en` for the demo, `any` to auto-detect). STT sends `text` segments, not partial and final flags. On push-to-talk release the server sends `flush`, waits for `flushed`, and joins the segments into the transcript. TTS has no cancel message: closing the socket stops it. TTS has no per-request emotion or style control, and SSML is spoken aloud; only `temp` and `padding_bonus` (speed) vary per request, so a different vibe is a different voice. The free plan allows 2 TTS and 3 STT sessions at once, which is tight with 3 devs testing; the $13 XS plan raises that to 5 and 20.
 
 ## Cards
 
@@ -204,7 +204,8 @@ from typing import Awaitable, Callable, NotRequired, TypedDict
 class Reply(TypedDict):
     say: str          # one or two short sentences, the user's language
     cards: list[dict] # see Cards
-    voice_id: NotRequired[str]  # Gradium voice to speak `say` in; absent: GRADIUM_VOICE_ID
+    voice_id: NotRequired[str]  # Gradium voice to speak `say` in; absent: GRADIUM_VOICE_ID.
+                                # Once the voice changes, every later reply carries it.
 
 class Agent:
     async def start(self) -> None:
@@ -224,20 +225,28 @@ class Agent:
 
 ## Tools
 
-**Model-facing.** The model sees two functions and must end every turn with `respond`.
+**Model-facing.** The model sees three functions and must end every turn with `respond`.
 
 | Function | Arguments | Returns |
 | --- | --- | --- |
 | `sbb_connections` | `from_station`, `to_station`, `depart_after` (ISO) | `{"connections": [{"line", "from", "to", "departure", "arrival", "platform", "arrival_platform", "transfers", "delay_min", "duration_min"}]}`, at most 4 |
-| `respond` | `say`, `cards` (see [Cards](#cards)) | Ends the turn |
+| `design_voice` | `description` (casting brief, at most 500 characters), `language`: `en` \| `fr` \| `es` \| `pt` \| `de` | `{"ok": true}`; the agent speaks in the new voice for the rest of the session |
+| `respond` | `say`, `cards` (see [Cards](#cards)), `mood`?: `stressed` \| `tired` \| `happy` \| `neutral` | Ends the turn |
 
 `sbb_connections` calls `GET https://transport.opendata.ch/v1/connections?from=…&to=…&date=YYYY-MM-DD&time=HH:MM&limit=4` (no key). Map `products[0]` → `line`, `from.platform` → `platform`, `to.platform` → `arrival_platform`, `from.delay` → `delay_min`.
+
+**Voice.** The agent changes how it sounds in two ways, and the newest change wins. Both end in `Reply.voice_id`.
+
+- **On request** ("talk like a pirate"): `design_voice`. `voice.design_voice(description, language)` makes one candidate with Gradium [Voice Design](https://docs.gradium.ai/guides/voices/voice-design), `json_config.cfg_scale` 10, waits until it is ready (at most 30 s) and converts it into a permanent voice. About 4 s. Each design permanently takes a custom-voice slot; past the allowance Gradium answers `409`.
+- **By mood:** once, early in a conversation, the agent asks how the user feels and sets `mood` in `respond` when it knows. A new mood switches the voice from that reply on: calmer for `stressed`, softer for `tired` (also sad), brighter for `happy`, the default voice for `neutral`. `voice.mood_voice(mood)` designs each mood's voice once from one mascot brief, names it `Beaver mood <mood>`, and finds it by name in the library (`GET /voices/`) after that, so the moods take three slots in total.
+
+Gradium Voice Design facts: REST at `https://api.gradium.ai/api` with `x-api-key`. `POST /voice-generator/generate` returns candidate ids with `ready: false`; poll `GET /voice-generator/embeddings?embedding_id=…`; `POST /voices/from-embedding` returns the voice's `uid`. Candidates work over REST only (100 characters); the TTS socket needs the converted voice. Languages `en`, `fr`, `es`, `pt`, `de`, no Italian. An unknown `json_config` key returns `201` and the candidate never gets ready.
 
 **Gemini rules** (`google-genai`, `generate_content`, checked 2026-10-10; they apply to vision too):
 
 - Model `gemini-3.8-flash`, the newest generation, with thinking level `low`; 3.8 rejects `minimal`, and there is no 3.8 Flash-Lite for text. Vision on the demo screen takes 2.1–2.7 s (checked 2026-10-10). `gemini-3.5-flash` was deprecated on 8 October 2026. Don't set temperature; Gemini 3.6 and later ignore it.
 - Declare functions with `parameters_json_schema`. For `cards.items`, use `anyOf` with one object per kind, each with a single-value `enum` on `kind`. Don't use `const`, `oneOf` or `$defs`, keep it shallow, and validate the arguments in code anyway.
-- Function calling mode `ANY` on every step, so the model always calls `sbb_connections` or `respond` and never returns free text. On the last step add `allowed_function_names=["respond"]`.
+- Function calling mode `ANY` on every step, so the model always calls a function and never returns free text. On the last step add `allowed_function_names=["respond"]`.
 - Append `response.candidates[0].content` to the history unmodified; it carries the thought signatures, and dropping them gives a 400. Then add one function response per call, with the call's `id` and `name`, after all the calls.
 - Vision attaches the screenshot as an inline image part at medium media resolution (560 tokens); use high if small chat text comes back wrong.
 
@@ -262,7 +271,7 @@ Events cover now to 7 days ahead. `source` is `luma` when the event's descriptio
 | --- | --- | --- |
 | `APP_TOKEN` | WP2, the app, the Shortcut | Any long random string |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | WP2 vision, WP3 agent | `gemini-3.8-flash` |
-| `GRADIUM_API_KEY`, `GRADIUM_VOICE_ID` | WP2 | Voice: the cloned mascot or a stock voice |
+| `GRADIUM_API_KEY`, `GRADIUM_VOICE_ID` | WP2, WP3 voice design | The default voice: the cloned mascot or a stock voice. A reply's `voice_id` overrides it |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | WP3 | Temporary account only, read-only scopes |
 | `WORKSPACE_MODE` | WP3 | `rest` or `fixture` |
 | `MOCK_AGENT` | WP2 | `1` uses `StubAgent` |
