@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The one screen: screen chip, the latest turn (question, mascot line, cards), and the orb.
+/// Context and results stay primary, with a compact Orbs control.
 struct ContentView: View {
     @Bindable var session: AgentSession
     @Binding var sheet: AppSheet?
@@ -24,8 +24,8 @@ struct ContentView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
                 .padding(.bottom, 28)
-                .animation(.spring(duration: Theme.Motion.panel), value: session.screen)
-                .animation(.spring(duration: Theme.Motion.panel), value: session.reply)
+                .animation(.timingCurve(0.16, 1, 0.3, 1, duration: Theme.Motion.panel), value: session.screen)
+                .animation(.timingCurve(0.16, 1, 0.3, 1, duration: Theme.Motion.panel), value: session.reply)
             }
             .scrollIndicators(.hidden)
             .mask {
@@ -38,15 +38,16 @@ struct ContentView: View {
             }
             orbDock
         }
-        .background(AppBackground(glow: session.orb == .idle ? 0.6 : 1))
+        .background(AppBackground())
     }
 
     // MARK: - Top bar
 
     private var topBar: some View {
         HStack(spacing: 12) {
-            Text("Orb Agent")
-                .font(.system(size: 20, weight: .bold))
+            Text("Orbs")
+                .font(.system(size: 17, weight: .medium))
+                .tracking(-0.68)
                 .foregroundStyle(Theme.textPrimary)
             Spacer()
             ConnectionBadge(connection: session.connection)
@@ -95,7 +96,7 @@ struct ContentView: View {
             Label(error, systemImage: "exclamationmark.triangle.fill")
                 .font(type.bodyStrong)
                 .foregroundStyle(Theme.dangerText)
-                .padding(16)
+                .padding(20)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous).fill(Theme.dangerSoft))
         }
@@ -105,7 +106,7 @@ struct ContentView: View {
 
     private var orbDock: some View {
         VStack(spacing: 6) {
-            OrbView(state: session.orb, scale: hasTurn ? 0.72 : 1)
+            OrbView(state: session.orb)
                 .contentShape(Circle())
                 .gesture(orbPress)
                 .accessibilityAddTraits(.isButton)
@@ -129,11 +130,8 @@ struct ContentView: View {
         }
         .padding(.bottom, 8)
         .frame(maxWidth: .infinity)
-        .animation(.spring(duration: Theme.Motion.panel), value: session.orb)
-        .animation(.spring(duration: Theme.Motion.panel), value: hasTurn)
+        .animation(.timingCurve(0.4, 0, 0.2, 1, duration: Theme.Motion.base), value: session.orb)
     }
-
-    private var hasTurn: Bool { session.transcript != nil || session.reply != nil }
 
     /// Live: hold to talk, tap to stop the mascot (see `AgentSession.orbPressBegan`).
     /// Demo data: hold to type a question, as before there was a mic.
@@ -164,7 +162,7 @@ struct ContentView: View {
     }
 
     private var orbLabel: String? {
-        if session.orb == .idle { return "Look and say" }
+        if session.orb == .idle { return "Ready" }
         return session.label
     }
 }
@@ -183,16 +181,16 @@ private struct Welcome: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(listening ? "I'm listening…" : "What do you need?")
+            Text(listening ? "Listening…" : "A moment worth exploring.")
                 .font(type.display)
-                .tracking(-0.5)
+                .tracking(-0.04 * 36)
                 .foregroundStyle(Theme.textPrimary)
             Text(hint)
                 .font(type.body)
                 .foregroundStyle(Theme.textMuted)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.top, 28)
+        .padding(.top, 24)
         .padding(.horizontal, 4)
         .animation(.easeInOut(duration: Theme.Motion.base), value: listening)
     }
@@ -233,16 +231,9 @@ struct MascotBubble: View {
                 .foregroundStyle(Theme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(18)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassSurface(.panel, cornerRadius: Theme.Radius.xxl)
-        .overlay(alignment: .bottomLeading) {
-            BubbleTail()
-                .fill(Theme.glassPanel)
-                .frame(width: 22, height: 12)
-                .offset(x: 30, y: 11)
-                .accessibilityHidden(true)
-        }
         .accessibilityElement(children: .combine)
     }
 
@@ -255,17 +246,6 @@ struct MascotBubble: View {
             text = String(past) + text.dropFirst(first.count)
         }
         return text
-    }
-}
-
-private struct BubbleTail: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.addQuadCurve(to: CGPoint(x: rect.minX + 4, y: rect.maxY), control: CGPoint(x: rect.minX + 8, y: rect.minY + 4))
-        path.closeSubpath()
-        return path
     }
 }
 

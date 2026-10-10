@@ -45,15 +45,14 @@ struct CardsView: View {
     }()
 }
 
-/// The A2UI `Card`, drawn as a glass card from the prototype's result panel.
+/// The A2UI `Card`, drawn as a solid Orbs surface with the kit's 24 pt radius.
 private struct GlassCard<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous)
         content
-            .padding(.horizontal, 12)
-            .padding(.vertical, 12)
+            .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(shape.fill(Theme.surfaceCard))
             .overlay(shape.strokeBorder(Theme.borderSubtle, lineWidth: 1))

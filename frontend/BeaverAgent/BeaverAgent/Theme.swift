@@ -1,114 +1,91 @@
 import SwiftUI
 import UIKit
 
-/// The Orb Agent design system for the iPhone app, from the team's design tokens
-/// (Paper "Micro Intent - Hackathon Prototypes", page "Design System", variant D dark glass).
-/// Dark values are the tokens as given; the light values are their counterparts so cards
-/// and chrome also read well in light mode.
+/// Orbs monochrome tokens shared with the web prototype and brand kit.
+/// Light and dark counterparts keep the app chrome consistent across appearances.
 enum Theme {
     // MARK: Ground
 
-    /// `color.canvas`, with a slightly lifted bottom for depth.
-    static let canvas = Color(light: 0xEEF1F7, dark: 0x0B0D12)
-    static let canvasBottom = Color(light: 0xDFE5F1, dark: 0x141826)
+    static let canvas = Color(light: 0xFAFAFA, dark: 0x111111)
+    static let canvasBottom = canvas
 
     // MARK: Glass (`color.glass-*`, `color.border-glass`, `effect.shadow-*`)
 
-    static let glassPanel = Color(light: 0xFFFFFF, lightAlpha: 0.74, dark: 0x1A1C24, darkAlpha: 0.84)
-    static let glassPill = Color(light: 0xFFFFFF, lightAlpha: 0.8, dark: 0x161820, darkAlpha: 0.88)
-    static let glassSheet = Color(light: 0xF7F8FB, lightAlpha: 0.94, dark: 0x1A1C24, darkAlpha: 0.94)
-    static let borderGlass = Color(light: 0xFFFFFF, lightAlpha: 0.95, dark: 0xFFFFFF, darkAlpha: 0.18)
-    /// The inset 1 px top highlight of `effect.shadow-panel`.
-    static let glassHighlight = Color(light: 0xFFFFFF, lightAlpha: 0.9, dark: 0xFFFFFF, darkAlpha: 0.08)
-    static let shadowPanel = Color(light: 0x1A2550, lightAlpha: 0.14, dark: 0x000000, darkAlpha: 0.6)
-    static let shadowPill = Color(light: 0x1A2550, lightAlpha: 0.12, dark: 0x000000, darkAlpha: 0.55)
+    static let glassPanel = Color(light: 0xFFFFFF, dark: 0x1A1A1A)
+    static let glassPill = glassPanel
+    static let glassSheet = glassPanel
+    static let borderGlass = Color(light: 0xDEDEDE, dark: 0x383838)
+    static let glassHighlight = Color.clear
+    static let shadowPanel = Color(light: 0x000000, lightAlpha: 0.08, dark: 0x000000, darkAlpha: 0.28)
+    static let shadowPill = Color(light: 0x000000, lightAlpha: 0.04, dark: 0x000000, darkAlpha: 0.16)
 
     // MARK: Surfaces
 
-    static let surfaceCard = Color(light: 0xFFFFFF, lightAlpha: 0.8, dark: 0xFFFFFF, darkAlpha: 0.06)
-    static let surfaceChip = Color(light: 0xFFFFFF, lightAlpha: 0.7, dark: 0xFFFFFF, darkAlpha: 0.08)
-    static let surfaceControl = Color(light: 0x0B0D12, lightAlpha: 0.06, dark: 0xFFFFFF, darkAlpha: 0.1)
-    static let surfaceInput = Color(light: 0xFFFFFF, lightAlpha: 0.7, dark: 0xFFFFFF, darkAlpha: 0.05)
-    static let borderInput = Color(light: 0x0B0D12, lightAlpha: 0.12, dark: 0xFFFFFF, darkAlpha: 0.12)
-    static let borderSubtle = Color(light: 0x0B0D12, lightAlpha: 0.07, dark: 0xFFFFFF, darkAlpha: 0.08)
+    static let surfaceCard = Color(light: 0xFFFFFF, dark: 0x1A1A1A)
+    static let surfaceChip = Color(light: 0xF4F4F4, dark: 0x242424)
+    static let surfaceControl = surfaceChip
+    static let surfaceInput = surfaceCard
+    static let borderInput = Color(light: 0xDEDEDE, dark: 0x383838)
+    static let borderSubtle = Color(light: 0xDEDEDE, lightAlpha: 0.7, dark: 0x383838, darkAlpha: 0.8)
 
     // MARK: Text
 
-    static let textPrimary = Color(light: 0x0B0D12, dark: 0xFFFFFF)
-    static let textSecondary = Color(light: 0x0B0D12, lightAlpha: 0.84, dark: 0xFFFFFF, darkAlpha: 0.86)
-    static let textTertiary = Color(light: 0x0B0D12, lightAlpha: 0.7, dark: 0xFFFFFF, darkAlpha: 0.72)
-    static let textMuted = Color(light: 0x0B0D12, lightAlpha: 0.62, dark: 0xFFFFFF, darkAlpha: 0.62)
-    static let textPlaceholder = Color(light: 0x0B0D12, lightAlpha: 0.45, dark: 0xFFFFFF, darkAlpha: 0.5)
+    static let textPrimary = Color(light: 0x171717, dark: 0xF5F5F5)
+    static let textSecondary = Color(light: 0x333333, dark: 0xE2E2E2)
+    static let textTertiary = Color(light: 0x666666, dark: 0xAAAAAA)
+    static let textMuted = textTertiary
+    static let textPlaceholder = Color(light: 0x666666, lightAlpha: 0.72, dark: 0xAAAAAA, darkAlpha: 0.78)
 
     // MARK: Accent and status
 
-    static let accent = Color(light: 0x2F55F0, dark: 0x3D63FF)
-    static let accentStrong = Color(hex: 0x2448F5)
-    static let accentText = Color(light: 0x2F55F0, dark: 0x9DBBFF)
-    static let accentTextStrong = Color(light: 0x2341C8, dark: 0xC9D8FF)
-    static let accentSoft = Color(light: 0x3D63FF, lightAlpha: 0.1, dark: 0x2448F5, darkAlpha: 0.16)
-    static let accentBorder = Color(light: 0x3D63FF, lightAlpha: 0.3, dark: 0x6E96FF, darkAlpha: 0.35)
-    static let successText = Color(light: 0x15803D, dark: 0x4ADE80)
-    static let successSoft = Color(light: 0x22C55E, lightAlpha: 0.14, dark: 0x22C55E, darkAlpha: 0.16)
-    static let warnText = Color(light: 0x9A5B00, dark: 0xFCD34D)
-    static let warnSoft = Color(light: 0xF59E0B, lightAlpha: 0.14, dark: 0xFBBF24, darkAlpha: 0.16)
-    static let dangerText = Color(light: 0xB91C1C, dark: 0xFCA5A5)
-    static let dangerSoft = Color(light: 0xEF4444, lightAlpha: 0.12, dark: 0xEF4444, darkAlpha: 0.16)
+    static let accent = Color(light: 0x171717, dark: 0xF5F5F5)
+    static let accentStrong = accent
+    static let accentText = accent
+    static let accentTextStrong = accent
+    static let accentSoft = Color(light: 0x171717, lightAlpha: 0.07, dark: 0xFFFFFF, darkAlpha: 0.1)
+    static let accentBorder = Color(light: 0x171717, lightAlpha: 0.24, dark: 0xFFFFFF, darkAlpha: 0.24)
+    static let successText = accent
+    static let successSoft = surfaceChip
+    static let warnText = accent
+    static let warnSoft = surfaceChip
+    static let dangerText = accent
+    static let dangerSoft = surfaceChip
 
-    // MARK: Orb (`gradient.orb*`, `effect.glow-orb`)
+    // MARK: Orb
 
     enum Orb {
-        static let core: [Gradient.Stop] = [
-            .init(color: Color(hex: 0xFFFFFF), location: 0),
-            .init(color: Color(hex: 0xCFF4FF), location: 0.16),
-            .init(color: Color(hex: 0x6FB8FF), location: 0.44),
-            .init(color: Color(hex: 0x2F6BFF), location: 0.72),
-            .init(color: Color(hex: 0x1B3BD1), location: 1),
-        ]
-        static let idle: [Gradient.Stop] = [
-            .init(color: Color(hex: 0xFFFFFF), location: 0),
-            .init(color: Color(hex: 0xE4E9F2), location: 0.4),
-            .init(color: Color(hex: 0xB9C2D6), location: 1),
-        ]
-        /// `gradient.orb-thinking`, a conic sweep starting at 200 degrees.
-        static let thinking = [Color(hex: 0x1B3BD1), Color(hex: 0x6FB8FF), Color(hex: 0xFFFFFF), Color(hex: 0x2F6BFF), Color(hex: 0x1B3BD1)]
-        static let thinkingStart: Double = 200
-        static let glow = Color(hex: 0x3E8BFF)
-        /// Ring and arc strokes; a deeper blue in light mode so they stay visible.
-        static let ring = Color(light: 0x3D63FF, dark: 0x9DBBFF)
-        /// Idle orb edge in light mode, where the frosted orb meets a pale ground.
-        static let idleEdge = Color(light: 0x8FA0C4, lightAlpha: 0.45, dark: 0xFFFFFF, darkAlpha: 0)
-        static let innerShade = Color(hex: 0x0A145A)
-        static let hero: CGFloat = 104
+        static let ink = Color(light: 0x171717, dark: 0xF5F5F5)
+        static let hero: CGFloat = 64
     }
 
     // MARK: Radii (`radius.*`) and sizes (`size.*`)
 
     enum Radius {
-        static let sm: CGFloat = 10
+        static let sm: CGFloat = 8
         static let md: CGFloat = 12
-        static let lg: CGFloat = 16
-        static let xl: CGFloat = 18
+        static let lg: CGFloat = 12
+        static let xl: CGFloat = 24
         static let xxl: CGFloat = 24
-        static let xxxl: CGFloat = 32
+        static let xxxl: CGFloat = 24
     }
 
     enum Size {
         static let touchMin: CGFloat = 44
-        static let pillHeight: CGFloat = 58
+        static let pillHeight: CGFloat = 44
         static let inputHeight: CGFloat = 52
     }
 
     // MARK: Motion (`duration.*`)
 
     enum Motion {
-        static let fast = 0.16
-        static let base = 0.24
+        static let fast = 0.12
+        static let base = 0.2
         static let panel = 0.32
         static let breathe = 4.0
-        static let listen = 1.2
-        static let think = 1.1
-        static let speak = 1.6
+        static let listen = 2.6
+        static let think = 4.5
+        static let act = 2.2
+        static let speak = 2.6
     }
 }
 
@@ -134,18 +111,18 @@ struct TypeScale {
 
     static let regular = TypeScale(
         name: "regular",
-        answer: .system(size: 26, weight: .semibold),
+        answer: .system(size: 24, weight: .semibold),
         answerTracking: -0.4,
-        time: .system(size: 30, weight: .semibold),
-        bodyStrong: .system(size: 19, weight: .semibold),
-        body: .system(size: 19, weight: .medium),
-        button: .system(size: 20, weight: .semibold),
-        meta: .system(size: 17, weight: .regular),
-        label: .system(size: 17, weight: .semibold),
-        eyebrow: .system(size: 13, weight: .semibold),
+        time: .system(size: 28, weight: .semibold),
+        bodyStrong: .system(size: 18, weight: .semibold),
+        body: .system(size: 15, weight: .regular),
+        button: .system(size: 14, weight: .medium),
+        meta: .system(size: 12, weight: .medium),
+        label: .system(size: 14, weight: .medium),
+        eyebrow: .system(size: 12, weight: .medium),
         eyebrowTracking: 1,
         display: .system(size: 36, weight: .bold),
-        control: 56
+        control: 44
     )
 
     static let large = TypeScale(
@@ -200,8 +177,7 @@ extension Color {
 
 // MARK: - Surfaces
 
-/// Dark translucent surface with a fine light rim and a soft shadow (`effect.blur-panel`,
-/// `effect.shadow-panel`, `effect.shadow-pill`).
+/// Solid surface with a fine border and a restrained shadow on panels.
 struct GlassSurface: ViewModifier {
     enum Kind { case panel, pill, flat }
     var kind: Kind = .panel
@@ -210,26 +186,12 @@ struct GlassSurface: ViewModifier {
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         content
-            .background {
-                shape
-                    .fill(.ultraThinMaterial)
-                    .overlay(shape.fill(kind == .panel ? Theme.glassPanel : Theme.glassPill))
-            }
-            .overlay {
-                shape.strokeBorder(Theme.borderGlass, lineWidth: 1)
-            }
-            .overlay {
-                shape
-                    .inset(by: 1)
-                    .stroke(
-                        LinearGradient(colors: [Theme.glassHighlight, .clear], startPoint: .top, endPoint: .center),
-                        lineWidth: 1
-                    )
-            }
+            .background(shape.fill(kind == .panel ? Theme.glassPanel : Theme.glassPill))
+            .overlay(shape.strokeBorder(Theme.borderGlass, lineWidth: 1))
             .shadow(
-                color: kind == .panel ? Theme.shadowPanel : kind == .pill ? Theme.shadowPill : .clear,
-                radius: kind == .panel ? 30 : 18,
-                y: kind == .panel ? 18 : 10
+                color: kind == .panel ? Theme.shadowPanel : .clear,
+                radius: kind == .panel ? 8 : 0,
+                y: kind == .panel ? 4 : 0
             )
     }
 }
@@ -258,32 +220,22 @@ struct BigButtonStyle: ButtonStyle {
         let shape = RoundedRectangle(cornerRadius: Theme.Radius.lg, style: .continuous)
         configuration.label
             .font(type.button)
-            .foregroundStyle(kind == .primary ? Color.white : Theme.textPrimary)
+            .foregroundStyle(kind == .primary ? Theme.canvas : Theme.textPrimary)
             .frame(maxWidth: .infinity, minHeight: type.control)
             .background(shape.fill(kind == .primary ? Theme.accent : Theme.surfaceControl))
             .overlay {
                 if kind == .secondary { shape.strokeBorder(Theme.borderInput, lineWidth: 1) }
             }
-            .shadow(color: kind == .primary && isEnabled ? Theme.accentStrong.opacity(0.4) : .clear, radius: 8, y: 6)
+            .shadow(color: .clear, radius: 0)
             .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : 0.4)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .animation(.easeOut(duration: Theme.Motion.fast), value: configuration.isPressed)
+            .animation(.timingCurve(0.4, 0, 0.2, 1, duration: Theme.Motion.fast), value: configuration.isPressed)
     }
 }
 
 struct AppBackground: View {
-    var glow: Double = 1
-
     var body: some View {
-        ZStack {
-            LinearGradient(colors: [Theme.canvas, Theme.canvasBottom], startPoint: .top, endPoint: .bottom)
-            RadialGradient(
-                colors: [Theme.accentStrong.opacity(0.22 * glow), .clear],
-                center: UnitPoint(x: 0.5, y: 0.86),
-                startRadius: 0,
-                endRadius: 380
-            )
-        }
+        Theme.canvas
         .ignoresSafeArea()
     }
 }

@@ -151,7 +151,7 @@ struct DebugSheet: View {
 
 // MARK: - Building blocks
 
-/// Glass bottom sheet (`color.glass-sheet`, radius 24 on top) with a large title,
+/// Solid bottom sheet (radius 24) with a large title,
 /// content, and big buttons at the bottom.
 private struct SheetScaffold<Content: View, Actions: View>: View {
     let title: String
@@ -176,10 +176,7 @@ private struct SheetScaffold<Content: View, Actions: View>: View {
         .padding(.horizontal, 20)
         .padding(.bottom, 12)
         .presentationBackground {
-            ZStack {
-                Rectangle().fill(.ultraThinMaterial)
-                Theme.glassSheet
-            }
+            Theme.glassSheet
         }
         .presentationCornerRadius(Theme.Radius.xxxl)
         .presentationDragIndicator(.visible)
