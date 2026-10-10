@@ -39,7 +39,7 @@ If a checkpoint slips by more than 15 minutes, cut the next stretch item instead
 2. Edit only the paths your package owns.
 3. Tests and dev loops use fixtures. Call Google, Gradium and SBB only in the live checks named in the plan.
 4. Every task has a check. Run it before the next task.
-5. Commit after every task, on `develop`, with Conventional Commits (`feat(ios): train card`). Pull before you push; paths don't overlap, so conflicts should be rare.
+5. Commit after every task on your package branch `feature/wpN-<name>`, with Conventional Commits (`feat(ios): train card`), and merge into `develop` at the checkpoints. The full rule list is in [AGENTS.md](../AGENTS.md).
 6. Secrets live in `backend/.env` and the app's settings only. `.env.example` lists every variable.
 7. The agent is read-only, and screen content is untrusted.
 
