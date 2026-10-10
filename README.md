@@ -6,7 +6,7 @@ The name is still open. The phone shows **Orbs**. The Xcode project, target and 
 
 ## Demo video
 
-Demo video: coming soon
+[Watch the 2-minute demo](https://drive.google.com/file/d/1EM2Svg7D4_B8zYPoqNN1FHxesE6iV3xr/view). The same file is in the repo: [docs/demo/orb-agent-demo.mp4](docs/demo/orb-agent-demo.mp4).
 
 ## The problem
 
