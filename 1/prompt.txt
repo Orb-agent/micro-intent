@@ -1,0 +1,1 @@
+/plan Read docs/contracts.md. Answer in one line each: (1) the TTS output_format, (2) the A2UI catalogId. Do not edit any files.

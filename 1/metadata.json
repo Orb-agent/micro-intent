@@ -1,0 +1,50 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4JW8N59W0CNTKX2MJ06KTR5",
+  "session_id": "97dd1d67-a086-4b9e-86c4-d6612b7b3bc1",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T12:23:06.533433Z",
+  "branch": "develop",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "CLAUDE.md"
+  ],
+  "agent": "Antigravity",
+  "model": "",
+  "turn_id": "f793df9c9d1a",
+  "token_usage": {
+    "input_tokens": 24769,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 11476,
+    "output_tokens": 90,
+    "api_call_count": 3
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T12:23:06.528792Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 0,
+    "total_lines_changed": 0,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 11,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "CLAUDE.md": 11
+      }
+    }
+  ]
+}
