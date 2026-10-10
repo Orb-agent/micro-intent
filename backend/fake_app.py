@@ -12,9 +12,11 @@ import asyncio
 import base64
 import json
 import os
+import ssl
 import time
 import wave
 
+import certifi
 import websockets
 from dotenv import load_dotenv
 
@@ -22,7 +24,8 @@ CHUNK_BYTES = 3840  # 80 ms of 24 kHz s16 mono
 
 
 async def main(args: argparse.Namespace) -> None:
-    async with websockets.connect(args.url, max_size=None) as ws:
+    tls = ssl.create_default_context(cafile=certifi.where()) if args.url.startswith("wss") else None
+    async with websockets.connect(args.url, max_size=None, ssl=tls) as ws:
         await ws.send(json.dumps({"type": "hello", "token": os.environ["APP_TOKEN"]}))
         print(json.loads(await ws.recv()))
         if args.text:
