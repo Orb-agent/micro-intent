@@ -35,7 +35,7 @@ async def test_read_google_doc(fake_google):
         result = await drive_read("1AbC-new", client=client)
 
     assert fake_google.api_requests()[1].url.params["mimeType"] == "text/plain"
-    assert result["text"] == "Packing list Lisbon\r\n- Passport\r\n- Charger"
+    assert result["text"] == "Packing list Lisbon\n- Passport\n- Charger"  # the fixture has LF since 443e5df
     assert result["truncated"] is False and result["type"] == "document"
 
 
