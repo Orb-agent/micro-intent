@@ -3,8 +3,9 @@
   "checkpoint_id": "01M4K3P36QK01GSFTBF9W9QZGX",
   "strategy": "manual-commit",
   "branch": "fm/micro-intent-agent-wp3-v1",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
+    ".claude/worktrees/agent-aad387fe601279689/backend/static/index.html",
     ".claude/worktrees/voice-design/backend/app.py",
     ".claude/worktrees/voice-design/backend/dev_agent.py",
     ".claude/worktrees/voice-design/backend/tests/test_app.py",
@@ -17,13 +18,27 @@
       "compact_transcript": "/0/transcript.jsonl",
       "content_hash": "/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/1/metadata.json",
+      "transcript": "/1/full.jsonl",
+      "compact_transcript": "/1/transcript.jsonl",
+      "content_hash": "/1/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
-    "input_tokens": 16,
-    "cache_creation_tokens": 10159,
-    "cache_read_tokens": 1273638,
-    "output_tokens": 6525,
-    "api_call_count": 8
+    "input_tokens": 28,
+    "cache_creation_tokens": 14576,
+    "cache_read_tokens": 1793847,
+    "output_tokens": 8288,
+    "api_call_count": 13,
+    "subagent_tokens": {
+      "input_tokens": 56,
+      "cache_creation_tokens": 39697,
+      "cache_read_tokens": 3377993,
+      "output_tokens": 1167,
+      "api_call_count": 28
+    }
   }
 }
