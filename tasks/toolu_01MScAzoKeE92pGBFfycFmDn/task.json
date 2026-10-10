@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01MScAzoKeE92pGBFfycFmDn",
+  "agent_id": "a27693c270f7fc6cb",
+  "subagent_type": "general-purpose",
+  "task_description": "Research A2UI v0.9 contract",
+  "token_usage": {
+    "input_tokens": 156,
+    "cache_creation_tokens": 247228,
+    "cache_read_tokens": 11534912,
+    "output_tokens": 940,
+    "api_call_count": 78
+  },
+  "started_at": "2026-10-10T13:52:10.028819+02:00",
+  "completed_at": "2026-10-10T14:04:07.284578+02:00"
+}

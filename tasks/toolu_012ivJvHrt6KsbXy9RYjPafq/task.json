@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_012ivJvHrt6KsbXy9RYjPafq",
+  "agent_id": "ad0e406af7c354bd0",
+  "subagent_type": "general-purpose",
+  "task_description": "Research Gradium STT/TTS API",
+  "token_usage": {
+    "input_tokens": 100,
+    "cache_creation_tokens": 204976,
+    "cache_read_tokens": 6769048,
+    "output_tokens": 661,
+    "api_call_count": 50
+  },
+  "started_at": "2026-10-10T13:52:10.030061+02:00",
+  "completed_at": "2026-10-10T14:03:58.512414+02:00"
+}
