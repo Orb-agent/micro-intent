@@ -11,7 +11,7 @@ struct ContentView: View {
         VStack(spacing: 0) {
             topBar
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 14) {
                     if let screen = session.screen {
                         ScreenChip(summary: screen.summary)
                             .transition(.move(edge: .top).combined(with: .opacity))
@@ -21,7 +21,7 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
-                .padding(.bottom, 24)
+                .padding(.bottom, 28)
                 .animation(.spring(duration: Theme.Motion.panel), value: session.screen)
                 .animation(.spring(duration: Theme.Motion.panel), value: session.reply)
             }
@@ -31,7 +31,7 @@ struct ContentView: View {
                 VStack(spacing: 0) {
                     Color.black
                     LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
-                        .frame(height: 28)
+                        .frame(height: 20)
                 }
             }
             orbDock
@@ -80,6 +80,12 @@ struct ContentView: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
             CardsView(surfaces: session.surfaces, cards: reply.cards)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
+            if session.orb == .idle {
+                // After the cards, never over them.
+                IntentChips { session.ask($0) }
+                    .padding(.horizontal, -20)
+                    .transition(.opacity)
+            }
         } else if session.transcript == nil {
             Welcome(listening: session.orb == .listening)
         }
@@ -97,11 +103,7 @@ struct ContentView: View {
 
     private var orbDock: some View {
         VStack(spacing: 6) {
-            if session.reply != nil && session.orb == .idle {
-                IntentChips { session.ask($0) }
-                    .transition(.opacity)
-            }
-            OrbView(state: session.orb, scale: hasTurn ? 0.78 : 1)
+            OrbView(state: session.orb, scale: hasTurn ? 0.72 : 1)
                 .contentShape(Circle())
                 .onLongPressGesture(minimumDuration: 0.5) {
                     sheet = .debug

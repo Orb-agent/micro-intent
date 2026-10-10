@@ -10,7 +10,7 @@ struct OrbView: View {
 
     private var orbSize: CGFloat { Theme.Orb.hero * scale }
     /// Layout size; rings may draw past it so idle does not reserve their space.
-    private var slot: CGFloat { 150 * scale }
+    private var slot: CGFloat { 132 * scale }
 
     var body: some View {
         TimelineView(.animation(paused: reduceMotion)) { timeline in
