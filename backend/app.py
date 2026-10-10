@@ -17,6 +17,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse
 
 import voice
 
@@ -78,7 +79,14 @@ def make_agent():
 
             return Agent()
         except ImportError:
-            log.warning("agent.py not available yet, using StubAgent")
+            pass
+        try:  # prototype stand-in until WP3's agent.py lands
+            from dev_agent import DevAgent
+
+            log.info("agent.py not available yet, using DevAgent")
+            return DevAgent()
+        except ImportError:
+            log.warning("no agent.py or dev_agent.py, using StubAgent")
     return StubAgent()
 
 
@@ -142,6 +150,12 @@ async def take_screen() -> tuple[Screenshot | None, dict | None]:
 
 
 app = FastAPI()
+
+
+@app.get("/")
+async def prototype_client():
+    """Mac prototype client (static/index.html); the iPhone app doesn't use it."""
+    return FileResponse(HERE / "static" / "index.html")
 
 
 @app.get("/health")
