@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 import time
@@ -149,3 +150,26 @@ def test_vision_failure(client, agent, monkeypatch):
     ctx.__exit__(None, None, None)
     assert "reply" in kinds(msgs)
     assert agent.screens == [None]
+
+
+def test_interrupted_turn_leaves_the_screen_for_the_re_ask(client, agent, monkeypatch):
+    calls = []
+
+    async def slow_first_turn(text, screen, on_status):
+        calls.append(screen)
+        if len(calls) == 1:
+            await asyncio.sleep(5)  # the user interrupts this one
+        return json.loads((server.FIXTURES / "demo_reply.json").read_text())
+
+    monkeypatch.setattr(agent, "turn", slow_first_turn)
+    ctx, ws = connect(client)
+    client.post("/screenshot", content=PNG, headers=AUTH)
+    assert ws.receive_json()["type"] == "screen_ok"
+    ws.send_json({"type": "text", "text": "Can I make it?"})
+    deadline = time.monotonic() + 2
+    while not calls and time.monotonic() < deadline:
+        time.sleep(0.01)
+    ws.send_json({"type": "text", "text": "Wait, can I make it?"})  # interrupts the first turn
+    receive_turn(ws)
+    ctx.__exit__(None, None, None)
+    assert calls == [SCREEN, SCREEN]

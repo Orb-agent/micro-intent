@@ -103,9 +103,10 @@ async def read_latest(shot: Screenshot) -> dict | None:
         log.warning("vision.py not available, screenshot %d not read", shot.id)
     else:
         try:
-            screen = await asyncio.to_thread(read_screen, shot.image, shot.mime)
-            if inspect.isawaitable(screen):  # in case read_screen is async
-                screen = await screen
+            if inspect.iscoroutinefunction(read_screen):
+                screen = await read_screen(shot.image, shot.mime)
+            else:  # a sync read_screen must not block the event loop
+                screen = await asyncio.to_thread(read_screen, shot.image, shot.mime)
         except Exception:
             log.exception("vision failed on screenshot %d", shot.id)
         screen = screen if isinstance(screen, dict) else None
@@ -125,17 +126,19 @@ def store_screenshot(image: bytes, mime: str) -> None:
     log.info("screenshot %d: %d bytes %s", latest.id, len(image), mime)
 
 
-async def take_screen() -> dict | None:
-    """The latest ScreenContext if it is fresh and unused (contracts § HTTP, screenshot rule)."""
+async def take_screen() -> tuple[Screenshot | None, dict | None]:
+    """The latest screenshot and its ScreenContext if fresh and unused (contracts § HTTP).
+
+    The caller marks it used once its turn completes, so a turn the user interrupts
+    leaves the screen for the question they ask next."""
     shot = latest
     if shot is None or shot.used or time.monotonic() - shot.at > SCREEN_MAX_AGE:
-        return None
+        return None, None
     await asyncio.wait({shot.task}, timeout=VISION_WAIT)  # never cancels the vision task
-    shot.used = True  # after the wait, so an interrupted turn leaves it for the next one
     if not shot.task.done() or shot.task.cancelled():
         log.warning("screenshot %d not read within %ds, turn goes without it", shot.id, VISION_WAIT)
-        return None
-    return shot.task.result()
+        return None, None
+    return shot, shot.task.result()
 
 
 app = FastAPI()
@@ -188,7 +191,7 @@ class Session:
         async def on_status(label: str) -> None:
             await self.state("searching", label)
 
-        screen = await take_screen()
+        shot, screen = await take_screen()
         timings["vision_wait"] = time.monotonic() - t0
         t_agent = time.monotonic()
         try:
@@ -199,6 +202,8 @@ class Session:
             await self.state("idle")
             return
         timings["agent"] = time.monotonic() - t_agent
+        if shot is not None:
+            shot.used = True
 
         await self.send({"type": "reply", "say": reply["say"], "cards": reply["cards"]})
         if cards_to_a2ui and reply["cards"]:
