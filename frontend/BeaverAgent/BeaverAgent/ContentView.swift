@@ -116,12 +116,6 @@ struct ContentView: View {
                 .transition(.orbsCard(reduceMotion: reduceMotion))
             CardsView(surfaces: session.surfaces, cards: session.inlineCards)
                 .transition(.orbsCard(reduceMotion: reduceMotion))
-            if session.orb == .idle {
-                // After the cards, never over them.
-                IntentChips { session.ask($0) }
-                    .padding(.horizontal, -20)
-                    .transition(.opacity)
-            }
         } else if session.transcript == nil {
             Welcome(listening: session.orb == .listening, handsFree: session.handsFree)
                 .transition(.opacity)
