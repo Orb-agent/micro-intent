@@ -123,42 +123,46 @@ struct ProfileSheet: View {
 
     private var roleBanner: some View {
         let isForMe = userRoleRaw == UserRole.forMe.rawValue
-        return HStack(alignment: .center, spacing: 14) {
-            Image(systemName: isForMe ? "person.fill" : "person.2.fill")
-                .font(.system(size: 26, weight: .semibold))
-                .foregroundStyle(Theme.accentText)
-                .frame(width: 48, height: 48)
-                .background(Circle().fill(Theme.accentSoft))
+        return Button {
+            showFirstRunSheet = true
+        } label: {
+            HStack(alignment: .center, spacing: 14) {
+                Image(systemName: isForMe ? "person.fill" : "person.2.fill")
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundStyle(Theme.accentText)
+                    .frame(width: 48, height: 48)
+                    .background(Circle().fill(Theme.accentSoft))
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(isForMe ? "Setup: For myself" : "Setup: For someone I help")
-                    .font(type.bodyStrong)
-                    .foregroundStyle(Theme.textPrimary)
-                Text(helperMode ? "Lena can help with settings" : "Voice and display tailored for direct use")
-                    .font(type.meta)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(isForMe ? "For me" : "For someone I help")
+                        .font(type.bodyStrong)
+                        .foregroundStyle(Theme.textPrimary)
+                    Text(helperMode ? "Lena can help with settings" : "Voice and display tailored for you")
+                        .font(type.meta)
+                        .foregroundStyle(Theme.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 8)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Theme.textMuted)
             }
-
-            Spacer()
-
-            Button("Change") {
-                showFirstRunSheet = true
-            }
-            .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(Theme.accentText)
-            .padding(.horizontal, 14)
-            .frame(minHeight: 44)
-            .background(Capsule().fill(Theme.surfaceControl))
+            .padding(16)
+            .frame(maxWidth: .infinity, minHeight: max(60, type.control), alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous)
+                    .fill(Theme.surfaceCard)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous)
+                    .strokeBorder(Theme.borderGlass, lineWidth: 1)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous))
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous)
-                .fill(Theme.surfaceCard)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous)
-                .strokeBorder(Theme.borderGlass, lineWidth: 1)
-        )
+        .buttonStyle(.plain)
+        .accessibilityHint("Change who this iPhone is for")
     }
 
     private var homeSection: some View {
