@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 import pytest
 from fastapi.testclient import TestClient
@@ -57,6 +58,31 @@ def connect(client):
     conn.send_json({"type": "hello", "token": "test-token"})
     assert conn.receive_json() == {"type": "ready"}
     return ws, conn
+
+
+def test_real_agent_websocket_startup(client, monkeypatch):
+    """Exercise the production factory/import path without calling Google or Gemini."""
+    import agent
+
+    context = json.loads((server.FIXTURES / "context.json").read_text(encoding="utf-8"))
+    started = []
+
+    async def fixture_context():
+        started.append("context")
+        return context
+
+    async def fixture_scopes():
+        started.append("scopes")
+        return set()
+
+    monkeypatch.setenv("MOCK_AGENT", "0")
+    monkeypatch.setattr(agent, "load_context", fixture_context)
+    monkeypatch.setattr(agent.google, "granted_scopes", fixture_scopes)
+    assert isinstance(server.make_agent(), agent.Agent)
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "hello", "token": "test-token"})
+        assert ws.receive_json() == {"type": "ready"}
+        assert sorted(started) == ["context", "scopes"]
 
 
 def test_conflict_popup_client_is_served(client):
