@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K30TKE03PQH7WJ1G38NCTA",
+  "session_id": "c8fca5a7-569a-4bbb-8663-d778fcb0c898",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T14:21:12.587463Z",
+  "branch": "feature/wp2-contract-maps",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/contracts.md",
+    "docs/work-packages.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "9fd5376971a5",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 4,
+    "cache_creation_tokens": 32806,
+    "cache_read_tokens": 116688,
+    "output_tokens": 2621,
+    "api_call_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T14:21:12.577281Z",
+    "agent_lines": 13,
+    "agent_removed": 7,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 13,
+    "total_lines_changed": 20,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K30TKE03PQH7WJ1G38NCTA",
+  "strategy": "manual-commit",
+  "branch": "feature/wp2-contract-maps",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/contracts.md",
+    "docs/work-packages.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 4,
+    "cache_creation_tokens": 32806,
+    "cache_read_tokens": 116688,
+    "output_tokens": 2621,
+    "api_call_count": 2
+  }
+}
