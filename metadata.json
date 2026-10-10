@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K28YYRCRKSDV7BYJESZSAT",
+  "strategy": "manual-commit",
+  "branch": "feature/wp1-ios-voice",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "frontend/BeaverAgent/BeaverAgent/VoiceIO.swift"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 104,
+    "cache_creation_tokens": 120734,
+    "cache_read_tokens": 6885720,
+    "output_tokens": 56709,
+    "api_call_count": 52
+  }
+}
