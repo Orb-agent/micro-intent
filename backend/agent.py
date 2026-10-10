@@ -87,6 +87,11 @@ trains and buses always go through `sbb_connections`. There is no Maps card: nam
 the time in `say`.
 Calendar questions get `event` cards with the event's own `source`; flight questions get a \
 `flight` card from the email.
+Whenever calendar events relevant to the user's question overlap, include a `conflict` card \
+with verdict `clash`: the earlier event is `event`, and the other event's title, start and \
+location are `proposal`. Prefer this card over duplicate event cards within the three-card \
+limit. The client shows a small attention pop-up for `clash` or `tight`; use `fits` only when \
+the plan actually fits, and do not invent a conflict just to show UI.
 
 When the turn includes <trains>, that lookup already ran for the plan on screen, with the \
 blocking event and the walk taken into account: answer from it and don't call `sbb_connections` \
