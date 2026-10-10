@@ -48,7 +48,7 @@ struct SettingsSheet: View {
             VStack(alignment: .leading, spacing: 22) {
                 ProfileSettingsCard()
 
-                ToggleRow(title: "Hands-free", detail: "Just talk, no holding. Talk over the answer to stop it", isOn: $handsFree)
+                ToggleRow(title: "Hands-free", detail: "Just talk, no holding. Answers also show in the Dynamic Island while you use other apps", isOn: $handsFree)
 
                 ToggleRow(title: "Large text", detail: "Bigger answers, cards and buttons", isOn: $largeText)
 

@@ -101,6 +101,9 @@ final class AgentSession {
 
     private let client = WebSocketClient()
     private let voice = VoiceIO()
+    private let activity = HandsFreeActivity()
+    /// This turn's `reply` arrived; false again once the next turn starts.
+    private var answered = false
     private var press = Press.none
     private var pressDecision: Task<Void, Never>?
     /// After an interrupt, the cancelled turn's `audio` frames are dropped until the next turn.
@@ -110,8 +113,14 @@ final class AgentSession {
 
     init() {
         voice.onChunk = { [weak self] in self?.micChunk($0) }
-        voice.onPlayingChange = { [weak self] in self?.isPlaying = $0 }
-        voice.onProblem = { [weak self] in self?.errorMessage = $0 }
+        voice.onPlayingChange = { [weak self] in
+            self?.isPlaying = $0
+            self?.syncActivity()
+        }
+        voice.onProblem = { [weak self] in
+            self?.errorMessage = $0
+            self?.syncActivity()
+        }
         client.onMessage = { [weak self] in self?.handle($0) }
         client.onStatus = { [weak self] status in
             guard let self, connection != .fixtures else { return }
@@ -128,25 +137,30 @@ final class AgentSession {
     // MARK: - Connection
 
     /// Applies the settings: fixture mode, or the live server at `serverURL`.
+    /// Hands-free also runs the Live Activity. With demo data it keeps the mic open without
+    /// sending it anywhere, which keeps the app running in the background like a live
+    /// session, so typed questions rehearse the Dynamic Island.
     func configure(useFixtures: Bool, serverURL: String, token: String, handsFree: Bool) {
         cancelPress()
         voice.stopPlayback()
-        guard !useFixtures, let url = WebSocketClient.endpointURL(from: serverURL) else {
-            client.disconnect()
-            voice.stop()
-            connection = .fixtures
-            self.handsFree = false
-            return
-        }
         self.handsFree = handsFree
-        connection = .connecting
-        client.connect(url: url, token: token, mode: handsFree ? .handsfree : .ptt)
-        voice.start()
+        if !useFixtures, let url = WebSocketClient.endpointURL(from: serverURL) {
+            connection = .connecting
+            client.connect(url: url, token: token, mode: handsFree ? .handsfree : .ptt)
+            voice.start()
+        } else {
+            client.disconnect()
+            connection = .fixtures
+            if handsFree { voice.start() } else { voice.stop() }
+        }
+        if handsFree { activity.start(activityState) } else { activity.end() }
     }
 
     func appBecameActive() {
         client.ensureConnected()
-        if connection != .fixtures { voice.resume() }
+        if connection != .fixtures || handsFree { voice.resume() }
+        // The user may have dismissed the Live Activity; it can only start in the foreground.
+        if handsFree { activity.start(activityState) }
     }
 
     // MARK: - Talking
@@ -221,6 +235,7 @@ final class AgentSession {
         stopSpeaking()
         serverState = .idle
         label = nil
+        syncActivity()
     }
 
     /// Stops the mascot now, without waiting for the server, and drops the rest of its audio.
@@ -256,6 +271,9 @@ final class AgentSession {
     // MARK: - Server frames
 
     func handle(_ message: ServerMessage) {
+        defer {
+            if case .reply = message { syncActivity(alert: true) } else { syncActivity() }
+        }
         switch message {
         case .ready, .unknown:
             break
@@ -276,10 +294,12 @@ final class AgentSession {
                 steps = []  // a new turn starts
                 errorMessage = nil
                 awaitingReply = true
+                answered = false
             }
             if state == .idle || state == .listening {
                 awaitingReply = false
             }
+            if state == .listening { answered = false }
             if state == .searching, let label, steps.last != label {
                 steps.append(label)
             }
@@ -301,6 +321,7 @@ final class AgentSession {
             self.reply = reply
             travelPlan = TravelPlan.make(cards: reply.cards, question: transcript ?? "")
             replyRevision += 1
+            answered = true
             surfaces = []
             conflictSurfaces = []
             conflictIndices = Set(reply.cards.enumerated().filter {
@@ -351,6 +372,15 @@ final class AgentSession {
     }
 
     // MARK: - Private
+
+    private var activityState: OrbActivityAttributes.ContentState {
+        .init(orb: orb, label: label, transcript: transcript, reply: reply, answered: answered, error: errorMessage)
+    }
+
+    /// Mirrors the orb on the Live Activity; a new reply alerts.
+    private func syncActivity(alert: Bool = false) {
+        activity.update(activityState, alert: alert)
+    }
 
     private func showScreen(_ notice: ScreenNotice) {
         // A turn that started while vision was reading this screenshot waits for it and uses it.

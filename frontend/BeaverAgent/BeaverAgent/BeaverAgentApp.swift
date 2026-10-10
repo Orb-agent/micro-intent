@@ -71,7 +71,7 @@ struct BeaverAgentApp: App {
 }
 
 /// Launch arguments for rehearsals and screenshots, e.g.
-/// `-demoScene searching`, `-demoSheet debug`, `-demoAsk "Can I make it?"`.
+/// `-demoScene searching`, `-demoSheet debug`, `-demoAsk "Can I make it?"`, `-demoAskDelay 10`.
 /// Live server only: `-demoHold 3` holds the orb for 3 s once connected, `-demoTapAt 9`
 /// taps it 9 s after connecting; with `-micFile` this drives the voice path without a finger.
 @MainActor
@@ -85,8 +85,10 @@ enum DemoLaunch {
             sheet.wrappedValue = value
         }
         if let question = defaults.string(forKey: "demoAsk") {
+            // `-demoAskDelay 10` leaves time to switch to another app first (hands-free keeps it running).
+            let delay = defaults.object(forKey: "demoAskDelay") == nil ? 2 : defaults.double(forKey: "demoAskDelay")
             Task {
-                try? await Task.sleep(for: .seconds(2))
+                try? await Task.sleep(for: .seconds(delay))
                 session.ask(question)
             }
         }

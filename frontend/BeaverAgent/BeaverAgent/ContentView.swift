@@ -117,7 +117,7 @@ struct ContentView: View {
             CardsView(surfaces: session.surfaces, cards: session.inlineCards)
                 .transition(.orbsCard(reduceMotion: reduceMotion))
         } else if session.transcript == nil {
-            Welcome(listening: session.orb == .listening, handsFree: session.handsFree)
+            Welcome(listening: session.orb == .listening, handsFree: session.handsFree && session.connection != .fixtures)
                 .transition(.opacity)
         }
         if let error = session.errorMessage {
