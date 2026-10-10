@@ -170,6 +170,8 @@ async def test_invalid_cards_retry_once_then_no_cards(ag, fake_interactions, sbb
     reply = await ag.turn("Can I make it?", None, on_status)
     assert reply == {"say": "Take the 18:01.", "cards": []}
     assert len(inter.calls) == 2
+    # contracts § Tools: forced function calling, respond only, on the retry
+    assert inter.calls[1]["generation_config"]["tool_choice"] == {"allowed_tools": {"mode": "any", "tools": ["respond"]}}
 
 
 @pytest.mark.asyncio

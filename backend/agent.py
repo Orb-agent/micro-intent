@@ -305,7 +305,7 @@ class Agent:
             last = step == MAX_STEPS - 1
             step_t0 = time.monotonic()
 
-            tool_choice: Any = {"allowed_tools": {"tools": ["respond"]}} if last else "any"
+            tool_choice: Any = {"allowed_tools": {"mode": "any", "tools": ["respond"]}} if last else "any"
             gen_cfg = {
                 "thinking_level": "low",
                 "tool_choice": tool_choice,
@@ -359,7 +359,7 @@ class Agent:
                         "result": json.dumps(out, ensure_ascii=False),
                     })
 
-                next_tool_choice: Any = {"allowed_tools": {"tools": ["respond"]}} if (step + 1 == MAX_STEPS - 1) else "any"
+                next_tool_choice: Any = {"allowed_tools": {"mode": "any", "tools": ["respond"]}} if (step + 1 == MAX_STEPS - 1) else "any"
                 interaction = await gen_client.aio.interactions.create(
                     input=results,
                     previous_interaction_id=interaction.id,
@@ -390,7 +390,7 @@ class Agent:
                     interaction = await gen_client.aio.interactions.create(
                         input=results,
                         previous_interaction_id=interaction.id,
-                        generation_config={"thinking_level": "low", "tool_choice": {"allowed_tools": {"tools": ["respond"]}}},
+                        generation_config={"thinking_level": "low", "tool_choice": {"allowed_tools": {"mode": "any", "tools": ["respond"]}}},
                         **common_config,
                     )
                     continue
