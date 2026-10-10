@@ -78,12 +78,12 @@ def test_text_turn_order(client):
     msgs = receive_turn(ws)
     ctx.__exit__(None, None, None)
     assert kinds(msgs) == [
-        "state:thinking", "state:searching", "reply", "state:speaking",
+        "state:thinking", "state:searching", "reply", "a2ui", "state:speaking",
         "audio", "audio", "audio_end", "state:idle",
     ]
     reply = msgs[2]
     assert [c["kind"] for c in reply["cards"]] == ["conflict", "train"]
-    assert msgs[4]["data"] == "AAAA"
+    assert msgs[5]["data"] == "AAAA"
 
 
 def test_voice_turn(client):
