@@ -176,6 +176,7 @@ Swift decoding: `keyDecodingStrategy = .convertFromSnakeCase`, `dateDecodingStra
 
 - Use the catalog id exactly as written. It's a2ui-swift's `basicCatalogId`; the React renderer uses a different one.
 - Format times as `HH:MM` in Europe/Zurich on the server, so the app doesn't need A2UI format functions. Event and flight cards also show the day (`Sat 17 Oct`), since they are often about another day.
+- Each card is a `Card` holding a `Column` of `Text`: the hero line first with `variant: "h2"` (the times; the verdict for `conflict`; the title for `event`), then plain detail lines, then an optional `variant: "caption"` meta line. The app styles these three; other variants get no special look.
 - Use a new `surfaceId` per reply, and one `SurfaceViewModel(catalog: basicCatalog)` per surface in the app.
 - No buttons or actions in the MVP.
 
