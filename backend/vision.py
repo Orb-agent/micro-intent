@@ -166,11 +166,13 @@ def _parses(value: str, pattern: str, fmt: str) -> bool:
     return True
 
 
-async def _cli(path: str) -> None:
-    with open(path, "rb") as f:
-        image = f.read()
+async def _cli(*paths: str) -> None:
+    frames = []
+    for path in paths:
+        with open(path, "rb") as f:
+            frames.append(f.read())
     t0 = time.monotonic()
-    context = await read_screen(image, mimetypes.guess_type(path)[0] or "image/jpeg")
+    context = await read_screen(frames[-1], mimetypes.guess_type(paths[-1])[0] or "image/jpeg", earlier=frames[:-1])
     print(json.dumps(context, indent=2, ensure_ascii=False))
     print(f"took {time.monotonic() - t0:.2f} s")
 
@@ -181,4 +183,4 @@ if __name__ == "__main__":
     load_dotenv()
     load_dotenv("../.env")
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
-    asyncio.run(_cli(sys.argv[1]))
+    asyncio.run(_cli(*sys.argv[1:]))
