@@ -49,6 +49,15 @@ The orb shows `speaking` while TTS audio is still queued, even after the server'
 After an interrupt, the rest of the cancelled turn's audio is dropped until the next turn's `state: thinking`.
 The console logs one line per reply (`voice: reply played, … underruns`) and every stop (`voice: playback stopped …`).
 
+## Live Activity
+
+Hands-free also starts a Live Activity (`OrbActivity/`, the `OrbActivityExtension` target), drawn on the lock screen and in the Dynamic Island.
+It shows the orb's state, the reply's `say` line and the card worth a glance: the first train or flight, otherwise the first card, plus a conflict verdict in one line.
+A new reply updates it with an alert, so the island opens briefly over the app in front; with Live Activities off, a local notification carries the reply instead.
+`UIBackgroundModes` `audio` (in `BeaverAgent-Info.plist`) keeps the mic, the WebSocket and playback running while another app is in front.
+With demo data, hands-free keeps the mic open without sending it anywhere, so `-demoAsk "Can I make it?" -demoAskDelay 12` leaves time to switch to Messages and watch the island.
+Free Apple ID signing is enough: no push entitlement, no App Group; the extension's bundle ID is `ch.microintent.BeaverAgent.OrbActivity`.
+
 ## Files
 
 | File | Role |
