@@ -1,0 +1,11 @@
+<!-- reply 1 -->
+> Use gemini-3.8-flash.
+
+yes lets use
+
+
+ok, so we sugggested to build swift ui app then my colleague will work on agent harness and i will work on voice processing and gemini vision part. I suggest that would be much faster
+
+---
+
+https://github.com/BBC6BAE9/a2ui-swift
