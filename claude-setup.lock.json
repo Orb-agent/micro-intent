@@ -1,0 +1,226 @@
+{
+  "schemaVersion": "1",
+  "kitVersion": "dc25620",
+  "installedAt": "2026-10-10T11:35:58.907Z",
+  "lastUpdated": "2026-10-10T11:35:58.907Z",
+  "selectedGroups": [
+    "essential",
+    "github",
+    "frontend",
+    "ml",
+    "diagrams",
+    "remotion",
+    "agent-skills",
+    "headroom",
+    "python",
+    "marketing"
+  ],
+  "projectName": "micro-intent",
+  "vcsProvider": "github",
+  "installedSkills": {
+    "git-operations": {
+      "assetHash": "b6dbd18a321ddc0e2be071b1c8977f6e71ccf22a5094be3d0a2653ce101d5ec5",
+      "installedHash": "b6dbd18a321ddc0e2be071b1c8977f6e71ccf22a5094be3d0a2653ce101d5ec5",
+      "installedAt": "2026-10-10T11:35:58.860Z",
+      "updatedAt": "2026-10-10T11:35:58.862Z"
+    },
+    "adapt": {
+      "assetHash": "a960b3dec6b096ee11a712f952c21a86c0d2856fe45588fe7486bfd482445438",
+      "installedHash": "a960b3dec6b096ee11a712f952c21a86c0d2856fe45588fe7486bfd482445438",
+      "installedAt": "2026-10-10T11:35:58.864Z",
+      "updatedAt": "2026-10-10T11:35:58.864Z"
+    },
+    "animate": {
+      "assetHash": "70b6be1e085beab81f5fe551f2766f54df0272c37f8d6e487bdf39f30366af4c",
+      "installedHash": "70b6be1e085beab81f5fe551f2766f54df0272c37f8d6e487bdf39f30366af4c",
+      "installedAt": "2026-10-10T11:35:58.865Z",
+      "updatedAt": "2026-10-10T11:35:58.865Z"
+    },
+    "arrange": {
+      "assetHash": "775f157cd6f0025de37e1264aac04f681b13a7ad3603046dd5ffe9f423b80de4",
+      "installedHash": "775f157cd6f0025de37e1264aac04f681b13a7ad3603046dd5ffe9f423b80de4",
+      "installedAt": "2026-10-10T11:35:58.866Z",
+      "updatedAt": "2026-10-10T11:35:58.866Z"
+    },
+    "audit": {
+      "assetHash": "3a475438b19d48dec53fe15e13f0e87d6584bfff81189b00f382a2c620ecf350",
+      "installedHash": "3a475438b19d48dec53fe15e13f0e87d6584bfff81189b00f382a2c620ecf350",
+      "installedAt": "2026-10-10T11:35:58.868Z",
+      "updatedAt": "2026-10-10T11:35:58.868Z"
+    },
+    "bolder": {
+      "assetHash": "855be81eca8f07172c5dcce7cdca30a462274bdf6ee46d32fcc7eb56600cbd12",
+      "installedHash": "855be81eca8f07172c5dcce7cdca30a462274bdf6ee46d32fcc7eb56600cbd12",
+      "installedAt": "2026-10-10T11:35:58.869Z",
+      "updatedAt": "2026-10-10T11:35:58.869Z"
+    },
+    "clarify": {
+      "assetHash": "cf9de9c30952ba929b08638b540a9dbc4f92e437986809a87d31e22278dcb735",
+      "installedHash": "cf9de9c30952ba929b08638b540a9dbc4f92e437986809a87d31e22278dcb735",
+      "installedAt": "2026-10-10T11:35:58.870Z",
+      "updatedAt": "2026-10-10T11:35:58.870Z"
+    },
+    "colorize": {
+      "assetHash": "5cf1a997868894926e5f6bdf5fc863e867be2f5fe9e8835d966a288981e3b7b8",
+      "installedHash": "5cf1a997868894926e5f6bdf5fc863e867be2f5fe9e8835d966a288981e3b7b8",
+      "installedAt": "2026-10-10T11:35:58.871Z",
+      "updatedAt": "2026-10-10T11:35:58.871Z"
+    },
+    "critique": {
+      "assetHash": "01dc72ed1960a0e3c5120a8fbab64b56d6557c570414bf7152bd78c4f68165c9",
+      "installedHash": "01dc72ed1960a0e3c5120a8fbab64b56d6557c570414bf7152bd78c4f68165c9",
+      "installedAt": "2026-10-10T11:35:58.874Z",
+      "updatedAt": "2026-10-10T11:35:58.874Z"
+    },
+    "delight": {
+      "assetHash": "d997a72e069d9e2757f59685d5336ada9165c8cc0e9d158fba139ddf94019bcc",
+      "installedHash": "d997a72e069d9e2757f59685d5336ada9165c8cc0e9d158fba139ddf94019bcc",
+      "installedAt": "2026-10-10T11:35:58.874Z",
+      "updatedAt": "2026-10-10T11:35:58.874Z"
+    },
+    "distill": {
+      "assetHash": "dffb5ad02d3fd8e4cdc7381cb3ecce1ec7d8048657e7a9eecf3a20c8097e280c",
+      "installedHash": "dffb5ad02d3fd8e4cdc7381cb3ecce1ec7d8048657e7a9eecf3a20c8097e280c",
+      "installedAt": "2026-10-10T11:35:58.875Z",
+      "updatedAt": "2026-10-10T11:35:58.875Z"
+    },
+    "extract": {
+      "assetHash": "b3c65112289c0f9d3815c605132e5792d32b71b1ab53a6596ca7e3a2a68ce88b",
+      "installedHash": "b3c65112289c0f9d3815c605132e5792d32b71b1ab53a6596ca7e3a2a68ce88b",
+      "installedAt": "2026-10-10T11:35:58.876Z",
+      "updatedAt": "2026-10-10T11:35:58.876Z"
+    },
+    "frontend-design": {
+      "assetHash": "2a43ac4549e0817082c2a298e51fd579c63a7a936321b10dbbefcc5003d441fc",
+      "installedHash": "2a43ac4549e0817082c2a298e51fd579c63a7a936321b10dbbefcc5003d441fc",
+      "installedAt": "2026-10-10T11:35:58.879Z",
+      "updatedAt": "2026-10-10T11:35:58.879Z"
+    },
+    "harden": {
+      "assetHash": "3b771a43bff6289c972835663013fd69f9437759cef69015ab182e0efce557f9",
+      "installedHash": "3b771a43bff6289c972835663013fd69f9437759cef69015ab182e0efce557f9",
+      "installedAt": "2026-10-10T11:35:58.880Z",
+      "updatedAt": "2026-10-10T11:35:58.880Z"
+    },
+    "normalize": {
+      "assetHash": "1321fb31e5b3f9ffe42039193927d2c72117f6968645a2c2fa6934211e60552b",
+      "installedHash": "1321fb31e5b3f9ffe42039193927d2c72117f6968645a2c2fa6934211e60552b",
+      "installedAt": "2026-10-10T11:35:58.880Z",
+      "updatedAt": "2026-10-10T11:35:58.880Z"
+    },
+    "onboard": {
+      "assetHash": "cd5ec9f3b925caae216e1b41ed66538f54e07b22333c7aee7dbd61e17aa4b41e",
+      "installedHash": "cd5ec9f3b925caae216e1b41ed66538f54e07b22333c7aee7dbd61e17aa4b41e",
+      "installedAt": "2026-10-10T11:35:58.881Z",
+      "updatedAt": "2026-10-10T11:35:58.881Z"
+    },
+    "optimize": {
+      "assetHash": "71caee1a977ed307df1fa74adb9b0e9c13ee168e6fda964f602f0b4dba6b7ea0",
+      "installedHash": "71caee1a977ed307df1fa74adb9b0e9c13ee168e6fda964f602f0b4dba6b7ea0",
+      "installedAt": "2026-10-10T11:35:58.881Z",
+      "updatedAt": "2026-10-10T11:35:58.881Z"
+    },
+    "overdrive": {
+      "assetHash": "a8369e35a7ef8c4fe3de21a2bc15e906bd8b051e4fa2388c52122870da214aec",
+      "installedHash": "a8369e35a7ef8c4fe3de21a2bc15e906bd8b051e4fa2388c52122870da214aec",
+      "installedAt": "2026-10-10T11:35:58.882Z",
+      "updatedAt": "2026-10-10T11:35:58.882Z"
+    },
+    "polish": {
+      "assetHash": "5f9af3783ad0ffff34ddaf3d95591e7044cbc0927c229340828e52103838b0ab",
+      "installedHash": "5f9af3783ad0ffff34ddaf3d95591e7044cbc0927c229340828e52103838b0ab",
+      "installedAt": "2026-10-10T11:35:58.882Z",
+      "updatedAt": "2026-10-10T11:35:58.882Z"
+    },
+    "quieter": {
+      "assetHash": "910d4b8bd48ebebbef5bde0e837a8154fecc598a8dead6a46342631fb5d9e6df",
+      "installedHash": "910d4b8bd48ebebbef5bde0e837a8154fecc598a8dead6a46342631fb5d9e6df",
+      "installedAt": "2026-10-10T11:35:58.883Z",
+      "updatedAt": "2026-10-10T11:35:58.883Z"
+    },
+    "teach-impeccable": {
+      "assetHash": "c421175bd7c4da4333755222a012913a894a8f1aaa2fb11dfe5c3b65b5f02211",
+      "installedHash": "c421175bd7c4da4333755222a012913a894a8f1aaa2fb11dfe5c3b65b5f02211",
+      "installedAt": "2026-10-10T11:35:58.883Z",
+      "updatedAt": "2026-10-10T11:35:58.883Z"
+    },
+    "typeset": {
+      "assetHash": "32108f34bbc76567fe563016c5327530a0d2669d603e7f9d4554a42285041fbb",
+      "installedHash": "32108f34bbc76567fe563016c5327530a0d2669d603e7f9d4554a42285041fbb",
+      "installedAt": "2026-10-10T11:35:58.883Z",
+      "updatedAt": "2026-10-10T11:35:58.883Z"
+    },
+    "mermaid-diagrams": {
+      "assetHash": "79bca3c767a821a28aa7d83a9673010b2066afa4889923ea5946153c8967e824",
+      "installedHash": "79bca3c767a821a28aa7d83a9673010b2066afa4889923ea5946153c8967e824",
+      "installedAt": "2026-10-10T11:35:58.886Z",
+      "updatedAt": "2026-10-10T11:35:58.886Z"
+    },
+    "skill-creator": {
+      "assetHash": "b2e3d83f60425c2d0b9d4162efb8f9aa322b45843497340f2289f42be422801c",
+      "installedHash": "b2e3d83f60425c2d0b9d4162efb8f9aa322b45843497340f2289f42be422801c",
+      "installedAt": "2026-10-10T11:35:58.887Z",
+      "updatedAt": "2026-10-10T11:35:58.887Z"
+    },
+    "remotion-best-practices": {
+      "assetHash": "af627225edda7420907d4f66bc07d9a111ee5e276bd3e45705bf118fb8e7cdbb",
+      "installedHash": "af627225edda7420907d4f66bc07d9a111ee5e276bd3e45705bf118fb8e7cdbb",
+      "installedAt": "2026-10-10T11:35:58.897Z",
+      "updatedAt": "2026-10-10T11:35:58.897Z"
+    },
+    "python-best-practices": {
+      "assetHash": "a856509d228b16c19e66a5be12ab29988de1018036fd79f25fa53d69db872c0a",
+      "installedHash": "a856509d228b16c19e66a5be12ab29988de1018036fd79f25fa53d69db872c0a",
+      "installedAt": "2026-10-10T11:35:58.897Z",
+      "updatedAt": "2026-10-10T11:35:58.897Z"
+    },
+    "python-docs": {
+      "assetHash": "ffce353065068b6864bef642c04f9d22df275fea224015bd461c214e9ce5222c",
+      "installedHash": "ffce353065068b6864bef642c04f9d22df275fea224015bd461c214e9ce5222c",
+      "installedAt": "2026-10-10T11:35:58.899Z",
+      "updatedAt": "2026-10-10T11:35:58.899Z"
+    },
+    "pydantic": {
+      "assetHash": "80ea080fdca5d5503d739e2ec7ba9b55864f2eba6b25eed1f4d5f6fc67c2315a",
+      "installedHash": "80ea080fdca5d5503d739e2ec7ba9b55864f2eba6b25eed1f4d5f6fc67c2315a",
+      "installedAt": "2026-10-10T11:35:58.900Z",
+      "updatedAt": "2026-10-10T11:35:58.900Z"
+    },
+    "pytorch-lightning": {
+      "assetHash": "1c67224586dc52801ce204028b3cc5d4158ed33ef99cfa72e5dad482acfee031",
+      "installedHash": "1c67224586dc52801ce204028b3cc5d4158ed33ef99cfa72e5dad482acfee031",
+      "installedAt": "2026-10-10T11:35:58.902Z",
+      "updatedAt": "2026-10-10T11:35:58.902Z"
+    },
+    "code-refactor": {
+      "assetHash": "f8943f59b0ddf416c75575d3c7db8c94ff4e867c1101690070845a3b1e121cbc",
+      "installedHash": "f8943f59b0ddf416c75575d3c7db8c94ff4e867c1101690070845a3b1e121cbc",
+      "installedAt": "2026-10-10T11:35:58.903Z",
+      "updatedAt": "2026-10-10T11:35:58.903Z"
+    }
+  },
+  "enabledPlugins": [
+    "superpowers@claude-plugins-official",
+    "context7@claude-plugins-official",
+    "claude-md-management@claude-plugins-official",
+    "pr-review-toolkit@claude-plugins-official",
+    "code-review@claude-plugins-official",
+    "code-simplifier@claude-plugins-official",
+    "claude-mem@thedotmack",
+    "github@claude-plugins-official",
+    "frontend-design@claude-plugins-official",
+    "playwright@claude-plugins-official",
+    "ui-ux-pro-max@ui-ux-pro-max-skill",
+    "huggingface-skills@claude-plugins-official",
+    "agent-skills@addy-agent-skills",
+    "marketing-skills@marketingskills"
+  ],
+  "installedTemplates": [
+    "config.yaml",
+    "rules.md",
+    "allowlist.yaml",
+    "commit-message.md",
+    "mr-template.md",
+    "review-template.md"
+  ]
+}
