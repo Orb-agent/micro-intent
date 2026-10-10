@@ -1,0 +1,6 @@
+{
+  "app": "WhatsApp",
+  "summary": "Anna asks about dinner in Bern on Thursday at 7.",
+  "messages": [{"from": "Anna", "text": "Dinner in Bern Thursday at 7?"}],
+  "proposal": {"title": "Dinner", "date": "2026-10-15", "time": "19:00", "place": "Bern"}
+}

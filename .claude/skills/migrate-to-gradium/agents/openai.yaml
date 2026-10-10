@@ -1,0 +1,4 @@
+interface:
+  display_name: "Migrate to Gradium"
+  short_description: "Switch voice APIs to Gradium"
+  default_prompt: "Use $migrate-to-gradium to switch this project from Cartesia, Deepgram, or ElevenLabs to Gradium."

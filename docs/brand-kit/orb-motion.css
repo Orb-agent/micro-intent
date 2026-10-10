@@ -1,0 +1,10 @@
+/* Selected Ring motion system. Geometry always uses breathing from thinking-orbs. */
+.orbs-motion{display:inline-flex;align-items:center;justify-content:center;flex:none;transform-origin:center}
+.orbs-motion[data-motion=listening]{animation:orbs-listen 2.6s ease-in-out infinite}
+.orbs-motion[data-motion=thinking]{animation:orbs-think 4.5s linear infinite}
+.orbs-motion[data-motion=acting]{animation:orbs-act 2.2s cubic-bezier(.2,.7,.2,1) infinite}
+.orbs-motion[data-paused=true]{animation:none;transform:none}
+@keyframes orbs-listen{0%,100%{transform:scale(.9)}16%{transform:scale(1.16)}32%{transform:scale(.94)}47%{transform:scale(1.08)}61%{transform:scale(.88)}78%{transform:scale(1.2)}90%{transform:scale(.97)}}
+@keyframes orbs-think{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes orbs-act{0%{transform:rotate(0deg) scale(1)}22%{transform:rotate(120deg) scale(1.12)}34%{transform:rotate(120deg) scale(1)}56%{transform:rotate(240deg) scale(1.12)}68%{transform:rotate(240deg) scale(1)}90%{transform:rotate(360deg) scale(1.12)}100%{transform:rotate(360deg) scale(1)}}
+@media(prefers-reduced-motion:reduce){.orbs-motion{animation:none!important;transform:none!important}}

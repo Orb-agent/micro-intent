@@ -1,0 +1,17 @@
+[
+  {"version": "v0.9", "createSurface": {"surfaceId": "reply-1", "catalogId": "https://a2ui.org/specification/v0_9/basic_catalog.json"}},
+  {"version": "v0.9", "updateComponents": {"surfaceId": "reply-1", "components": [
+    {"id": "root", "component": "Column", "children": ["c0", "c1"]},
+    {"id": "c0", "component": "Card", "child": "c0-body"},
+    {"id": "c0-body", "component": "Column", "children": ["c0-verdict", "c0-event", "c0-proposal", "c0-note"]},
+    {"id": "c0-verdict", "component": "Text", "text": "You can make it", "variant": "h2"},
+    {"id": "c0-event", "component": "Text", "text": "Call with Acme · 17:30 → 17:45"},
+    {"id": "c0-proposal", "component": "Text", "text": "Dinner in Bern · 19:00"},
+    {"id": "c0-note", "component": "Text", "text": "Leave right after the call", "variant": "caption"},
+    {"id": "c1", "component": "Card", "child": "c1-body"},
+    {"id": "c1-body", "component": "Column", "children": ["c1-time", "c1-line", "c1-meta"]},
+    {"id": "c1-time", "component": "Text", "text": "18:01 → 18:58", "variant": "h2"},
+    {"id": "c1-line", "component": "Text", "text": "IC 8 · Zürich HB → Bern"},
+    {"id": "c1-meta", "component": "Text", "text": "Platform 31 · direct", "variant": "caption"}
+  ]}}
+]

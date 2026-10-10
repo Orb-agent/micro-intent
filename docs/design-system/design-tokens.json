@@ -1,0 +1,191 @@
+{
+  "meta": {
+    "name": "Micro Intent design tokens",
+    "version": "0.1.0",
+    "source": "Paper file 'Micro Intent - Hackathon Prototypes', page 'Design System' (derived from Variant D dark-glass overlay)",
+    "cssPrefix": "--mi-",
+    "modes": "default (desktop overlay + iPhone), large ([data-mi-mode=\"large\"]), reduced motion (prefers-reduced-motion)"
+  },
+  "color": {
+    "canvas": "#0B0D12",
+    "glass-pill": "rgba(22, 24, 32, 0.88)",
+    "glass-panel": "rgba(26, 28, 36, 0.84)",
+    "glass-sheet": "rgba(26, 28, 36, 0.94)",
+    "glass-fallback": "#1A1C24",
+    "surface-card": "rgba(255, 255, 255, 0.06)",
+    "surface-chip": "rgba(255, 255, 255, 0.08)",
+    "surface-control": "rgba(255, 255, 255, 0.10)",
+    "surface-input": "rgba(255, 255, 255, 0.05)",
+    "scrim": "rgba(8, 9, 12, 0.62)",
+    "scrim-light": "rgba(8, 9, 12, 0.45)",
+    "border-glass": "rgba(255, 255, 255, 0.18)",
+    "border-input": "rgba(255, 255, 255, 0.12)",
+    "border-subtle": "rgba(255, 255, 255, 0.08)",
+    "border-key": "rgba(255, 255, 255, 0.20)",
+    "text-primary": "#FFFFFF",
+    "text-secondary": "rgba(255, 255, 255, 0.86)",
+    "text-tertiary": "rgba(255, 255, 255, 0.72)",
+    "text-muted": "rgba(255, 255, 255, 0.62)",
+    "text-placeholder": "rgba(255, 255, 255, 0.50)",
+    "text-faint": "rgba(255, 255, 255, 0.35)",
+    "text-on-light": "#0B0D12",
+    "accent": "#3D63FF",
+    "accent-strong": "#2448F5",
+    "accent-text": "#9DBBFF",
+    "accent-text-strong": "#C9D8FF",
+    "accent-soft": "rgba(36, 72, 245, 0.16)",
+    "accent-soft-strong": "rgba(61, 99, 255, 0.24)",
+    "accent-border": "rgba(110, 150, 255, 0.35)",
+    "accent-border-strong": "rgba(110, 150, 255, 0.50)",
+    "success": "#22C55E",
+    "success-text": "#4ADE80",
+    "success-soft": "rgba(34, 197, 94, 0.16)",
+    "warn": "#FBBF24",
+    "warn-text": "#FCD34D",
+    "warn-soft": "rgba(251, 191, 36, 0.16)",
+    "danger": "#EF4444",
+    "danger-text": "#FCA5A5",
+    "danger-soft": "rgba(239, 68, 68, 0.16)",
+    "service-sbb": "#EB0000"
+  },
+  "gradient": {
+    "orb": "radial-gradient(circle at 34% 28%, #FFFFFF 0%, #CFF4FF 16%, #6FB8FF 44%, #2F6BFF 72%, #1B3BD1 100%)",
+    "orb-idle": "radial-gradient(circle at 34% 28%, #FFFFFF 0%, #E4E9F2 40%, #B9C2D6 100%)",
+    "orb-thinking": "conic-gradient(from 200deg, #1B3BD1, #6FB8FF, #FFFFFF, #2F6BFF, #1B3BD1)",
+    "orb-halo": "radial-gradient(circle, rgba(62, 139, 255, 0.45) 0%, rgba(62, 139, 255, 0.12) 55%, rgba(62, 139, 255, 0) 72%)"
+  },
+  "effect": {
+    "blur-panel": "blur(30px) saturate(160%)",
+    "blur-pill": "blur(24px) saturate(150%)",
+    "shadow-panel": "inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 32px 90px rgba(0, 0, 0, 0.60), 0 0 0 1px rgba(0, 0, 0, 0.35)",
+    "shadow-pill": "0 16px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.35)",
+    "shadow-sheet": "inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 -20px 60px rgba(0, 0, 0, 0.50)",
+    "shadow-primary": "0 6px 16px rgba(36, 72, 245, 0.40)",
+    "glow-orb": "inset 0 -3px 6px rgba(10, 20, 90, 0.35), 0 0 14px rgba(62, 139, 255, 0.70)",
+    "ring-speaking": "0 0 0 4px var(--mi-color-canvas), 0 0 0 6px rgba(157, 187, 255, 0.55), 0 0 0 14px rgba(157, 187, 255, 0.12)"
+  },
+  "font": {
+    "sans": "Inter, system-ui, -apple-system, sans-serif",
+    "mono": "'JetBrains Mono', ui-monospace, monospace"
+  },
+  "text": {
+    "answer": { "size": "21px", "line": "28px", "weight": "600", "tracking": "-0.015em" },
+    "time": { "size": "18px", "line": "22px", "weight": "600", "tracking": "-0.01em" },
+    "body-strong": { "size": "14px", "line": "18px", "weight": "600", "tracking": "0em" },
+    "body": { "size": "14px", "line": "20px", "weight": "500", "tracking": "0em" },
+    "button": { "size": "14px", "line": "18px", "weight": "600", "tracking": "0em" },
+    "meta": { "size": "13px", "line": "16px", "weight": "400", "tracking": "0em" },
+    "label": { "size": "12px", "line": "16px", "weight": "600", "tracking": "0em" },
+    "eyebrow": { "size": "11px", "line": "14px", "weight": "600", "tracking": "0.08em" }
+  },
+  "space": {
+    "2": "2px",
+    "4": "4px",
+    "6": "6px",
+    "8": "8px",
+    "10": "10px",
+    "12": "12px",
+    "14": "14px",
+    "16": "16px",
+    "18": "18px",
+    "24": "24px",
+    "28": "28px",
+    "36": "36px",
+    "40": "40px"
+  },
+  "radius": {
+    "xs": "6px",
+    "sm": "10px",
+    "md": "12px",
+    "lg": "16px",
+    "xl": "18px",
+    "2xl": "24px",
+    "3xl": "32px",
+    "full": "9999px"
+  },
+  "size": {
+    "panel-width": "560px",
+    "panel-width-min": "480px",
+    "panel-width-max": "600px",
+    "pill-height": "58px",
+    "control": "40px",
+    "touch-min": "44px",
+    "input-height": "52px",
+    "orb": "32px",
+    "orb-halo": "44px",
+    "orb-hero": "104px",
+    "edge-gap": "24px",
+    "pill-gap": "8px"
+  },
+  "duration": {
+    "instant": "100ms",
+    "fast": "160ms",
+    "base": "240ms",
+    "panel": "320ms",
+    "sheet": "420ms",
+    "stagger": "40ms",
+    "done-to-idle": "4000ms",
+    "loop-breathe": "4000ms",
+    "loop-listen": "1200ms",
+    "loop-think": "1100ms",
+    "loop-speak": "1600ms"
+  },
+  "easing": {
+    "standard": "cubic-bezier(0.2, 0, 0, 1)",
+    "enter": "cubic-bezier(0.05, 0.7, 0.1, 1)",
+    "exit": "cubic-bezier(0.3, 0, 0.8, 0.15)",
+    "spring": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+    "linear": "linear"
+  },
+  "modes": {
+    "large": {
+      "selector": "[data-mi-mode=\"large\"]",
+      "text": {
+        "answer": { "size": "44px", "line": "52px", "weight": "600", "tracking": "-0.025em" },
+        "time": { "size": "26px", "line": "32px", "weight": "600", "tracking": "0em" },
+        "body-strong": { "size": "26px", "line": "32px", "weight": "600", "tracking": "0em" },
+        "body": { "size": "20px", "line": "28px", "weight": "400", "tracking": "0em" },
+        "button": { "size": "24px", "line": "30px", "weight": "600", "tracking": "0em" },
+        "meta": { "size": "18px", "line": "22px", "weight": "500", "tracking": "0em" },
+        "label": { "size": "20px", "line": "24px", "weight": "600", "tracking": "0em" },
+        "eyebrow": { "size": "16px", "line": "20px", "weight": "600", "tracking": "0.06em" }
+      },
+      "size": {
+        "panel-width": "800px",
+        "panel-width-min": "640px",
+        "panel-width-max": "880px",
+        "control": "72px",
+        "touch-min": "72px"
+      },
+      "radius": {
+        "md": "20px",
+        "xl": "20px",
+        "2xl": "32px"
+      }
+    },
+    "reducedMotion": {
+      "selector": "@media (prefers-reduced-motion: reduce)",
+      "duration": {
+        "base": "160ms",
+        "panel": "160ms",
+        "sheet": "160ms",
+        "stagger": "0ms",
+        "loop-breathe": "0ms",
+        "loop-listen": "0ms",
+        "loop-think": "0ms",
+        "loop-speak": "0ms"
+      },
+      "easing": {
+        "spring": "cubic-bezier(0.2, 0, 0, 1)"
+      }
+    },
+    "noBackdropFilter": {
+      "selector": "@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))",
+      "color": {
+        "glass-pill": "#1A1C24",
+        "glass-panel": "#1A1C24",
+        "glass-sheet": "#1A1C24"
+      }
+    }
+  }
+}
