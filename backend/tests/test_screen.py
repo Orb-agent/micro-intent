@@ -196,6 +196,42 @@ def test_turn_moves_on_to_a_newer_screenshot(monkeypatch):
     assert (shot.id, screen) == (2, {"summary": "B"})
 
 
+def post_and_ask(client, ws, image):
+    client.post("/screenshot", content=image, headers=AUTH)
+    assert ws.receive_json()["type"] == "screen_ok"  # still sent for a reused reading
+    ask(ws)
+
+
+def test_unchanged_screen_is_read_once(client, agent, monkeypatch):
+    seen = []
+    monkeypatch.setattr(server, "read_screen", lambda image, mime: seen.append(image) or {"summary": image.decode()})
+    ctx, ws = connect(client)
+    for image in (b"chat", b"chat", b"calendar", b"chat"):
+        post_and_ask(client, ws, image)
+    server.latest.read_at -= server.SCREEN_MAX_AGE + 1  # vision read "today" too long ago
+    post_and_ask(client, ws, b"chat")
+    ctx.__exit__(None, None, None)
+    assert seen == [b"chat", b"calendar", b"chat", b"chat"]
+    assert [s["summary"] for s in agent.screens] == ["chat", "chat", "calendar", "chat", "chat"]  # each turn gets it
+
+
+def test_failed_reading_is_not_reused(client, agent, monkeypatch):
+    seen = []
+
+    def down_once(image, mime):
+        seen.append(image)
+        if len(seen) == 1:
+            raise RuntimeError("Gemini is down")
+        return SCREEN
+
+    monkeypatch.setattr(server, "read_screen", down_once)
+    ctx, ws = connect(client)
+    post_and_ask(client, ws, PNG)
+    post_and_ask(client, ws, PNG)
+    ctx.__exit__(None, None, None)
+    assert len(seen) == 2 and agent.screens == [None, SCREEN]
+
+
 def test_vision_failure(client, agent, monkeypatch):
     monkeypatch.setattr(server, "read_screen", failing_read_screen)
     ctx, ws = connect(client)

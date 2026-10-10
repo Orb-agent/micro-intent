@@ -97,7 +97,7 @@ The orb shows `speaking` while the app still has audio queued, even after the se
 | `POST /screenshot` | From the iPhone Shortcut. `Authorization: Bearer <APP_TOKEN>`, body is the raw image (`image/jpeg` or `image/png`, max 8 MB). Returns `204` and starts vision |
 | `GET /health` | `{"ok": true, "workspace": "rest" \| "fixture"}` |
 
-**Screenshot rule:** the server keeps only the latest screenshot and its `ScreenContext`. A turn gets the context if the screenshot is less than 120 s old and no earlier turn has used it; if vision is still running, the turn waits for it.
+**Screenshot rule:** the server keeps only the latest screenshot and its `ScreenContext`. A turn gets the context if the screenshot is less than 120 s old and no earlier turn has used it; if vision is still running, the turn waits for it. A screenshot with the same bytes (and `recent` frames) as the one before reuses its context without calling vision, for up to 120 s after that read began; `screen_ok` is still sent, and a failed read is never reused.
 
 ## Audio
 
