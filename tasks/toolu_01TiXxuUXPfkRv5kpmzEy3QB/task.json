@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01TiXxuUXPfkRv5kpmzEy3QB",
+  "agent_id": "acd6e7ad538d81a2c",
+  "subagent_type": "general-purpose",
+  "task_description": "Simulate team decision on PR #14",
+  "token_usage": {
+    "input_tokens": 80,
+    "cache_creation_tokens": 124173,
+    "cache_read_tokens": 4626851,
+    "output_tokens": 308,
+    "api_call_count": 40
+  },
+  "started_at": "2026-10-10T16:30:38.28221+02:00",
+  "completed_at": "2026-10-10T16:36:27.370615+02:00"
+}
