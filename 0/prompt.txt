@@ -1,0 +1,1 @@
+I have a question if we can have out iphone app, so it will screencast and see the screen and other apps and then it will popul next layer to the apps layer and show generated ui?
