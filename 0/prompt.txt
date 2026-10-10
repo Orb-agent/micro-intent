@@ -1,0 +1,39 @@
+<!-- reply 1 -->
+> The bigger issue is the one in the table above: the repo now holds three separate architectures with no shared history. main is BC’s lineage (Chrome extension or web app, Gemini Live voice, HTTP API on Cloud Run). Ours is on develop (SwiftUI, Gradium, WebSocket). Coral’s branch is a web PWA with a Chrome extension. I’ve left develop alone until the team picks a direction. The options I see:
+> 
+> Keep ours: BC and Coral re-base onto develop and docs/contracts.md. BC’s agent work (agent.py, sbb.py, calendar_source.py, the A2UI catalog) could be ported into WP3 instead of starting over.
+> Adopt BC’s: we drop our backend for theirs. That means replacing Gradium with Gemini Live and the SwiftUI app with an extension, which also abandons the iPhone demo.
+> Hybrid: keep our voice and WebSocket layer, and use BC’s agent package behind our Agent.turn() interface.
+> The three subagents (vision, screenshot upload, hands-free) are still running on top of our lineage. Their work stands either way under the first and third options.
+
+we need to converge to clean ios app, not chrome extension, with a2ui and etc what we discussed, crreate pr into develop Interruption works and is committed, along with the commit-every-step rule and every step before it.
+
+**Interruption** (`c6d5100`):
+- **Three triggers:** tapping the orb while the mascot talks, starting to talk over it, or sending a typed question.
+- **Server:** cancels the turn, which stops the Gemini call and closes the Gradium voice stream.
+- **Live check:** an interrupt sent mid-sentence got `idle` back about 10 ms later, with no further audio.
+- **App side:** Gradium generates speech faster than real time, so a few seconds of audio are already queued on the phone. The app must stop playback itself the moment it interrupts. That's now in the contract and in the iOS plan.
+
+**Commit rule** (`12c2b91`): it's rule 1 of a new team-rules section in `AGENTS.md`, which `CLAUDE.md` now imports so Claude Code follows it too. I've been committing after each WP2 task: scaffold, WebSocket server, voice, tunnel, interruption.
+
+**WP2 progress so far:**
+
+| Task | Result |
+| --- | --- |
+| 1. Scaffold | Done |
+| 2. WebSocket server | Done, tests passing |
+| 3–4. Gradium speech in and out | Transcript 0.46 s after release, first audio 0.2 s after the reply |
+| 5. Tunnel | Done, using ngrok because cloudflared isn't installed |
+
+A spoken question returns its first mascot audio 1.65 s after you let go of the button, 1 s of which is the stub agent's fake delay. Vision, the screenshot endpoint and the Shortcut are next.
+
+**LiveKit:** yes, there's an official Gradium plugin (`livekit-plugins-gradium` 1.8.6, from LiveKit's own repo).
+- **What it adds:** WebRTC audio, built-in end-of-turn detection, built-in interruption, and a Swift SDK for the iPhone.
+- **What it costs:** a rebuild. We'd need a LiveKit Cloud project and a token endpoint, and the agent would be rewritten on LiveKit's framework. The model's text would be spoken directly, so the cards need a separate channel. The iOS dev would also switch SDKs.
+- **My take:** that doesn't fit 3 hours, and our current setup already handles push-to-talk with interruption.
+
+The other classic still missing is hands-free mode: no button, Gradium's voice detection decides when you've stopped talking, and you can interrupt just by speaking. I can add that on our current setup in about an hour.
+
+Should I do hands-free now, or continue with vision and add it after checkpoint 2?
+
+The GitHub repo is still disabled (403), so all of this is committed locally on `feature/wp2-backend-voice-vision` and in local `develop` (scaffold only), but not pushed.
