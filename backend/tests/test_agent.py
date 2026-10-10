@@ -80,7 +80,8 @@ def sbb_requests(monkeypatch):
 
 
 @pytest.fixture
-async def ag():
+async def ag(monkeypatch):
+    monkeypatch.setenv("WORKSPACE_MODE", "fixture")  # agent.py loads backend/.env, which may say rest
     a = Agent()
     await a.start()
     return a

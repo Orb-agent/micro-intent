@@ -30,7 +30,8 @@ async def test_load_context_fixture_mode(monkeypatch):
     assert flight["from"] == "SWISS"
 
 
-def test_load_context_sync():
+def test_load_context_sync(monkeypatch):
+    monkeypatch.setenv("WORKSPACE_MODE", "fixture")
     data = load_context_sync()
     assert "events" in data
     assert len(data["events"]) >= 5
