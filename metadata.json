@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K8MKHT195RXDPMHBVSX0VG",
+  "strategy": "manual-commit",
+  "branch": "fm/micro-intent-ios-brand-theme-v1",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "frontend/screenshots/brand/error-dark.jpg",
+    "frontend/screenshots/brand/error-light.jpg",
+    "frontend/screenshots/brand/idle-dark.jpg",
+    "frontend/screenshots/brand/idle-light.jpg",
+    "frontend/screenshots/brand/large-text-dark.jpg",
+    "frontend/screenshots/brand/large-text-light.jpg",
+    "frontend/screenshots/brand/listening-dark.jpg",
+    "frontend/screenshots/brand/listening-light.jpg",
+    "frontend/screenshots/brand/reply-dark.jpg",
+    "frontend/screenshots/brand/reply-light.jpg",
+    "frontend/screenshots/brand/searching-dark.jpg",
+    "frontend/screenshots/brand/searching-light.jpg",
+    "frontend/screenshots/brand/settings-dark.jpg",
+    "frontend/screenshots/brand/settings-light.jpg"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 6,
+    "cache_creation_tokens": 4405,
+    "cache_read_tokens": 616532,
+    "output_tokens": 1347,
+    "api_call_count": 3
+  }
+}
