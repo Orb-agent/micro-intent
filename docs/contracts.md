@@ -6,20 +6,20 @@ The interfaces between the three [work packages](work-packages.md). If something
 
 | Part | Choice |
 | --- | --- |
-| iPhone app | SwiftUI, iOS 17+, `URLSessionWebSocketTask`, `AVAudioEngine`, [a2ui-swift](https://github.com/BBC6BAE9/a2ui-swift) `from: "0.3.0"` (product `A2UISwiftUI`) |
-| Server | Python 3.11, uv, FastAPI and uvicorn, httpx, `google-genai`, `gradium`, python-dotenv, pytest |
+| Frontend (iPhone) | SwiftUI, iOS 17+, `URLSessionWebSocketTask`, `AVAudioEngine`, [a2ui-swift](https://github.com/BBC6BAE9/a2ui-swift) `from: "0.3.0"` (product `A2UISwiftUI`) |
+| Backend | Python 3.11, uv, FastAPI and uvicorn, httpx, `google-genai`, `gradium`, python-dotenv, pytest |
 | Hosting | Server on a dev Mac; a Cloudflare quick tunnel gives the HTTPS and WSS URL that the app and the Shortcut use. Start it once and leave it running: the URL changes on every restart |
 | Time zone | `Europe/Zurich` everywhere; times on the wire are ISO 8601 with offset |
 
 ```text
-ios/                    # WP1: Xcode project
-server/                 # run from here: uv run uvicorn app:app --reload --port 8000
+frontend/               # WP1: Xcode project, SwiftUI
+backend/                # run from here: uv run uvicorn app:app --reload --port 8000
   pyproject.toml        # WP2 owns it; lists every package's deps
   .env.example
   app.py  voice.py  vision.py      # WP2
-  a2ui.py                          # WP1: cards → A2UI messages
+  a2ui.py                          # WP3: cards → A2UI messages
   agent.py  context.py  tools/sbb.py   # WP3
-  fixtures/             # demo_reply.json, cards.json, screen.json, screen.png (WP2); context.json (WP3)
+  fixtures/             # demo_reply.json, cards.json, screen.json, screen.png (WP2); context.json, *_a2ui.json (WP3)
   tests/
 ```
 
@@ -248,7 +248,7 @@ Events cover now to 7 days ahead. `source` is `luma` when the event's descriptio
 
 ## Environment
 
-`server/.env`, never committed; `server/.env.example` lists them all. The app keeps the server URL and token in its settings sheet, and the Shortcut has the token in its header.
+`backend/.env`, never committed; `backend/.env.example` lists them all. The app keeps the server URL and token in its settings sheet, and the Shortcut has the token in its header.
 
 | Variable | Used by | Notes |
 | --- | --- | --- |
