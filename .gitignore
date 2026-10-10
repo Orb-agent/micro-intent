@@ -1,27 +1,11 @@
-# Secrets - never commit real keys
 .env
-.env.*
-!.env.example
-*.pem
-service-account*.json
-credentials*.json
-token*.json
-
-# Python
-.venv/
-venv/
 __pycache__/
 *.pyc
 .pytest_cache/
-.ruff_cache/
+.venv/
+.claude/worktrees/
 
-# Node / extension builds
-node_modules/
-dist/
-build/
-*.zip
-
-# Local agent / tool state
-.claude/settings.local.json
-output/
-.DS_Store
+# Xcode
+.derived/
+xcuserdata/
+*.xcuserstate

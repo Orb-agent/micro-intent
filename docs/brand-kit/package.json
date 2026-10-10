@@ -1,0 +1,10 @@
+{
+  "name": "orbs-brand-kit",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "thinking-orbs": "0.3.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  }
+}
