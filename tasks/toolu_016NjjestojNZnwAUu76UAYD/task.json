@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_016NjjestojNZnwAUu76UAYD",
+  "agent_id": "a61004d15467484c3",
+  "subagent_type": "general-purpose",
+  "task_description": "SC4 latency and evals",
+  "token_usage": {
+    "input_tokens": 38,
+    "cache_creation_tokens": 66960,
+    "cache_read_tokens": 1523629,
+    "output_tokens": 1287,
+    "api_call_count": 19
+  },
+  "started_at": "2026-10-10T15:53:14.164813+02:00",
+  "completed_at": "2026-10-10T15:59:43.12985+02:00"
+}
