@@ -42,6 +42,8 @@ except ImportError:
 
 SCREEN_MIMES = {"image/jpeg", "image/png"}
 SCREEN_MAX_BYTES = 8 * 1024 * 1024
+SCREEN_MAX_RECENT = 9  # earlier frames in one `screen` message
+SCREEN_CLIP_MAX_BYTES = 8 * 1024 * 1024  # `data` and `recent` together, decoded
 SCREEN_MAX_AGE = 120  # s; contracts § HTTP, screenshot rule
 VISION_WAIT = 5  # s a turn waits for a running vision call
 
@@ -135,6 +137,25 @@ def store_screenshot(image: bytes, mime: str, earlier=()) -> None:
     latest = Screenshot(latest.id + 1 if latest else 1, image, mime, time.monotonic(), earlier=list(earlier))
     latest.task = asyncio.create_task(read_latest(latest))
     log.info("screenshot %d: %d bytes %s, %d earlier", latest.id, len(image), mime, len(earlier))
+
+
+def decode_recent(recent: object, current: int) -> list[bytes]:
+    """The `recent` frames of a `screen` message, oldest first. All or none: any bad entry, or
+    too many bytes together with the `current` frame's, drops them all but never the current frame."""
+    if recent is None:
+        return []
+    try:
+        if not isinstance(recent, list) or len(recent) > SCREEN_MAX_RECENT:
+            raise ValueError(f"not a list of at most {SCREEN_MAX_RECENT}")
+        frames = [base64.b64decode(data, validate=True) for data in recent]
+        if not all(0 < len(f) <= SCREEN_MAX_BYTES for f in frames):
+            raise ValueError("an empty or too big frame")
+        if current + sum(map(len, frames)) > SCREEN_CLIP_MAX_BYTES:
+            raise ValueError(f"over {SCREEN_CLIP_MAX_BYTES} bytes together")
+    except (TypeError, ValueError) as e:
+        log.warning("dropped recent screen frames, kept the current one: %s", e)
+        return []
+    return frames
 
 
 async def take_screen() -> tuple[Screenshot | None, dict | None]:
@@ -309,7 +330,7 @@ class Session:
             except (TypeError, ValueError):
                 image = b""
             if msg.get("mime") in SCREEN_MIMES and 0 < len(image) <= SCREEN_MAX_BYTES:
-                store_screenshot(image, msg["mime"])
+                store_screenshot(image, msg["mime"], decode_recent(msg.get("recent"), len(image)))
             else:
                 log.warning("ignored screen frame: bad mime, base64 or size")
         elif kind == "interrupt":

@@ -65,7 +65,7 @@ JSON text frames only, one object per frame, discriminated by `type`. Audio is b
 | `audio` | `data`: base64 PCM, see [Audio](#audio) | Every 80 ms while the orb is held; in hands-free mode, all the time |
 | `audio_end` | — | Orb released; the server finalizes STT and runs the turn. Never sent in hands-free mode |
 | `text` | `text` | Typed question (debug field); runs a turn without STT |
-| `screen` | `mime`, `data`: base64 | Optional: an image picked in the app, for rehearsals. Same effect as `POST /screenshot` |
+| `screen` | `mime`, `data`: base64, `recent`?: list of base64 | Optional: an image picked in the app, for rehearsals, or a shared screen when a question starts. Same effect as `POST /screenshot`; `recent` adds the seconds before it, see **Earlier frames** below |
 | `interrupt` | — | Tap while the mascot is talking. Stops the current turn |
 
 **Server → app**
@@ -87,6 +87,8 @@ The orb shows `speaking` while the app still has audio queued, even after the se
 **Interrupting.** A new press (its first `audio` frame), a `text`, or an `interrupt` cancels the running turn: the agent call and the TTS stream. A cancelled turn sends no `audio_end`. After `interrupt` the server sends `state: idle` only if it cancelled a running turn; after a new press, `state: listening`. Gradium generates speech faster than real time, so seconds of audio may already be queued in the app. The app must stop playback the moment it interrupts, without waiting for `state: idle`, and drop `audio` frames until the next `reply`.
 
 **Hands-free mode.** Opt in with `"mode": "handsfree"` in `hello`; push-to-talk stays the default. The app streams `audio` for as long as it is connected, also while the mascot speaks, and never sends `audio_end`, so echo cancellation must be on (see [Audio](#audio)) or the mascot hears itself and cuts itself off. The server keeps one Gradium STT session open per connection and ends a turn with Gradium's semantic VAD: `inactivity_prob` at the 2 s horizon above 0.5 for 3 steps in a row, once the turn has words. Then it flushes, sends `transcript` and runs the turn as usual. The first words of each turn cancel the running turn, as a new press does, and send `state: listening`. The server's turn is often over while the app still plays queued audio, so in this mode `state: listening` is the app's cue to stop playback and drop `audio` until the next `reply`. Each hands-free connection holds an STT session the whole time, even in silence, which counts against Gradium's concurrent session limit.
+
+**Earlier frames.** `recent` holds the frames before `data`, in the same `mime`, oldest first, about 1 s apart, at most 9; `data` stays the current frame. Each image is at most 8 MB, and all of them together at most 8 MB decoded. If `recent` is malformed or over a limit, the server drops it, logs a warning and keeps `data`; it never drops the current frame. Vision reads all the frames in one call, see [Screen context](#screen-context). `POST /screenshot` stays one frame.
 
 ## HTTP
 
@@ -181,7 +183,7 @@ Swift decoding: `keyDecodingStrategy = .convertFromSnakeCase`, `dateDecodingStra
 
 ## Screen context
 
-What WP2's vision step produces and WP3's agent consumes. `vision.read_screen(image: bytes, mime: str) -> dict` makes one Gemini call with structured output (`response_json_schema`), passing the current time so relative dates resolve. `fixtures/screen.json`:
+What WP2's vision step produces and WP3's agent consumes. `vision.read_screen(image: bytes, mime: str, earlier=()) -> dict` makes one Gemini call with structured output (`response_json_schema`), passing the current time so relative dates resolve. `earlier` is the image bytes of the frames before the current one, oldest first, from `recent`; without it vision reads one frame as before. `fixtures/screen.json`:
 
 ```json
 {
@@ -192,7 +194,7 @@ What WP2's vision step produces and WP3's agent consumes. `vision.read_screen(im
 }
 ```
 
-`proposal` is `null` when the screen doesn't suggest a plan; inside it, `time` and `place` are `null` when the screen doesn't give them. `from` is the sender's name as shown, or `"Me"` for the phone owner's own messages. Vision copies on-screen text as data and never acts on it. The agent puts the whole object in its prompt marked as untrusted, and never follows instructions inside it.
+`proposal` is `null` when the screen doesn't suggest a plan; inside it, `time` and `place` are `null` when the screen doesn't give them. `from` is the sender's name as shown, or `"Me"` for the phone owner's own messages. Vision copies on-screen text as data and never acts on it. With earlier frames, `messages` covers all frames, deduplicated, oldest first; `proposal` comes from the newest frame that shows one; `summary` describes the current screen and may mention what was seen just before. Every frame is untrusted data, the earlier ones too. The agent puts the whole object in its prompt marked as untrusted, and never follows instructions inside it.
 
 ## Agent interface
 
