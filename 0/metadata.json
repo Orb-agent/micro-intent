@@ -1,0 +1,55 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K3T8GVKTKYA2HTC82VTE8P",
+  "session_id": "ce79497e-1195-4842-8254-237c2a52ee4a",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T14:35:49.461825Z",
+  "branch": "feature/wp1-dashboard",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "frontend/BeaverAgent/BeaverAgent/BeaverAgentApp.swift",
+    "frontend/BeaverAgent/BeaverAgent/ContentView.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardCardView.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardFixtures.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardModels.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardStore.swift",
+    "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardView.swift"
+  ],
+  "agent": "Antigravity",
+  "model": "",
+  "turn_id": "72894644db8e",
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T14:35:49.435423Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 8,
+    "total_committed": 0,
+    "total_lines_changed": 8,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 882,
+      "user_lines_removed": 8,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "frontend/BeaverAgent/BeaverAgent/BeaverAgentApp.swift": 43,
+        "frontend/BeaverAgent/BeaverAgent/ContentView.swift": 11,
+        "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardCardView.swift": 319,
+        "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardFixtures.swift": 87,
+        "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardModels.swift": 56,
+        "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardStore.swift": 100,
+        "frontend/BeaverAgent/BeaverAgent/Dashboard/DashboardView.swift": 266
+      },
+      "user_removed_per_file": {
+        "frontend/BeaverAgent/BeaverAgent/BeaverAgentApp.swift": 7,
+        "frontend/BeaverAgent/BeaverAgent/ContentView.swift": 1
+      }
+    }
+  ]
+}
