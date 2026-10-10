@@ -1,0 +1,5 @@
+we need also be able to be interrupted end etc, so its classics. I do not know if there is integration to livekit for gradium
+
+---
+
+do not forget to commit every step, also put this rule in the agents.md i suggest
