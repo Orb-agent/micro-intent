@@ -6,6 +6,9 @@ import Foundation
 /// This fixture data stands in for backend profile and family sync in the hackathon prototype.
 /// All changes are stored locally in @AppStorage and never transmitted over the wire.
 enum ProfileFixtures {
+    /// Name of the iPhone's owner shown on the Settings profile card.
+    static let ownerName = "Ruth"
+
     /// Default home city from the hackathon brief.
     static let defaultHomeCity = "Winterthur"
 

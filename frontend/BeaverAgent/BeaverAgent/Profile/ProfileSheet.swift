@@ -68,13 +68,7 @@ struct ProfileSheet: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 28)
-        .presentationBackground {
-            ZStack {
-                Rectangle().fill(.ultraThinMaterial)
-                Theme.glassSheet
-            }
-        }
-        .presentationCornerRadius(Theme.Radius.xxxl)
+        .modifier(SheetBackground())
         .presentationDragIndicator(.visible)
         .sheet(isPresented: $showFirstRunSheet) {
             FirstRunSheet()

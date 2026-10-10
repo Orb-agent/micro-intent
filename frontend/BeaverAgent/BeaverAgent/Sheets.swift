@@ -28,7 +28,8 @@ enum Appearance: String, CaseIterable, Identifiable {
     }
 }
 
-/// Server URL and token live here and nowhere else (contracts § Environment).
+/// Profile first, then what an older person changes; server URL and token stay under
+/// Advanced and live here and nowhere else (contracts § Environment).
 struct SettingsSheet: View {
     @AppStorage(SettingsKey.serverURL) private var serverURL = ""
     @AppStorage(SettingsKey.token) private var token = ""
@@ -45,33 +46,7 @@ struct SettingsSheet: View {
     var body: some View {
         SheetScaffold(title: "Settings") {
             VStack(alignment: .leading, spacing: 22) {
-                VStack(alignment: .leading, spacing: 14) {
-                    LabeledField(title: "Server URL") {
-                        TextField("https://….trycloudflare.com", text: $serverURL)
-                            .keyboardType(.URL)
-                            .textContentType(.URL)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                    }
-                    LabeledField(title: "Token") {
-                        SecureField("App token", text: $token)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                    }
-                    if !replays {
-                        HStack(spacing: 10) {
-                            ConnectionBadge(connection: connection)
-                            if case .offline(let reason) = connection {
-                                Text(reason)
-                                    .font(type.meta)
-                                    .foregroundStyle(Theme.textMuted)
-                                    .lineLimit(3)
-                            }
-                        }
-                    }
-                }
-                // A new server address hands the choice back to the default (live).
-                .onChange(of: serverURL) { useFixtures = nil }
+                ProfileSettingsCard()
 
                 ToggleRow(title: "Hands-free", detail: "Just talk, no holding. Talk over the answer to stop it", isOn: $handsFree)
 
@@ -90,14 +65,42 @@ struct SettingsSheet: View {
                 }
 
                 DisclosureGroup(isExpanded: $showsAdvanced) {
-                    ToggleRow(title: "Offline replay", detail: "Replays saved answers without a server", isOn: replaysBinding)
-                        .padding(.top, 10)
+                    VStack(alignment: .leading, spacing: 14) {
+                        LabeledField(title: "Server URL") {
+                            TextField("https://….trycloudflare.com", text: $serverURL)
+                                .keyboardType(.URL)
+                                .textContentType(.URL)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                        }
+                        LabeledField(title: "Token") {
+                            SecureField("App token", text: $token)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                        }
+                        ToggleRow(title: "Offline replay", detail: "Replays saved answers without a server", isOn: replaysBinding)
+                        // Replayed answers need no server, so there is nothing to report.
+                        if !replays && connection != .fixtures {
+                            HStack(spacing: 10) {
+                                ConnectionBadge(connection: connection)
+                                if case .offline(let reason) = connection {
+                                    Text(reason)
+                                        .font(type.meta)
+                                        .foregroundStyle(Theme.textMuted)
+                                        .lineLimit(3)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.top, 10)
                 } label: {
                     Text("Advanced")
                         .eyebrow(type, color: Theme.textMuted)
                 }
                 .tint(Theme.textMuted)
             }
+            // A new server address hands the choice back to the default (live).
+            .onChange(of: serverURL) { useFixtures = nil }
         } actions: {
             Button("Done") { dismiss() }
                 .buttonStyle(BigButtonStyle(kind: .primary))
@@ -198,7 +201,8 @@ private struct SheetScaffold<Content: View, Actions: View>: View {
     }
 }
 
-private struct SheetBackground: ViewModifier {
+/// System Liquid Glass sheet on iOS 26, a solid token sheet before. Shared with the profile sheets.
+struct SheetBackground: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 26.0, *) {
             content
