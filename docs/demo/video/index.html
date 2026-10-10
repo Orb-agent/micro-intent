@@ -564,7 +564,7 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="124" data-width="1920" data-height="1080">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="147" data-width="1920" data-height="1080">
       <div class="bg-glow" id="bg-glow"></div>
       <div class="bg-grain"></div>
 
@@ -802,8 +802,15 @@
         </div>
       </div>
 
+      <!-- S9c: under the hood (architecture film, 1.5x) -->
+      <div class="scene" id="s9c" style="opacity: 0">
+        <div id="s9c-frame" style="position: absolute; inset: 0; overflow: hidden; background: #111; opacity: 0">
+          <video id="s9c-video" class="clip" src="assets/video/architecture.mp4" muted playsinline data-start="113.2" data-duration="22.7" data-media-start="0" data-track-index="5" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover"></video>
+        </div>
+      </div>
+
       <!-- S10: Look. Ask. Done. -> Orbs logo -->
-      <section id="s10" class="scene clip" data-start="113" data-duration="11" data-track-index="2">
+      <section id="s10" class="scene clip" data-start="136" data-duration="11" data-track-index="2">
         <div class="stage">
           <div class="line" id="s10-line" style="font-size: 120px">
             <span class="w lead">Look.</span>
@@ -826,8 +833,9 @@
         data-automation='{"version":1,"lanes":[{"target":"volume","points":[{"t":0,"v":0.6},{"t":9,"v":0.6},{"t":10.5,"v":0.26},{"t":56,"v":0.26},{"t":59,"v":0}]}]}'></audio>
       <audio id="music-b" src="assets/audio/music.mp3" data-start="56" data-duration="54" data-media-start="2" data-track-index="11" data-volume="1"
         data-automation='{"version":1,"lanes":[{"target":"volume","points":[{"t":0,"v":0},{"t":3,"v":0.26},{"t":41,"v":0.26},{"t":42,"v":0.42},{"t":52,"v":0.42},{"t":54,"v":0}]}]}'></audio>
-      <audio id="music-c" src="assets/audio/music.mp3" data-start="108" data-duration="16" data-media-start="40" data-track-index="10" data-volume="1"
-        data-automation='{"version":1,"lanes":[{"target":"volume","points":[{"t":0,"v":0},{"t":2,"v":0.42},{"t":6,"v":0.3},{"t":9,"v":0.5},{"t":13,"v":0.5},{"t":16,"v":0}]}]}'></audio>
+      <audio id="music-c" src="assets/audio/music.mp3" data-start="108" data-duration="39" data-media-start="4" data-track-index="10" data-volume="1"
+        data-automation='{"version":1,"lanes":[{"target":"volume","points":[{"t":0,"v":0},{"t":2,"v":0.42},{"t":28,"v":0.42},{"t":29,"v":0.3},{"t":32,"v":0.5},{"t":36,"v":0.5},{"t":39,"v":0}]}]}'></audio>
+      <audio id="sfx-w11" src="assets/audio/sfx-whoosh.mp3" data-start="112.9" data-duration="1" data-track-index="14" data-volume="0.4"></audio>
       <audio id="sfx-w9" src="assets/audio/sfx-whoosh.mp3" data-start="96.9" data-duration="1" data-track-index="14" data-volume="0.4"></audio>
       <audio id="sfx-w10" src="assets/audio/sfx-whoosh.mp3" data-start="104.7" data-duration="1" data-track-index="14" data-volume="0.35"></audio>
       <audio id="vo-a" src="assets/audio/vo-narrator.mp3" data-start="9.8" data-media-start="0" data-duration="4.5" data-track-index="12" data-volume="1"></audio>
@@ -838,7 +846,7 @@
       <audio id="vo-d" src="assets/audio/vo-narrator.mp3" data-start="51" data-media-start="19.6" data-duration="5.0" data-track-index="12" data-volume="1"></audio>
       <audio id="vo-e" src="assets/audio/vo-narrator.mp3" data-start="70" data-media-start="25.25" data-duration="5.65" data-track-index="12" data-volume="1"></audio>
       <audio id="vo-f" src="assets/audio/vo-narrator.mp3" data-start="85.4" data-media-start="31.45" data-duration="4.6" data-track-index="12" data-volume="1"></audio>
-      <audio id="vo-g" src="assets/audio/vo-narrator.mp3" data-start="114.8" data-media-start="36.8" data-duration="3.55" data-track-index="12" data-volume="1"></audio>
+      <audio id="vo-g" src="assets/audio/vo-narrator.mp3" data-start="137.8" data-media-start="36.8" data-duration="3.55" data-track-index="12" data-volume="1"></audio>
       <audio id="sfx-w1" src="assets/audio/sfx-whoosh.mp3" data-start="2.35" data-duration="1" data-track-index="14" data-volume="0.45"></audio>
       <audio id="sfx-w2" src="assets/audio/sfx-whoosh.mp3" data-start="8.6" data-duration="1" data-track-index="14" data-volume="0.45"></audio>
       <audio id="sfx-w3" src="assets/audio/sfx-whoosh.mp3" data-start="20.2" data-duration="1" data-track-index="14" data-volume="0.4"></audio>
@@ -849,8 +857,8 @@
       <audio id="sfx-tap" src="assets/audio/sfx-tap.mp3" data-start="77" data-duration="1" data-track-index="15" data-volume="0.8"></audio>
       <audio id="sfx-chime" src="assets/audio/sfx-chime.mp3" data-start="77.25" data-duration="2" data-track-index="16" data-volume="0.6"></audio>
       <audio id="sfx-w7" src="assets/audio/sfx-whoosh.mp3" data-start="84" data-duration="1" data-track-index="14" data-volume="0.4"></audio>
-      <audio id="sfx-w8" src="assets/audio/sfx-whoosh.mp3" data-start="112.8" data-duration="1" data-track-index="14" data-volume="0.4"></audio>
-      <audio id="sfx-chime2" src="assets/audio/sfx-chime.mp3" data-start="118.1" data-duration="2" data-track-index="16" data-volume="0.45"></audio>
+      <audio id="sfx-w8" src="assets/audio/sfx-whoosh.mp3" data-start="135.8" data-duration="1" data-track-index="14" data-volume="0.4"></audio>
+      <audio id="sfx-chime2" src="assets/audio/sfx-chime.mp3" data-start="141.1" data-duration="2" data-track-index="16" data-volume="0.45"></audio>
     </div>
 
     <script>
@@ -1159,16 +1167,23 @@
         tl.to("#s9b-frame", { y: 400, opacity: 0, filter: "blur(10px)", duration: 0.5, ease: "power3.in" }, 112.7);
         blurOut(tl, ["#s9b .eyebrow", "#s9b-h2"], 112.6);
 
+        // ---------- S9c: under the hood ----------
+        tl.set("#s9c", { opacity: 0 }, 0);
+        tl.set("#s9c", { opacity: 1 }, 113.2);
+        tl.set("#s9c", { opacity: 0 }, 136.0);
+        tl.fromTo("#s9c-frame", { scale: 0.62, borderRadius: 40, y: 260, opacity: 0 }, { scale: 1, borderRadius: 0, y: 0, opacity: 1, duration: 0.9, ease: "power3.out" }, 113.2);
+        tl.to("#s9c-frame", { scale: 0.7, borderRadius: 40, opacity: 0, filter: "blur(12px)", duration: 0.55, ease: "power3.in" }, 135.4);
+
         // ---------- S10: Look. Ask. Done. -> logo ----------
-        kinetic(tl, "s10-line", [114.85, 115.7, 116.62]);
-        tl.to("#s10-line", { scale: 0.8, opacity: 0, filter: "blur(18px)", duration: 0.45, ease: "power2.in" }, 117.3);
-        orbMotion(tl, "s10-orb", 117.4, 124, "breathe");
-        tl.fromTo("#s10-orb", { x: 600, y: -380, scale: 0.3, opacity: 0, rotation: -90 }, { x: 0, y: 0, scale: 1, opacity: 1, rotation: 0, duration: 1.0, ease: "power3.out" }, 117.4);
+        kinetic(tl, "s10-line", [137.85, 138.7, 139.62]);
+        tl.to("#s10-line", { scale: 0.8, opacity: 0, filter: "blur(18px)", duration: 0.45, ease: "power2.in" }, 140.3);
+        orbMotion(tl, "s10-orb", 140.4, 147, "breathe");
+        tl.fromTo("#s10-orb", { x: 600, y: -380, scale: 0.3, opacity: 0, rotation: -90 }, { x: 0, y: 0, scale: 1, opacity: 1, rotation: 0, duration: 1.0, ease: "power3.out" }, 140.4);
         tl.set("#s10-name", { opacity: 0 }, 0);
-        blurIn(tl, "#s10-name", 117.8, 0.7, { x: 60 });
+        blurIn(tl, "#s10-name", 140.8, 0.7, { x: 60 });
         tl.set(["#s10-tag", "#s10-foot"], { opacity: 0 }, 0);
-        blurIn(tl, "#s10-tag", 119.2, 0.7, { y: 20 });
-        tl.fromTo("#s10-foot", { opacity: 0 }, { opacity: 1, duration: 0.8 }, 120.0);
+        blurIn(tl, "#s10-tag", 142.2, 0.7, { y: 20 });
+        tl.fromTo("#s10-foot", { opacity: 0 }, { opacity: 1, duration: 0.8 }, 143.0);
 
         window.__timelines["main"] = tl;
       }
