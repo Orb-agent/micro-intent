@@ -30,9 +30,11 @@ from google.genai import types  # noqa: E402
 log = logging.getLogger("vision")
 
 TZ = ZoneInfo("Europe/Zurich")
-# Newest model. On the demo screen (2026-10-10), 3.8 Flash on low thinking takes 2.1-2.7 s,
-# 4/4 correct; 3.8 rejects minimal thinking. gemini-3.5-flash-lite on minimal is faster
-# (1.3-1.8 s, 4/4) if vision ever needs to be.
+# Newest model: 3.8 Flash on low thinking, 4/4 correct on the demo screen; 3.8 rejects minimal
+# thinking. One frame takes 2.5-4.2 s (2026-10-10, varies ±1 s run to run; 2.1-2.7 s earlier
+# that day), and 5 earlier frames add about 1 s. A cold first call adds only ~0.2 s (one
+# models.get round trip), so the server doesn't warm up. gemini-3.5-flash-lite on minimal is
+# faster (1.3-1.8 s, 4/4) if vision ever needs to be.
 DEFAULT_MODEL = "gemini-3.8-flash"
 
 PROMPT = """You read a phone or computer screen and describe it as JSON. You may also get the \
