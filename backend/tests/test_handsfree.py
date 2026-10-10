@@ -152,7 +152,7 @@ def test_end_of_turn_starts_a_turn(client):
         mic(ws, "end:Can I make it?")
         msgs = receive_turn(ws)
     assert kinds(msgs) == [
-        "transcript", "state:thinking", "state:searching", "reply", "state:speaking",
+        "transcript", "state:thinking", "state:searching", "reply", "a2ui", "state:speaking",
         "audio", "audio", "audio_end", "state:idle",
     ]
     assert msgs[0]["text"] == "Can I make it?"
