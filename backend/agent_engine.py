@@ -1,5 +1,5 @@
 """
-Lumi Agent Engine: Gemini orchestration with Google Workspace tool calling.
+Lumi Agent Engine: Gemini orchestration with Google Workspace, Google Maps, and Google Flights tool calling.
 """
 import os
 from typing import Dict, Any, List, Optional
@@ -12,37 +12,41 @@ from services import (
     drive_service,
     docs_service,
     tasks_service,
+    maps_service,
+    flights_service,
 )
 
 LUMI_SYSTEM_INSTRUCTION = """
-Eres Lumi, una asistente ejecutiva de inteligencia artificial ultra eficiente, proactiva y cálida.
-Tu propósito es ayudar al usuario a gestionar su vida profesional mediante Google Workspace (Gmail, Calendar, Drive, Docs, Tasks).
+You are Lumi, an exceptionally efficient, proactive, and warm executive AI assistant.
+Your purpose is to help users manage their professional lives and travel through Google Workspace (Gmail, Calendar, Drive, Docs, Tasks) and travel and location services (Google Maps and Google Flights).
 
-Reglas de conducta:
-1. Comunícate en español, con un tono cordial, ejecutivo y orientado a la acción.
-2. Usa las herramientas proporcionadas cuando el usuario pida agendar eventos, consultar información, redactar correos o crear notas y tareas.
-3. Resume con claridad las acciones realizadas y los detalles clave (fechas, horas, destinatarios, títulos o enlaces generados).
-4. Si falta información crucial para ejecutar una acción irreversible (como enviar un correo con datos ambiguos), especifica lo que falta.
-5. Presenta tus respuestas de manera limpia con viñetas o formato estructurado.
+Behavior guidelines:
+1. Communicate in English with a courteous, executive tone focused on action.
+2. Use the available tools when users ask to schedule events, find information, draft emails, create notes and tasks, find routes, or look up flights.
+3. Clearly summarize completed actions and key details (dates, times, recipients, titles, locations, flight numbers, or generated links).
+4. If crucial information is missing for an irreversible action (such as sending an email with ambiguous details), specify what is missing.
+5. Present responses clearly with bullets or structured formatting, and include direct Google Maps or Google Flights links when relevant.
+6. For questions about travel, places, or navigation, use the Google Maps tools (`maps_search_places`, `maps_get_directions`).
+7. For questions about flights, air travel, or airline bookings, check Google Flights (`flights_search`) or the user's Gmail reservations (`flights_get_reservations`).
 """
 
 
 def build_workspace_tool() -> types.Tool:
-    """Builds the Tool containing FunctionDeclarations for Google Workspace APIs."""
+    """Builds the Tool containing FunctionDeclarations for Workspace, Maps, and Flights APIs."""
     declarations = [
         types.FunctionDeclaration(
             name="calendar_list_events",
-            description="Lista los próximos eventos del calendario de Google del usuario.",
+            description="Lists the user's upcoming Google Calendar events.",
             parameters_json_schema={
                 "type": "object",
                 "properties": {
                     "max_results": {
                         "type": "integer",
-                        "description": "Máximo número de eventos a consultar (por defecto 10)"
+                        "description": "Maximum number of events to retrieve (default 10)"
                     },
                     "time_min": {
                         "type": "string",
-                        "description": "Fecha y hora mínima de búsqueda en formato ISO 8601 (ej: 2026-10-10T12:00:00Z)"
+                        "description": "Earliest date and time to search, in ISO 8601 format (e.g., 2026-10-10T12:00:00Z)"
                     }
                 }
             }
@@ -55,24 +59,24 @@ def build_workspace_tool() -> types.Tool:
                 "properties": {
                     "summary": {
                         "type": "string",
-                        "description": "Título o asunto del evento"
+                        "description": "Event title or summary"
                     },
                     "start_time": {
                         "type": "string",
-                        "description": "Fecha y hora de inicio en formato ISO 8601 (ej: 2026-10-15T10:00:00+02:00)"
+                        "description": "Start date and time in ISO 8601 format (e.g., 2026-10-15T10:00:00+02:00)"
                     },
                     "end_time": {
                         "type": "string",
-                        "description": "Fecha y hora de fin en formato ISO 8601 (ej: 2026-10-15T11:00:00+02:00)"
+                        "description": "End date and time in ISO 8601 format (e.g., 2026-10-15T11:00:00+02:00)"
                     },
                     "description": {
                         "type": "string",
-                        "description": "Descripción o notas del evento"
+                        "description": "Event description or notes"
                     },
                     "attendees": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "Lista de direcciones de correo electrónico de los invitados"
+                        "description": "List of invitees' email addresses"
                     }
                 },
                 "required": ["summary", "start_time", "end_time"]
@@ -80,38 +84,38 @@ def build_workspace_tool() -> types.Tool:
         ),
         types.FunctionDeclaration(
             name="gmail_list_messages",
-            description="Busca y lista correos electrónicos de Gmail según un filtro.",
+            description="Searches and lists Gmail messages matching a query.",
             parameters_json_schema={
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "Filtro de búsqueda de Gmail (ej: 'is:unread', 'from:cliente@empresa.com')"
+                        "description": "Gmail search query (e.g., 'is:unread', 'from:client@company.com')"
                     },
                     "max_results": {
                         "type": "integer",
-                        "description": "Máximo de correos a consultar (por defecto 5)"
+                        "description": "Maximum number of messages to retrieve (default 5)"
                     }
                 }
             }
         ),
         types.FunctionDeclaration(
             name="gmail_send_email",
-            description="Envía un correo electrónico a través de Gmail.",
+            description="Sends an email through Gmail.",
             parameters_json_schema={
                 "type": "object",
                 "properties": {
                     "to": {
                         "type": "string",
-                        "description": "Correo electrónico del destinatario"
+                        "description": "Recipient's email address"
                     },
                     "subject": {
                         "type": "string",
-                        "description": "Asunto del correo"
+                        "description": "Email subject"
                     },
                     "body": {
                         "type": "string",
-                        "description": "Contenido o cuerpo del correo electrónico"
+                        "description": "Email body"
                     }
                 },
                 "required": ["to", "subject", "body"]
@@ -119,20 +123,20 @@ def build_workspace_tool() -> types.Tool:
         ),
         types.FunctionDeclaration(
             name="tasks_list_tasks",
-            description="Obtiene las tareas pendientes de Google Tasks.",
+            description="Retrieves pending tasks from Google Tasks.",
             parameters_json_schema={
                 "type": "object",
                 "properties": {
                     "tasklist": {
                         "type": "string",
-                        "description": "Identificador de la lista de tareas ('@default' por defecto)"
+                        "description": "Task list ID ('@default' by default)"
                     }
                 }
             }
         ),
         types.FunctionDeclaration(
             name="tasks_create_task",
-            description="Crea una nueva tarea pendiente en Google Tasks.",
+            description="Creates a new task in Google Tasks.",
             parameters_json_schema={
                 "type": "object",
                 "properties": {
@@ -142,11 +146,11 @@ def build_workspace_tool() -> types.Tool:
                     },
                     "notes": {
                         "type": "string",
-                        "description": "Notas o detalles adicionales"
+                        "description": "Additional notes or details"
                     },
                     "due": {
                         "type": "string",
-                        "description": "Fecha límite en formato RFC 3339 (ej: 2026-10-20T18:00:00Z)"
+                        "description": "Due date in RFC 3339 format (e.g., 2026-10-20T18:00:00Z)"
                     }
                 },
                 "required": ["title"]
@@ -178,11 +182,104 @@ def build_workspace_tool() -> types.Tool:
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "Query de búsqueda en Google Drive (ej: name contains 'Minuta')"
+                        "description": "Google Drive search query (e.g., name contains 'Meeting Notes')"
                     },
                     "page_size": {
                         "type": "integer",
-                        "description": "Cantidad de archivos a devolver (por defecto 10)"
+                        "description": "Number of files to return (default 10)"
+                    }
+                }
+            }
+        ),
+        types.FunctionDeclaration(
+            name="maps_search_places",
+            description="Searches Google Maps for places, addresses, offices, restaurants, or points of interest.",
+            parameters_json_schema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Place or address search query (e.g., 'Google Zürich', 'Italian restaurant in Bern')"
+                    },
+                    "location": {
+                        "type": "string",
+                        "description": "Optional location or coordinates to bias the search"
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "description": "Maximum number of results to return (default 5)"
+                    }
+                },
+                "required": ["query"]
+            }
+        ),
+        types.FunctionDeclaration(
+            name="maps_get_directions",
+            description="Calculates routes, distance, estimated travel time, and Google Maps links between an origin and destination.",
+            parameters_json_schema={
+                "type": "object",
+                "properties": {
+                    "origin": {
+                        "type": "string",
+                        "description": "Starting point or origin address (e.g., 'Zürich HB', 'Paradeplatz')"
+                    },
+                    "destination": {
+                        "type": "string",
+                        "description": "Arrival point or destination address (e.g., 'Bern', 'Zürich Airport')"
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": ["driving", "transit", "walking", "bicycling"],
+                        "description": "Travel mode (driving, transit, walking, bicycling). Defaults to driving."
+                    }
+                },
+                "required": ["origin", "destination"]
+            }
+        ),
+        types.FunctionDeclaration(
+            name="flights_search",
+            description="Searches Google Flights for travel options by origin, destination, and date, and generates direct search and booking links.",
+            parameters_json_schema={
+                "type": "object",
+                "properties": {
+                    "origin": {
+                        "type": "string",
+                        "description": "IATA code or origin city (e.g., 'ZRH' or 'Zürich')"
+                    },
+                    "destination": {
+                        "type": "string",
+                        "description": "IATA code or destination city (e.g., 'LIS' or 'Lisbon')"
+                    },
+                    "departure_date": {
+                        "type": "string",
+                        "description": "Departure date in YYYY-MM-DD format (e.g., '2026-10-20')"
+                    },
+                    "return_date": {
+                        "type": "string",
+                        "description": "Optional return date in YYYY-MM-DD format"
+                    },
+                    "passengers": {
+                        "type": "integer",
+                        "description": "Number of passengers (default 1)"
+                    },
+                    "travel_class": {
+                        "type": "string",
+                        "enum": ["economy", "premium_economy", "business", "first"],
+                        "description": "Travel class ('economy' by default)"
+                    }
+                },
+                "required": ["origin", "destination", "departure_date"]
+            }
+        ),
+        types.FunctionDeclaration(
+            name="flights_get_reservations",
+            description="Searches the user's Gmail for flight confirmations, airline tickets, booking references (PNRs), and itineraries.",
+            parameters_json_schema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Optional search query for flight emails (default: 'flight OR booking OR airline OR ticket OR boarding')"
                     }
                 }
             }
@@ -192,7 +289,7 @@ def build_workspace_tool() -> types.Tool:
 
 
 def dispatch_tool_call(tool_name: str, args: Dict[str, Any], access_token: str) -> Any:
-    """Executes the specific Workspace tool using the user's bearer token."""
+    """Executes the specific tool using the user's bearer token or external services."""
     if tool_name == "calendar_list_events":
         return calendar_service.list_events(
             access_token=access_token,
@@ -245,8 +342,34 @@ def dispatch_tool_call(tool_name: str, args: Dict[str, Any], access_token: str) 
             query=args.get("query"),
             page_size=args.get("page_size", 10)
         )
+    elif tool_name == "maps_search_places":
+        return maps_service.search_places(
+            query=args["query"],
+            location=args.get("location"),
+            max_results=args.get("max_results", 5)
+        )
+    elif tool_name == "maps_get_directions":
+        return maps_service.get_directions(
+            origin=args["origin"],
+            destination=args["destination"],
+            mode=args.get("mode", "driving")
+        )
+    elif tool_name == "flights_search":
+        return flights_service.search_flights(
+            origin=args["origin"],
+            destination=args["destination"],
+            departure_date=args["departure_date"],
+            return_date=args.get("return_date"),
+            passengers=args.get("passengers", 1),
+            travel_class=args.get("travel_class", "economy")
+        )
+    elif tool_name == "flights_get_reservations":
+        return flights_service.get_user_flight_reservations(
+            access_token=access_token,
+            query=args.get("query", "flight OR booking OR airline OR ticket OR boarding")
+        )
     else:
-        raise ValueError(f"Unknown Workspace tool: {tool_name}")
+        raise ValueError(f"Unknown tool: {tool_name}")
 
 
 class LumiAgent:
@@ -255,15 +378,15 @@ class LumiAgent:
     def __init__(self, api_key: Optional[str] = None, model_name: str = "gemini-2.5-flash"):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         self.client = genai.Client(api_key=self.api_key)
-        self.model_name = model_name
+        self.model_name = os.getenv("GEMINI_MODEL") or model_name
         self.workspace_tool = build_workspace_tool()
 
     def run(self, prompt: str, access_token: str, max_turns: int = 5) -> Dict[str, Any]:
         """
         Executes a multi-turn reasoning loop:
-        1. Sends prompt to Gemini with Workspace tools.
+        1. Sends prompt to Gemini with Workspace, Maps, and Flights tools.
         2. Loops while Gemini requests function calls.
-        3. Executes requested functions using access_token.
+        3. Executes requested functions using access_token or external integrations.
         4. Returns the synthesized text response and list of executed actions.
         """
         executed_actions: List[Dict[str, Any]] = []
@@ -342,6 +465,6 @@ class LumiAgent:
 
         # Fallback if loop finishes
         return {
-            "reply": response.text or "Acciones procesadas correctamente.",
+            "reply": response.text or "Actions completed successfully.",
             "actions": executed_actions
         }

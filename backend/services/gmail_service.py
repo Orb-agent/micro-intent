@@ -23,7 +23,7 @@ def list_messages(access_token: str, query: str = "is:unread", max_results: int 
         detailed_messages.append({
             "id": msg["id"],
             "snippet": msg_data.get("snippet", ""),
-            "subject": headers.get("Subject", "Sin Asunto"),
+            "subject": headers.get("Subject", "No subject"),
             "from": headers.get("From", ""),
             "date": headers.get("Date", "")
         })

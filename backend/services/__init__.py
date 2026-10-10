@@ -4,6 +4,8 @@ from . import gmail_service
 from . import drive_service
 from . import docs_service
 from . import tasks_service
+from . import maps_service
+from . import flights_service
 
 __all__ = [
     "get_credentials",
@@ -14,4 +16,6 @@ __all__ = [
     "drive_service",
     "docs_service",
     "tasks_service",
+    "maps_service",
+    "flights_service",
 ]
