@@ -2,8 +2,16 @@
   "cli_version": "0.11.4",
   "checkpoint_id": "01M4K4CETPBDH9GSS9XRSSQEY7",
   "strategy": "manual-commit",
-  "checkpoints_count": 2,
-  "files_touched": null,
+  "checkpoints_count": 3,
+  "files_touched": [
+    "backend/agent.py",
+    "backend/fixtures/maps_places.json",
+    "backend/fixtures/maps_route.json",
+    "backend/tests/test_agent.py",
+    "backend/tests/test_maps.py",
+    "backend/tools/maps.py",
+    "docs/contracts.md"
+  ],
   "sessions": [
     {
       "metadata": "/0/metadata.json",
@@ -11,14 +19,21 @@
       "compact_transcript": "/0/transcript.jsonl",
       "content_hash": "/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/1/metadata.json",
+      "transcript": "/1/full.jsonl",
+      "compact_transcript": "/1/transcript.jsonl",
+      "content_hash": "/1/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
-    "input_tokens": 10,
-    "cache_creation_tokens": 4513,
-    "cache_read_tokens": 774083,
-    "output_tokens": 2042,
-    "api_call_count": 5,
+    "input_tokens": 24,
+    "cache_creation_tokens": 73036,
+    "cache_read_tokens": 1369907,
+    "output_tokens": 5156,
+    "api_call_count": 12,
     "subagent_tokens": {
       "input_tokens": 8,
       "cache_creation_tokens": 4846,
