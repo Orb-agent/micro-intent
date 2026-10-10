@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Beaver prototype</title>
+<title>Micro Intent · Beaver</title>
 <!--
   Mac prototype client for the /ws protocol in docs/contracts.md: mic, screen sharing,
   mascot voice and cards. Stands in for the iPhone app (WP1) so the idea can be tried on
@@ -11,60 +11,91 @@
 -->
 <style>
   :root {
-    --bg: #f6f5f2; --panel: #fff; --ink: #1d1d1b; --muted: #6b6a66; --line: #e4e2dc;
-    --red: #d6001c; --idle: #b9b6ad; --listening: #1f8a4c; --thinking: #6b5bd6;
-    --searching: #d08a00; --speaking: #d6001c;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #151514; --panel: #1f1f1d; --ink: #f1efe9; --muted: #a09d95; --line: #33322f; }
+    color-scheme: dark;
+    --bg: #0b0d12; --bg-raised: #141826; --panel: rgb(26 28 36 / .84);
+    --ink: #f7f8fb; --muted: #a9afbf; --line: rgb(255 255 255 / .1);
+    --accent: #3d63ff; --accent-bright: #6fb8ff; --success: #4ade80;
+    --warning: #fcd34d; --danger: #fca5a5;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-         font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; }
-  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 16px; }
-  header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
-  h1 { font-size: 18px; margin: 0; }
-  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  [hidden] { display: none !important; }
+  body {
+    min-height: 100vh; margin: 0; color: var(--ink);
+    background: radial-gradient(ellipse at 50% 22%, #17254a 0, transparent 38%),
+      linear-gradient(180deg, var(--bg) 0%, #101522 100%);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  }
+  main { width: min(100% - 40px, 940px); min-height: 100vh; margin: 0 auto; padding: 28px 0 36px; display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: max-content; }
+  .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid rgb(111 184 255 / .34); border-radius: 13px; color: #b9d8ff; background: linear-gradient(145deg, #1b3bd1, #3d63ff 62%, #6fb8ff); box-shadow: 0 5px 22px rgb(61 99 255 / .28); }
+  .brand-mark svg { width: 21px; height: 21px; }
+  h1 { margin: 0; font-size: 16px; line-height: 1.2; font-weight: 650; letter-spacing: -.02em; }
+  .brand-caption { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  .row, .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   button, select, input { font: inherit; color: inherit; }
-  button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px;
-           padding: 6px 14px; cursor: pointer; }
-  button:disabled { opacity: .5; cursor: default; }
-  .pill { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
-  .pill.ok { color: var(--listening); border-color: currentColor; }
-  .stage { display: grid; justify-items: center; gap: 10px; padding: 24px 0 8px; }
-  #orb { width: 132px; height: 132px; border-radius: 50%; border: none; background: var(--idle);
-         box-shadow: 0 0 0 0 transparent; transition: background .2s, transform .15s; touch-action: none; }
+  button, select { min-height: 42px; border: 1px solid var(--line); background: rgb(255 255 255 / .055); border-radius: 13px; padding: 8px 14px; cursor: pointer; transition: background .18s, border-color .18s, transform .18s; }
+  button:hover:not(:disabled), select:hover { border-color: rgb(157 187 255 / .38); background: rgb(255 255 255 / .09); }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { opacity: .42; cursor: default; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid #6fb8ff; outline-offset: 3px; }
+  select { max-width: 230px; color: #dce5ff; }
+  option { color: #f7f8fb; background: #141826; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; background: rgb(255 255 255 / .04); font-size: 12px; }
+  #conn::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #737b8e; }
+  .pill.ok { color: var(--success); border-color: rgb(74 222 128 / .24); background: rgb(34 197 94 / .08); }
+  .pill.ok::before { background: var(--success); box-shadow: 0 0 10px rgb(74 222 128 / .6); }
+  .stage { flex: 1; display: grid; align-content: center; justify-items: center; gap: 16px; min-height: 400px; padding: 28px 0 32px; text-align: center; }
+  .eyebrow { margin: 0; color: #9dbbff; font-size: 11px; font-weight: 650; letter-spacing: .18em; text-transform: uppercase; }
+  #orb { position: relative; isolation: isolate; display: grid; place-items: center; width: 156px; height: 156px; margin: 8px 0 4px; padding: 0; border: 1px solid rgb(255 255 255 / .5); border-radius: 50%; color: #14358d; background: radial-gradient(circle at 33% 25%, #fff 0%, #cff4ff 14%, #6fb8ff 39%, #3d63ff 67%, #1b3bd1 100%); box-shadow: inset -10px -15px 24px rgb(10 20 90 / .45), inset 6px 7px 15px rgb(255 255 255 / .78), 0 0 60px rgb(62 139 255 / .34), 0 18px 54px rgb(0 0 0 / .3); transition: transform .25s, filter .25s, box-shadow .25s; touch-action: none; }
+  #orb::before, #orb::after { content: ""; position: absolute; z-index: -1; border: 1px solid rgb(157 187 255 / .24); border-radius: 50%; pointer-events: none; }
+  #orb::before { inset: -13px; }
+  #orb::after { inset: -25px; border-color: rgb(157 187 255 / .11); }
+  #orb:hover { filter: brightness(1.08); transform: scale(1.025); }
   #orb:active { transform: scale(.96); }
-  #orb[data-state="listening"] { background: var(--listening); animation: pulse 1.2s infinite; }
-  #orb[data-state="thinking"] { background: var(--thinking); animation: pulse 1.6s infinite; }
-  #orb[data-state="searching"] { background: var(--searching); animation: pulse .9s infinite; }
-  #orb[data-state="speaking"] { background: var(--speaking); animation: pulse .7s infinite; }
-  @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 0%, transparent); }
-                     50% { box-shadow: 0 0 0 14px rgb(0 0 0 / .06); } 100% { box-shadow: 0 0 0 0 transparent; } }
-  @media (prefers-reduced-motion: reduce) { #orb { animation: none !important; } }
-  #label { color: var(--muted); min-height: 1.4em; }
-  .hint { color: var(--muted); font-size: 13px; text-align: center; }
-  .bubble { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px 16px; }
-  .you { color: var(--muted); }
-  #cards { display: grid; gap: 12px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: grid; gap: 4px; }
-  .card .kind { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-  .card .big { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  #orb svg { width: 31px; height: 31px; filter: drop-shadow(0 2px 5px rgb(255 255 255 / .45)); }
+  #orb[data-state="listening"] { animation: listen 1.25s ease-in-out infinite; }
+  #orb[data-state="thinking"], #orb[data-state="searching"] { animation: think 2.8s linear infinite; }
+  #orb[data-state="speaking"] { animation: speak .8s ease-in-out infinite alternate; }
+  #orb[data-state="listening"]::before, #orb[data-state="speaking"]::before { border-color: rgb(111 184 255 / .6); }
+  @keyframes listen { 50% { box-shadow: inset -10px -15px 24px rgb(10 20 90 / .4), inset 6px 7px 15px rgb(255 255 255 / .8), 0 0 0 12px rgb(61 99 255 / .12), 0 0 72px rgb(62 139 255 / .62); } }
+  @keyframes think { to { filter: hue-rotate(45deg); } }
+  @keyframes speak { to { transform: scale(1.045); box-shadow: inset -10px -15px 24px rgb(10 20 90 / .4), inset 6px 7px 15px rgb(255 255 255 / .8), 0 0 72px rgb(62 139 255 / .65), 0 0 0 9px rgb(61 99 255 / .1); } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+  #label { min-height: 1.5em; color: #b9d8ff; font-size: 14px; font-weight: 550; }
+  .hint { max-width: 410px; margin: 0; color: var(--muted); font-size: 13px; }
+  .content { width: min(100%, 700px); margin: 0 auto; display: grid; gap: 12px; }
+  .bubble { background: linear-gradient(135deg, rgb(61 99 255 / .12), rgb(255 255 255 / .045)); border: 1px solid rgb(111 184 255 / .18); border-radius: 18px; padding: 15px 18px; box-shadow: 0 12px 32px rgb(0 0 0 / .12); }
+  .you { color: var(--muted); font-size: 13px; }
+  #screenRow { min-height: 0; }
+  #cards { display: grid; gap: 10px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; display: grid; gap: 5px; box-shadow: 0 12px 32px rgb(0 0 0 / .12); backdrop-filter: blur(18px); }
+  .card .kind { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: #9dbbff; }
+  .card .big { font-size: 27px; font-weight: 650; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
   .card .meta { color: var(--muted); }
-  .badge { display: inline-block; background: var(--red); color: #fff; border-radius: 6px; padding: 0 6px; font-weight: 600; }
-  .verdict-fits { color: var(--listening); } .verdict-tight { color: var(--searching); } .verdict-clash { color: var(--red); }
-  #screenThumb { max-width: 160px; border-radius: 8px; border: 1px solid var(--line); display: none; }
-  #log { font: 12px/1.5 ui-monospace, Menlo, monospace; color: var(--muted); white-space: pre-wrap;
-         max-height: 180px; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
-  form { display: flex; gap: 8px; } form input { flex: 1; min-width: 0; border: 1px solid var(--line);
-         background: var(--panel); border-radius: 999px; padding: 6px 14px; }
+  .badge { display: inline-block; background: rgb(61 99 255 / .2); color: #c9d8ff; border-radius: 7px; padding: 0 7px; font-weight: 600; }
+  .verdict-fits { color: var(--success); } .verdict-tight { color: var(--warning); } .verdict-clash { color: var(--danger); }
+  #screenThumb { max-width: 120px; border-radius: 12px; border: 1px solid var(--line); display: none; }
+  #screenSummary { max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #textForm { display: flex; gap: 9px; padding: 7px; border: 1px solid var(--line); border-radius: 17px; background: rgb(255 255 255 / .055); box-shadow: 0 14px 36px rgb(0 0 0 / .18); }
+  #textForm input { flex: 1; min-width: 0; min-height: 42px; border: 0; outline: 0; background: transparent; padding: 7px 12px; }
+  #textForm input::placeholder { color: #81899d; }
+  #textForm button { min-width: 78px; border-color: transparent; color: white; background: linear-gradient(135deg, #3d63ff, #2448f5); font-weight: 600; }
+  #textForm button:hover { background: linear-gradient(135deg, #5878ff, #3157ff); }
+  #logDetails { margin-top: 16px; color: #858da1; font-size: 12px; }
+  #logDetails summary { width: max-content; cursor: pointer; user-select: none; }
+  #log { margin-top: 8px; font: 11px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; max-height: 150px; overflow: auto; background: rgb(0 0 0 / .2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  @media (max-width: 680px) { main { width: min(100% - 28px, 940px); padding-top: 17px; } header { align-items: flex-start; flex-direction: column; } .toolbar { width: 100%; } .toolbar > * { flex: 1; } .toolbar select { max-width: none; } .stage { min-height: 360px; } #orb { width: 136px; height: 136px; } }
 </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>Beaver prototype</h1>
-    <div class="row">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12c2.2-4.5 5.1-6.8 8.7-6.8 3.1 0 5.2 1.5 7.3 4.4M4 12c2.2 4.5 5.1 6.8 8.7 6.8 3.1 0 5.2-1.5 7.3-4.4M4 12h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+      <div><h1>Micro Intent</h1><span class="brand-caption">Beaver voice companion</span></div>
+    </div>
+    <div class="toolbar">
       <span id="conn" class="pill">disconnected</span>
       <select id="mode" title="Voice mode">
         <option value="ptt">Push to talk</option>
@@ -75,19 +106,24 @@
     </div>
   </header>
 
-  <section class="stage">
-    <button id="orb" data-state="idle" aria-label="Hold to talk"></button>
+  <section class="stage" aria-label="Voice assistant">
+    <p class="eyebrow">Your day, in the moment</p>
+    <button id="orb" data-state="idle" aria-label="Hold to talk" title="Hold to talk">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
     <div id="label"></div>
-    <div class="hint" id="hint">Click the orb to start. Then hold it, or hold Space, while you talk.</div>
+    <p class="hint" id="hint">Tap the orb to enable your microphone. Then hold it, or hold Space, while you talk.</p>
   </section>
 
-  <div class="row"><img id="screenThumb" alt="Last screen frame sent"><span id="screenSummary" class="pill" hidden></span></div>
-  <div id="you" class="you"></div>
-  <div id="say" class="bubble" hidden></div>
-  <div id="cards"></div>
+  <section class="content" aria-live="polite">
+    <div class="row" id="screenRow"><img id="screenThumb" alt="Last screen frame sent"><span id="screenSummary" class="pill" hidden></span></div>
+    <div id="you" class="you"></div>
+    <div id="say" class="bubble" hidden></div>
+    <div id="cards"></div>
 
-  <form id="textForm"><input id="text" placeholder="Or type a question…" autocomplete="off"><button>Send</button></form>
-  <div id="log"></div>
+    <form id="textForm"><input id="text" aria-label="Type a question" placeholder="Ask Beaver anything…" autocomplete="off"><button>Send</button></form>
+  </section>
+  <details id="logDetails"><summary>Connection details</summary><div id="log"></div></details>
 </main>
 
 <script>
