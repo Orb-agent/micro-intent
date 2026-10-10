@@ -1,6 +1,7 @@
 """
 Automated unit & integration tests for the Lumi Backend.
 """
+import httpx
 import pytest
 from httplib2 import Response
 from googleapiclient.errors import HttpError
@@ -9,10 +10,41 @@ from fastapi.testclient import TestClient
 
 from main import app
 from services.auth_client import get_credentials
-from services import maps_service, flights_service
+from services import auth_client, maps_service, flights_service
 from agent_engine import build_workspace_tool, dispatch_tool_call
 
 client = TestClient(app)
+REAL_VERIFY = auth_client.verify_google_token
+
+
+@pytest.fixture(autouse=True)
+def accept_any_google_token(monkeypatch):
+    """Endpoint tests use fake tokens; test_google_token_verification covers the real check."""
+    async def accept(token):
+        pass
+    monkeypatch.setattr(auth_client, "verify_google_token", accept)
+
+
+@pytest.mark.parametrize("tokeninfo_status,info,client_id,expected", [
+    (200, {"aud": "our-client", "exp": "9999999999"}, "our-client", 200),
+    (200, {"aud": "other-client", "exp": "9999999999"}, "our-client", 401),
+    (400, {"error": "invalid_token"}, "our-client", 401),
+    (200, {"aud": "our-client"}, None, 503),
+])
+@patch("main.maps_service.search_places", return_value=[])
+def test_google_token_verification(mock_search, monkeypatch, tokeninfo_status, info, client_id, expected):
+    monkeypatch.setattr(auth_client, "verify_google_token", REAL_VERIFY)
+    monkeypatch.setattr(auth_client, "_verified", {})
+    if client_id:
+        monkeypatch.setenv("GOOGLE_CLIENT_ID", client_id)
+    else:
+        monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
+    transport = httpx.MockTransport(lambda request: httpx.Response(tokeninfo_status, json=info))
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(auth_client.httpx, "AsyncClient", lambda **kw: real_client(transport=transport, **kw))
+    response = client.get("/api/maps/search?query=Bern", headers={"Authorization": "Bearer some-token"})
+    assert response.status_code == expected
+    assert mock_search.called == (expected == 200)
 
 
 def test_docs_google_connection(monkeypatch):
