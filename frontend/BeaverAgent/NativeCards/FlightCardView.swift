@@ -112,8 +112,8 @@ public struct FlightCardView: View {
 
             // Large Action Buttons (at least 60pt tall)
             CardActionButtonsView(
-                confirmTitle: "Bestätigen",
-                cancelTitle: "Abbrechen",
+                confirmTitle: "Confirm",
+                cancelTitle: "Cancel",
                 confirmActionId: "confirm_flight",
                 cancelActionId: "cancel_flight",
                 onAction: onAction

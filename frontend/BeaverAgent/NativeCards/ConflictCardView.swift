@@ -15,22 +15,22 @@ public struct ConflictCardView: View {
         }
         switch card.verdict {
         case .fits:
-            return "Passt zeitlich: Keine Terminüberschneidung."
+            return "Fits schedule: No overlap between events."
         case .tight:
-            return "Zeitlich knapp: Sehr wenig Puffer zwischen den Terminen."
+            return "Tight schedule: Very little buffer between events."
         case .clash:
-            return "Terminkonflikt: Beide Termine überschneiden sich."
+            return "Schedule conflict: Both events overlap."
         }
     }
 
     private var suggestedFixButtonTitle: String {
         switch card.verdict {
         case .fits:
-            return "Vorschlag übernehmen"
+            return "Accept Proposal"
         case .tight:
-            return "Termin anpassen"
+            return "Adjust Event"
         case .clash:
-            return "Termin verschieben"
+            return "Move Event"
         }
     }
 
@@ -39,19 +39,19 @@ public struct ConflictCardView: View {
         case .fits:
             return GlassPillView(
                 iconName: "checkmark.seal.fill",
-                text: "Passt zeitlich",
+                text: "Fits schedule",
                 tintColor: CardTheme.successText
             )
         case .tight:
             return GlassPillView(
                 iconName: "clock.badge.exclamationmark.fill",
-                text: "Zeitlich knapp",
+                text: "Tight schedule",
                 tintColor: CardTheme.warnText
             )
         case .clash:
             return GlassPillView(
                 iconName: "exclamationmark.triangle.fill",
-                text: "Terminkonflikt",
+                text: "Schedule Conflict",
                 tintColor: CardTheme.dangerText
             )
         }
@@ -85,13 +85,13 @@ public struct ConflictCardView: View {
             // Event Details Cards (Current Event & Proposal)
             VStack(spacing: 12) {
                 // Event 1: Current Event
-                HStack(alignment: .center, spacing: 14) {
+                HStack(alignment: .center, spacing: 12) {
                     Circle()
                         .fill(Color.white.opacity(0.14))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 40, height: 40)
                         .overlay {
                             Image(systemName: "calendar")
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(CardTheme.textPrimary)
                         }
 
@@ -99,17 +99,22 @@ public struct ConflictCardView: View {
                         Text(card.event.title)
                             .font(CardTheme.headlineFont)
                             .foregroundColor(CardTheme.textPrimary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
 
-                        Text("Aktueller Termin")
+                        Text("Current Event")
                             .font(CardTheme.captionFont)
                             .foregroundColor(CardTheme.textMuted)
+                            .lineLimit(1)
                     }
 
-                    Spacer()
+                    Spacer(minLength: 8)
 
                     Text("\(CardFormatters.formatTime(card.event.start)) – \(CardFormatters.formatTime(card.event.end))")
-                        .font(CardTheme.headlineFont)
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundColor(CardTheme.textSecondary)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 .padding(14)
                 .background {
@@ -120,13 +125,13 @@ public struct ConflictCardView: View {
                 }
 
                 // Event 2: Proposed Event
-                HStack(alignment: .center, spacing: 14) {
+                HStack(alignment: .center, spacing: 12) {
                     Circle()
                         .fill(CardTheme.accentSoft)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 40, height: 40)
                         .overlay {
                             Image(systemName: "sparkles")
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(CardTheme.accentText)
                         }
 
@@ -134,19 +139,29 @@ public struct ConflictCardView: View {
                         Text(card.proposal.title)
                             .font(CardTheme.headlineFont)
                             .foregroundColor(CardTheme.textPrimary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
 
                         if let place = card.proposal.place, !place.isEmpty {
                             Text(place)
                                 .font(CardTheme.captionFont)
                                 .foregroundColor(CardTheme.textSecondary)
+                                .lineLimit(1)
+                        } else {
+                            Text("Proposed Event")
+                                .font(CardTheme.captionFont)
+                                .foregroundColor(CardTheme.textMuted)
+                                .lineLimit(1)
                         }
                     }
 
-                    Spacer()
+                    Spacer(minLength: 8)
 
                     Text(CardFormatters.formatTime(card.proposal.start))
-                        .font(CardTheme.timeFont)
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundColor(CardTheme.textPrimary)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 .padding(14)
                 .background {
@@ -233,110 +248,131 @@ public struct MiniDayRailView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Rail Hour Labels: 17:00, 19:30, 22:00 (>= 17pt)
+            // Rail Hour Labels: 17:00, 19:30, 22:00 with identical font and weight (>= 17pt)
             HStack {
                 Text("17:00")
                     .font(CardTheme.captionFont)
-                    .foregroundColor(CardTheme.textMuted)
+                    .foregroundColor(CardTheme.textSecondary)
                 Spacer()
                 Text("19:30")
                     .font(CardTheme.captionFont)
-                    .foregroundColor(CardTheme.textTertiary)
+                    .foregroundColor(CardTheme.textSecondary)
                 Spacer()
                 Text("22:00")
                     .font(CardTheme.captionFont)
-                    .foregroundColor(CardTheme.textMuted)
+                    .foregroundColor(CardTheme.textSecondary)
             }
 
-            // Visual Rail Canvas
+            // Two separate thin lanes on the 17:00 - 22:00 axis
             GeometryReader { geometry in
                 let width = geometry.size.width
-                let height: CGFloat = 44
+                let trackHeight: CGFloat = 52
+                let laneHeight: CGFloat = 12
+                let lane1Y: CGFloat = 8
+                let lane2Y: CGFloat = 32
 
-                ZStack(alignment: .leading) {
-                    // Rail background track
+                // Calculate event 1 (top lane) geometry
+                let e1StartMin = minutesFrom1700(date: event.start)
+                let e1EndMin = minutesFrom1700(date: event.end)
+                let e1X = width * (e1StartMin / totalSpanMinutes)
+                let e1W = max(16, width * ((e1EndMin - e1StartMin) / totalSpanMinutes))
+
+                // Calculate proposal / event 2 (bottom lane) geometry
+                let pStartMin = minutesFrom1700(date: proposal.start)
+                let pEndMin = minutesFrom1700(date: proposalEnd)
+                let pX = width * (pStartMin / totalSpanMinutes)
+                let pW = max(16, width * ((pEndMin - pStartMin) / totalSpanMinutes))
+
+                // Overlap calculation
+                let overlapStart = max(event.start, proposal.start)
+                let overlapEnd = min(event.end, proposalEnd)
+                let hasOverlap = overlapEnd > overlapStart
+
+                let oStartMin = hasOverlap ? minutesFrom1700(date: overlapStart) : 0
+                let oEndMin = hasOverlap ? minutesFrom1700(date: overlapEnd) : 0
+                let oX = width * (oStartMin / totalSpanMinutes)
+                let oW = max(18, width * ((oEndMin - oStartMin) / totalSpanMinutes))
+                let oCenterX = oX + (oW / 2)
+
+                ZStack(alignment: .topLeading) {
+                    // Full track background container
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .fill(CardTheme.surfaceControl)
-                        .frame(height: height)
+                        .frame(height: trackHeight)
 
                     // Hour tick dividers at 18:00, 19:00, 20:00, 21:00
                     ForEach(1...4, id: \.self) { hourOffset in
                         let tickX = width * (Double(hourOffset * 60) / totalSpanMinutes)
                         Rectangle()
-                            .fill(Color.white.opacity(0.12))
-                            .frame(width: 1, height: height)
+                            .fill(Color.white.opacity(0.10))
+                            .frame(width: 1, height: trackHeight)
                             .offset(x: tickX)
                     }
 
-                    // Event 1 block
-                    let e1StartMin = minutesFrom1700(date: event.start)
-                    let e1EndMin = minutesFrom1700(date: event.end)
-                    let e1X = width * (e1StartMin / totalSpanMinutes)
-                    let e1W = max(24, width * ((e1EndMin - e1StartMin) / totalSpanMinutes))
+                    // Background track groove for Lane 1 (top)
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color.white.opacity(0.06))
+                        .frame(width: width - 8, height: laneHeight)
+                        .offset(x: 4, y: lane1Y)
 
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color(white: 0.35).opacity(0.85))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
-                        }
-                        .frame(width: min(e1W, width - e1X), height: height - 8)
-                        .offset(x: e1X, y: 0)
+                    // Background track groove for Lane 2 (bottom)
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color.white.opacity(0.06))
+                        .frame(width: width - 8, height: laneHeight)
+                        .offset(x: 4, y: lane2Y)
 
-                    // Event 2 (Proposal) block
-                    let pStartMin = minutesFrom1700(date: proposal.start)
-                    let pEndMin = minutesFrom1700(date: proposalEnd)
-                    let pX = width * (pStartMin / totalSpanMinutes)
-                    let pW = max(24, width * ((pEndMin - pStartMin) / totalSpanMinutes))
+                    // Overlap background highlight band across both lanes
+                    if hasOverlap {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(CardTheme.warn.opacity(0.18))
+                            .frame(width: min(oW, width - oX), height: trackHeight - 8)
+                            .offset(x: oX, y: 4)
+                    }
 
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(CardTheme.accentStrong.opacity(0.85))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .strokeBorder(CardTheme.accentBorder, lineWidth: 1)
-                        }
-                        .frame(width: min(pW, width - pX), height: height - 8)
-                        .offset(x: pX, y: 0)
+                    // --- LANE 1 (Current Event) ---
+                    // Base event 1 bar (neutral slate)
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color.white.opacity(0.40))
+                        .frame(width: min(e1W, width - e1X), height: laneHeight)
+                        .offset(x: e1X, y: lane1Y)
 
-                    // Overlap region in accent warning color (#FBBF24)
-                    let overlapStart = max(event.start, proposal.start)
-                    let overlapEnd = min(event.end, proposalEnd)
-
-                    if overlapEnd > overlapStart {
-                        let oStartMin = minutesFrom1700(date: overlapStart)
-                        let oEndMin = minutesFrom1700(date: overlapEnd)
-                        let oX = width * (oStartMin / totalSpanMinutes)
-                        let oW = max(18, width * ((oEndMin - oStartMin) / totalSpanMinutes))
-
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    // Highlight overlapping span on Lane 1 in warning color
+                    if hasOverlap {
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
                             .fill(CardTheme.warn)
-                            .overlay {
-                                HStack(spacing: 2) {
-                                    Image(systemName: "exclamationmark.triangle.fill")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(Color(red: 11/255, green: 13/255, blue: 18/255))
-                                }
-                            }
-                            .frame(width: min(oW, width - oX), height: height - 8)
-                            .offset(x: oX, y: 0)
-                            .shadow(color: CardTheme.warn.opacity(0.6), radius: 8, x: 0, y: 0)
-                    } else if verdict == .clash {
-                        // In case of conflict without direct time overlap (e.g. transit travel clash)
-                        let clashX = width * (e1EndMin / totalSpanMinutes)
-                        let clashW = max(20, width * ((pStartMin - e1EndMin) / totalSpanMinutes))
+                            .frame(width: min(oW, width - oX), height: laneHeight)
+                            .offset(x: oX, y: lane1Y)
+                    }
 
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(CardTheme.warn.opacity(0.9))
-                            .overlay {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(Color(red: 11/255, green: 13/255, blue: 18/255))
-                            }
-                            .frame(width: min(clashW, width - clashX), height: height - 8)
-                            .offset(x: clashX, y: 0)
+                    // --- LANE 2 (Proposed Event) ---
+                    // Base event 2 bar (accent cyan)
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(CardTheme.accent)
+                        .frame(width: min(pW, width - pX), height: laneHeight)
+                        .offset(x: pX, y: lane2Y)
+
+                    // Highlight overlapping span on Lane 2 in warning color
+                    if hasOverlap {
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(CardTheme.warn)
+                            .frame(width: min(oW, width - oX), height: laneHeight)
+                            .offset(x: oX, y: lane2Y)
+                    }
+
+                    // Warning icon centered on the overlapping span
+                    if hasOverlap {
+                        ZStack {
+                            Circle()
+                                .fill(CardTheme.warn)
+                                .frame(width: 24, height: 24)
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(Color(red: 11/255, green: 13/255, blue: 18/255))
+                        }
+                        .shadow(color: CardTheme.warn.opacity(0.6), radius: 6, x: 0, y: 0)
+                        .offset(x: max(14, min(width - 24, oCenterX - 12)), y: 14)
                     }
                 }
-                .padding(.horizontal, 4)
             }
             .frame(height: 52)
         }
@@ -366,7 +402,7 @@ public struct MiniDayRailView: View {
 #Preview("Conflict Card (Clash with Overlap) - Dark") {
     let clashCard = ConflictCard(
         event: ConflictEvent(
-            title: "Meeting mit Team",
+            title: "Meeting with Team",
             start: CardDateParser.parse("2026-10-15T18:00:00+02:00") ?? Date(),
             end: CardDateParser.parse("2026-10-15T19:30:00+02:00") ?? Date()
         ),
@@ -376,7 +412,7 @@ public struct MiniDayRailView: View {
             place: "Bern"
         ),
         verdict: .clash,
-        note: "30 Min. Überschneidung zwischen Meeting und Dinner"
+        note: "30 min overlap between Meeting and Dinner"
     )
 
     return ZStack {

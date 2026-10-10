@@ -14,7 +14,7 @@ public struct EventCardView: View {
         case .calendar:
             return GlassPillView(
                 iconName: "calendar",
-                text: "Kalender",
+                text: "Calendar",
                 tintColor: CardTheme.accentText
             )
         case .luma:
@@ -63,7 +63,7 @@ public struct EventCardView: View {
                             .font(CardTheme.headlineFont)
                             .foregroundColor(CardTheme.textPrimary)
 
-                        Text("\(CardFormatters.formatTime(card.start)) – \(CardFormatters.formatTime(card.end)) Uhr")
+                        Text("\(CardFormatters.formatTime(card.start)) – \(CardFormatters.formatTime(card.end))")
                             .font(CardTheme.captionFont)
                             .foregroundColor(CardTheme.textSecondary)
                     }
@@ -86,7 +86,7 @@ public struct EventCardView: View {
                                 .font(CardTheme.headlineFont)
                                 .foregroundColor(CardTheme.textPrimary)
 
-                            Text("Veranstaltungsort")
+                            Text("Location")
                                 .font(CardTheme.captionFont)
                                 .foregroundColor(CardTheme.textMuted)
                         }
@@ -104,8 +104,8 @@ public struct EventCardView: View {
 
             // Large Action Buttons (at least 60pt tall)
             CardActionButtonsView(
-                confirmTitle: "Bestätigen",
-                cancelTitle: "Abbrechen",
+                confirmTitle: "Confirm",
+                cancelTitle: "Cancel",
                 confirmActionId: "confirm_event",
                 cancelActionId: "cancel_event",
                 onAction: onAction

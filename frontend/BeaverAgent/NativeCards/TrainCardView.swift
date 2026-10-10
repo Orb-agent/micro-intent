@@ -42,13 +42,13 @@ public struct TrainCardView: View {
                     if delay == 0 {
                         GlassPillView(
                             iconName: "checkmark.circle.fill",
-                            text: "Pünktlich",
+                            text: "On time",
                             tintColor: CardTheme.successText
                         )
                     } else {
                         GlassPillView(
                             iconName: "exclamationmark.circle.fill",
-                            text: "+\(delay) Min.",
+                            text: "+\(delay) min",
                             tintColor: CardTheme.dangerText
                         )
                     }
@@ -57,7 +57,7 @@ public struct TrainCardView: View {
 
             // Hero Departure Time (48pt+) as the primary visual focus, plus Platform
             VStack(alignment: .leading, spacing: 6) {
-                Text("Abfahrt")
+                Text("Departure")
                     .font(CardTheme.captionFont)
                     .foregroundColor(CardTheme.textMuted)
                     .textCase(.uppercase)
@@ -73,7 +73,7 @@ public struct TrainCardView: View {
                         HStack(spacing: 6) {
                             Image(systemName: "signpost.right.fill")
                                 .font(.system(size: 17, weight: .bold))
-                            Text("Gleis \(platform)")
+                            Text("Platform \(platform)")
                                 .font(CardTheme.titleFont)
                         }
                         .foregroundColor(Color(red: 210/255, green: 170/255, blue: 255/255))
@@ -97,7 +97,7 @@ public struct TrainCardView: View {
             // Journey Route: Destination, Arrival & Duration
             HStack(alignment: .center, spacing: 14) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Ankunft: \(CardFormatters.formatTime(card.arrival))")
+                    Text("Arrival: \(CardFormatters.formatTime(card.arrival))")
                         .font(CardTheme.timeFont)
                         .foregroundColor(CardTheme.textPrimary)
 
@@ -117,7 +117,7 @@ public struct TrainCardView: View {
                     }
                     .foregroundColor(CardTheme.accentText)
 
-                    Text(card.transfers == 0 ? "Direktverbindung" : "\(card.transfers) Umstieg(e)")
+                    Text(card.transfers == 0 ? "Direct" : "\(card.transfers) transfer\(card.transfers == 1 ? "" : "s")")
                         .font(CardTheme.captionFont)
                         .foregroundColor(CardTheme.textMuted)
                 }
@@ -144,8 +144,8 @@ public struct TrainCardView: View {
 
             // Large Action Buttons (at least 60pt tall)
             CardActionButtonsView(
-                confirmTitle: "Bestätigen",
-                cancelTitle: "Abbrechen",
+                confirmTitle: "Confirm",
+                cancelTitle: "Cancel",
                 confirmActionId: "confirm_train",
                 cancelActionId: "cancel_train",
                 onAction: onAction

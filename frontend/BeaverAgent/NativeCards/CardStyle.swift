@@ -159,16 +159,16 @@ public enum CardFormatters {
     private static let shortDateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.timeZone = zurichTimeZone
-        f.locale = Locale(identifier: "de_CH")
-        f.dateFormat = "E, d. MMM"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "EEE d MMM"
         return f
     }()
 
     private static let fullDateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.timeZone = zurichTimeZone
-        f.locale = Locale(identifier: "de_CH")
-        f.dateFormat = "d. MMMM yyyy"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "d MMMM yyyy"
         return f
     }()
 
@@ -190,17 +190,17 @@ public enum CardFormatters {
         let hours = seconds / 3600
         if hours > 0 {
             if minutes > 0 {
-                return "\(hours) Std. \(minutes) Min."
+                return "\(hours)h \(minutes)m"
             } else {
-                return "\(hours) Std."
+                return "\(hours)h"
             }
         } else {
-            return "\(minutes) Min."
+            return "\(minutes)m"
         }
     }
 }
 
-// MARK: - Reusable Action Buttons ("Bestätigen" & "Abbrechen")
+// MARK: - Reusable Action Buttons ("Confirm" & "Cancel")
 
 public struct CardActionButtonsView: View {
     public let confirmTitle: String
@@ -210,8 +210,8 @@ public struct CardActionButtonsView: View {
     public let onAction: ((String) -> Void)?
 
     public init(
-        confirmTitle: String = "Bestätigen",
-        cancelTitle: String = "Abbrechen",
+        confirmTitle: String = "Confirm",
+        cancelTitle: String = "Cancel",
         confirmActionId: String = "confirm",
         cancelActionId: String = "cancel",
         onAction: ((String) -> Void)? = nil
@@ -225,7 +225,7 @@ public struct CardActionButtonsView: View {
 
     public var body: some View {
         HStack(spacing: 14) {
-            // Cancel button (Abbrechen - secondary translucent button, at least 60pt)
+            // Cancel button (secondary translucent button, at least 60pt)
             Button {
                 onAction?(cancelActionId)
             } label: {
@@ -250,7 +250,7 @@ public struct CardActionButtonsView: View {
             .buttonStyle(CardScaleButtonStyle())
             .accessibilityLabel(cancelTitle)
 
-            // Confirm button (Bestätigen - prominent primary button, at least 60pt)
+            // Confirm button (prominent primary button, at least 60pt)
             Button {
                 onAction?(confirmActionId)
             } label: {
