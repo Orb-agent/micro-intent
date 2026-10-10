@@ -59,7 +59,7 @@ def test_screenshot_starts_a_proactive_turn(client, monkeypatch, fake_interactio
     ]
     assert msgs[2] == {"type": "reply", "say": OFFER["say"], "cards": OFFER["cards"]}
     assert [c["kind"] for c in msgs[2]["cards"]] == ["conflict", "train"]
-    asked = model.calls[0]["input"]
+    asked = model.calls[0]["input"][-1]["content"][0]["text"]
     assert server.PROACTIVE in asked and "<screen_context>" in asked and "<trains>" in asked
     assert len(sbb_requests) == 1  # the train prefetch for the plan on screen
     assert server.latest.used  # the follow-up "yes" doesn't get the screen a second time

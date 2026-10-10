@@ -6,7 +6,7 @@ import json
 
 import httpx
 import pytest
-from test_agent import FakeInteraction, FakeStep, ag, fake_interactions, statuses  # noqa: F401
+from test_agent import FakeInteraction, FakeStep, ag, fake_interactions, results, statuses  # noqa: F401
 
 import agent
 from a2ui import cards_to_a2ui
@@ -73,7 +73,7 @@ async def test_flight_search_without_key_ends_in_a_link_card(ag, fake_interactio
 
     assert await ag.turn("Find me a flight to Lisbon on the 20th", None, on_status) == answer
     assert seen == ["Searching flights…"]
-    result = json.loads(inter.calls[1]["input"][0]["result"])
+    result = json.loads(results(inter.calls[1])[0]["result"])
     assert result["flights"] == [] and result["google_flights_url"] == link
 
     components = cards_to_a2ui("reply-1", answer["cards"])[1]["updateComponents"]["components"]
