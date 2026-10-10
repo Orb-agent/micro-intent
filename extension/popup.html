@@ -20,6 +20,7 @@
       button:disabled { opacity: .55; cursor: wait; }
       #status { min-height: 1.4em; margin: 10px 0 0; font-size: 12px; }
       .hint { margin-top: 14px; font-size: 11px; }
+      select { box-sizing: border-box; width: 100%; padding: 9px 10px; border: 1px solid #8886; border-radius: 8px; background: Canvas; color: CanvasText; font: inherit; }
     </style>
   </head>
   <body>
@@ -29,10 +30,13 @@
     <input id="server" type="url" placeholder="http://localhost:8000" autocomplete="url">
     <label for="token">App token</label>
     <input id="token" type="password" autocomplete="off" placeholder="APP_TOKEN">
+    <label for="mode">Voice mode</label>
+    <select id="mode"><option value="ptt">Click to talk</option><option value="handsfree">Hands-free listening</option></select>
     <button id="save" class="secondary" type="button">Save and allow this server</button>
     <button id="open" type="button">Open assistant</button>
+    <button id="enableSite" class="secondary" type="button">Add floating orb to this site</button>
     <div id="status" role="status" aria-live="polite"></div>
-    <p class="hint">The assistant opens in a tab so the microphone and spoken replies stay available while you work.</p>
+    <p class="hint">The floating orb stays in the bottom-right corner. Choose click-to-talk or hands-free listening above.</p>
     <script src="popup.js"></script>
   </body>
 </html>

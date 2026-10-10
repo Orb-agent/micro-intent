@@ -53,8 +53,20 @@
   #orb[data-state="thinking"] svg { animation: breathe 1.5s ease-in-out infinite; }
   #orb[data-state="searching"] svg { animation: orbit 1.5s linear infinite; }
   #orb[data-state="speaking"] svg { animation: breathe .7s ease-in-out infinite; }
+  #orb[data-state="idle"] svg { animation: idlePulse 2.8s ease-in-out infinite; }
   @keyframes orbit { to { transform: rotate(360deg); } }
   @keyframes breathe { 50% { transform: scale(.9); opacity: .68; } }
+  @keyframes idlePulse { 50% { transform: scale(.94); opacity: .78; } }
+  body.orbs-widget { width: 150px; min-height: 150px; overflow: hidden; color-scheme: dark; background: transparent; --ink: #fff; --muted: #c7c7c7; --orb-ink: #fff; }
+  body.orbs-widget main { width: 100%; min-height: 0; margin: 0; padding: 10px 6px; display: flex; align-items: center; justify-content: center; }
+  body.orbs-widget main > :not(.stage) { display: none !important; }
+  body.orbs-widget .stage { width: 100%; min-height: 0; padding: 0; gap: 2px; border: 0; border-radius: 0; background: transparent; }
+  body.orbs-widget .stage-intro, body.orbs-widget .hint { display: none; }
+  body.orbs-widget #orb { width: 76px; height: 76px; border: 1px solid #ffffff36; border-radius: 50%; background: #080808; box-shadow: 0 8px 30px #0008, 0 0 0 5px #ffffff0d; cursor: pointer; }
+  body.orbs-widget #orb svg { width: 68%; height: 68%; }
+  body.orbs-widget #orb:hover { transform: scale(1.05); }
+  body.orbs-widget #orb[data-state="listening"] { box-shadow: 0 0 0 7px #ffffff22, 0 8px 30px #0009; }
+  body.orbs-widget #label { max-width: 140px; min-height: 0; padding: 4px 8px; border: 1px solid #ffffff20; border-radius: 999px; background: #111e; color: #fff; font-size: 10px; line-height: 1.2; text-align: center; }
   @media (prefers-reduced-motion: reduce) { #orb svg { animation: none !important; } }
   #label { color: var(--ink); min-height: 1.4em; font-weight: 550; }
   .hint { color: var(--muted); font-size: 13px; text-align: center; }

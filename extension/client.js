@@ -12,8 +12,9 @@ $("brandMark").innerHTML = orbMark().replace('<svg viewBox="0 0 100 100" aria-hi
 const log = (...a) => { const l = $("log"); l.hidden = false; l.textContent += a.join(" ") + "\n"; l.scrollTop = l.scrollHeight; };
 
 let token = "", server = "";
-let ws, ctx, micNode, screenStream, screenVideo;
+let ws, ctx, micNode, micStream, screenStream, screenVideo;
 let mode = "ptt", talking = false, serverState = "idle", dropAudio = false;
+const widgetMode = new URLSearchParams(location.search).has("widget");
 let playing = [], nextTime = 0, releasedAt = 0, firstAudioLogged = true;
 
 // ---------- WebSocket ----------
@@ -63,17 +64,26 @@ function ensureCtx() { // needs a user gesture (click, key, submit) before audio
 
 async function startAudio() {
   ensureCtx();
+  if (ctx.state === "suspended") await ctx.resume();
   await ctx.audioWorklet.addModule(chrome.runtime.getURL("pcm-worklet.js"));
-  const mic = await navigator.mediaDevices.getUserMedia({
+  micStream = await navigator.mediaDevices.getUserMedia({
     audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
   });
   micNode = new AudioWorkletNode(ctx, "pcm");
   micNode.port.onmessage = (e) => { if (talking || mode === "handsfree") send({ type: "audio", data: b64(e.data) }); };
-  ctx.createMediaStreamSource(mic).connect(micNode);
+  ctx.createMediaStreamSource(micStream).connect(micNode);
   $("hint").textContent = mode === "handsfree"
     ? "Hands-free: just talk. Talking over the beaver interrupts it."
     : "Hold the orb or Space while you talk. Click the orb while it speaks to stop it.";
   log("mic on at", ctx.sampleRate, "Hz");
+}
+
+function stopAudio() {
+  talking = false;
+  serverState = "idle";
+  if (micNode) { micNode.port.onmessage = null; try { micNode.disconnect(); } catch {} micNode = null; }
+  if (micStream) { micStream.getTracks().forEach((track) => track.stop()); micStream = null; }
+  renderOrb();
 }
 
 function b64(buf) {
@@ -119,10 +129,35 @@ function release() {
   if (!talking) return;
   talking = false; releasedAt = performance.now(); send({ type: "audio_end" }); renderOrb();
 }
-$("orb").addEventListener("pointerdown", (e) => { e.preventDefault(); press(); });
-for (const ev of ["pointerup", "pointerleave", "pointercancel"]) $("orb").addEventListener(ev, release);
-addEventListener("keydown", (e) => { if (e.code === "Space" && !e.repeat && document.activeElement !== $("text")) { e.preventDefault(); press(); } });
-addEventListener("keyup", (e) => { if (e.code === "Space" && document.activeElement !== $("text")) { e.preventDefault(); release(); } });
+$("orb").addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  if (!widgetMode) press();
+});
+if (widgetMode) {
+  document.body.classList.add("orbs-widget");
+  $("orb").addEventListener("click", async () => {
+    $("orb").disabled = true;
+    try {
+      if (mode === "handsfree") {
+        if (micNode) { stopAudio(); $("label").textContent = "Tap to listen"; }
+        else { await startAudio(); $("label").textContent = "Listening · tap to pause"; }
+      } else if (talking) {
+        release(); $("label").textContent = "Tap to talk";
+      } else {
+        if (!micNode) await startAudio();
+        if (playing.length || serverState !== "idle") stopPlayback();
+        talking = true; renderOrb(); grabScreen("orb"); $("label").textContent = "Listening · tap to send";
+      }
+    } catch (error) {
+      $("label").textContent = "Microphone access needed";
+      log("mic error:", error.message);
+    } finally { $("orb").disabled = false; }
+  });
+} else {
+  for (const ev of ["pointerup", "pointerleave", "pointercancel"]) $("orb").addEventListener(ev, release);
+}
+addEventListener("keydown", (e) => { if (!widgetMode && e.code === "Space" && !e.repeat && document.activeElement !== $("text")) { e.preventDefault(); press(); } });
+addEventListener("keyup", (e) => { if (!widgetMode && e.code === "Space" && document.activeElement !== $("text")) { e.preventDefault(); release(); } });
 
 $("mode").addEventListener("change", () => {
   mode = $("mode").value; stopPlayback(); talking = false;
@@ -191,9 +226,12 @@ function renderCards(cards) {
 }
 
 async function initialize() {
-  const settings = await chrome.storage.local.get({ beaverServer: "http://localhost:8000", beaverToken: "" });
+  const settings = await chrome.storage.local.get({ beaverServer: "http://localhost:8000", beaverToken: "", voiceMode: "ptt" });
   server = settings.beaverServer;
   token = settings.beaverToken;
+  mode = settings.voiceMode === "handsfree" ? "handsfree" : "ptt";
+  $("mode").value = mode;
+  if (widgetMode) $("label").textContent = mode === "handsfree" ? "Tap to listen" : "Tap to talk";
   if (!token) {
     setConn("token required", false);
     $("label").textContent = "Open the Orbs popup and save your APP_TOKEN.";
@@ -203,7 +241,8 @@ async function initialize() {
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || (!changes.beaverServer && !changes.beaverToken)) return;
+  if (area !== "local" || (!changes.beaverServer && !changes.beaverToken && !changes.voiceMode)) return;
+  if (changes.voiceMode) { mode = changes.voiceMode.newValue === "handsfree" ? "handsfree" : "ptt"; stopAudio(); }
   if (ws) { ws.onclose = null; ws.close(); }
   stopPlayback();
   initialize();
