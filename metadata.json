@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K2JJRZBNR8QTCZ6JBXVWCA",
+  "strategy": "manual-commit",
+  "branch": "feature/wp3-a2ui-ios",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "frontend/BeaverAgent/BeaverAgent/Fixtures/cards_a2ui.json",
+    "frontend/BeaverAgent/BeaverAgent/Fixtures/demo_a2ui.json",
+    "frontend/README.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 52,
+    "cache_creation_tokens": 32882,
+    "cache_read_tokens": 4894948,
+    "output_tokens": 7145,
+    "api_call_count": 26
+  }
+}
