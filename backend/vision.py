@@ -27,9 +27,10 @@ from google.genai import types  # noqa: E402
 log = logging.getLogger("vision")
 
 TZ = ZoneInfo("Europe/Zurich")
-# 3.6 Flash with minimal thinking: 1.9-2.2 s and 3/3 correct on the demo screen, against
-# 2.1-3.9 s for 3.8 Flash on low (measured 2026-10-10). 3.8 rejects "minimal".
-DEFAULT_MODEL = "gemini-3.6-flash"
+# Newest model. On the demo screen (2026-10-10), 3.8 Flash on low thinking takes 2.1-2.7 s,
+# 4/4 correct; 3.8 rejects minimal thinking. gemini-3.5-flash-lite on minimal is faster
+# (1.3-1.8 s, 4/4) if vision ever needs to be.
+DEFAULT_MODEL = "gemini-3.8-flash"
 
 PROMPT = """You read one iPhone screenshot and describe it as JSON.
 
@@ -94,10 +95,8 @@ async def read_screen(image: bytes, mime: str, now: datetime | None = None) -> d
     """One Gemini call. Raises ValueError if the model's JSON has the wrong shape."""
     now = (now or datetime.now(TZ)).astimezone(TZ)
     t0 = time.monotonic()
-    model = os.environ.get("VISION_MODEL") or DEFAULT_MODEL
-    level = types.ThinkingLevel.LOW if "3.8" in model else types.ThinkingLevel.MINIMAL
     response = await client().aio.models.generate_content(
-        model=model,
+        model=os.environ.get("GEMINI_MODEL") or DEFAULT_MODEL,
         contents=[
             types.Part.from_bytes(data=image, mime_type=mime),
             f"Current date and time: {now:%A %Y-%m-%d %H:%M} (Europe/Zurich).",
@@ -106,7 +105,7 @@ async def read_screen(image: bytes, mime: str, now: datetime | None = None) -> d
             system_instruction=PROMPT,
             response_mime_type="application/json",
             response_json_schema=SCHEMA,
-            thinking_config=types.ThinkingConfig(thinking_level=level),
+            thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.LOW),
             automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
             media_resolution=types.MediaResolution.MEDIA_RESOLUTION_MEDIUM,
         ),

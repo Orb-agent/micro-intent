@@ -232,7 +232,7 @@ class Agent:
 
 **Gemini rules** (`google-genai`, `generate_content`, checked 2026-10-10; they apply to vision too):
 
-- Model `gemini-3.8-flash` with thinking level `low`. `gemini-3.5-flash` was deprecated on 8 October 2026. Don't set temperature; Gemini 3.6 and later ignore it.
+- Model `gemini-3.8-flash`, the newest generation, with thinking level `low`; 3.8 rejects `minimal`, and there is no 3.8 Flash-Lite for text. Vision on the demo screen takes 2.1–2.7 s (checked 2026-10-10). `gemini-3.5-flash` was deprecated on 8 October 2026. Don't set temperature; Gemini 3.6 and later ignore it.
 - Declare functions with `parameters_json_schema`. For `cards.items`, use `anyOf` with one object per kind, each with a single-value `enum` on `kind`. Don't use `const`, `oneOf` or `$defs`, keep it shallow, and validate the arguments in code anyway.
 - Function calling mode `ANY` on every step, so the model always calls `sbb_connections` or `respond` and never returns free text. On the last step add `allowed_function_names=["respond"]`.
 - Append `response.candidates[0].content` to the history unmodified; it carries the thought signatures, and dropping them gives a 400. Then add one function response per call, with the call's `id` and `name`, after all the calls.
@@ -258,8 +258,7 @@ Events cover now to 7 days ahead. `source` is `luma` when the event's descriptio
 | Variable | Used by | Notes |
 | --- | --- | --- |
 | `APP_TOKEN` | WP2, the app, the Shortcut | Any long random string |
-| `GEMINI_API_KEY`, `GEMINI_MODEL` | WP3 agent | `gemini-3.8-flash` |
-| `VISION_MODEL` | WP2 vision | `gemini-3.6-flash` with thinking `minimal`: steadier and faster for reading a screenshot (1.9–2.2 s) |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | WP2 vision, WP3 agent | `gemini-3.8-flash` |
 | `GRADIUM_API_KEY`, `GRADIUM_VOICE_ID` | WP2 | Voice: the cloned mascot or a stock voice |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | WP3 | Temporary account only, read-only scopes |
 | `WORKSPACE_MODE` | WP3 | `rest` or `fixture` |

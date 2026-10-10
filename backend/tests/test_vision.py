@@ -38,14 +38,14 @@ async def test_good_response_passes(fake):
 
 
 async def test_request_has_image_date_and_structured_output(fake, monkeypatch):
-    monkeypatch.delenv("VISION_MODEL", raising=False)
+    monkeypatch.delenv("GEMINI_MODEL", raising=False)
     models = fake(json.dumps(GOOD))
     await vision.read_screen(b"\x89PNG", "image/png", now=SATURDAY)
     call = models.calls[0]
     image, text = call["contents"]
     assert image.inline_data.data == b"\x89PNG" and image.inline_data.mime_type == "image/png"
     assert "Saturday 2026-10-10 14:30" in text
-    assert call["model"] == "gemini-3.6-flash"
+    assert call["model"] == "gemini-3.8-flash"
     config = call["config"]
     assert config.response_mime_type == "application/json"
     assert config.response_json_schema == vision.SCHEMA
