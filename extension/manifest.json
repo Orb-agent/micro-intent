@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Orbs",
+  "version": "1.4.0",
+  "minimum_chrome_version": "116",
+  "background": { "service_worker": "background.js", "type": "module" },
+  "description": "A desktop voice and text assistant, connected to your Orbs backend.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    },
+    "default_popup": "popup.html",
+    "default_title": "Orbs"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["client.html", "client.js", "pcm-worklet.js"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["floating-orb.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https://* wss://*"
+  }
+}

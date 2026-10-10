@@ -16,7 +16,7 @@ struct ContentView: View {
             topBar
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    if let screen = session.screen {
+                    if let screen = session.screen, !screen.reading {
                         ScreenChip(summary: screen.summary)
                             .transition(.orbsCard(reduceMotion: reduceMotion))
                     }
@@ -44,6 +44,15 @@ struct ContentView: View {
             orbDock
         }
         .background(AppBackground())
+        .overlay(alignment: .topTrailing) {
+            if !session.conflictCards.isEmpty {
+                ConflictNotice(surfaces: session.conflictSurfaces, cards: session.conflictCards,
+                               dismiss: session.dismissConflict)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 72)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
     }
 
     /// State changes use the kit's 200 ms curve; reduced motion fades only.
@@ -105,7 +114,7 @@ struct ContentView: View {
                 .glassID("reply", in: glass)
                 .id(reply.say)
                 .transition(.orbsCard(reduceMotion: reduceMotion))
-            CardsView(surfaces: session.surfaces, cards: reply.cards)
+            CardsView(surfaces: session.surfaces, cards: session.inlineCards)
                 .transition(.orbsCard(reduceMotion: reduceMotion))
         } else if session.transcript == nil {
             Welcome(listening: session.orb == .listening, handsFree: session.handsFree)
@@ -129,7 +138,14 @@ struct ContentView: View {
     /// grow upward, and the status pill under the orb only changes its text.
     private var orbDock: some View {
         VStack(spacing: 10) {
-            if showsChips {
+            if let screen = seeingScreen {
+                SeeingChip(
+                    thumbnail: screen.thumbnail,
+                    failed: session.failedScreen == screen.id
+                )
+                .glassID("seeing", in: glass)
+                .transition(.opacity)
+            } else if showsChips {
                 IntentChips(glass: glass) { session.ask($0) }
                     .transition(.opacity)
             }
@@ -160,6 +176,19 @@ struct ContentView: View {
         .glassGroup(spacing: 10)
         .animation(motion, value: session.orb)
         .animation(motion, value: showsChips)
+        .animation(motion, value: seeingScreen)
+        .animation(motion, value: session.failedScreen)
+    }
+
+    /// The screenshot the agent is looking at: from `screen_ok` while it waits for a turn,
+    /// through the turn that uses it, until that answer has been spoken.
+    private var seeingScreen: AgentSession.ScreenNotice? {
+        guard let screen = session.screen else { return nil }
+        if session.failedScreen == screen.id { return screen }
+        switch session.screenUse {
+        case .waiting, .inTurn, .answered: return screen
+        case .done: return nil
+        }
     }
 
     /// Follow-up chips after an answer, once the orb is back to idle.
@@ -202,7 +231,7 @@ struct ContentView: View {
 }
 
 enum AppSheet: String, Identifiable {
-    case settings, debug
+    case settings, debug, travel, profile, family, onboarding
     var id: String { rawValue }
 }
 
@@ -298,7 +327,7 @@ struct ScreenChip: View {
                 .frame(width: 36, height: 36)
                 .background(Circle().fill(failed ? Theme.warnSoft : Theme.accentSoft))
             VStack(alignment: .leading, spacing: 4) {
-                Text(failed ? "Couldn't read that screen" : "I see")
+                Text(failed ? "Couldn't read your screen" : "I see")
                     .eyebrow(type, color: failed ? Theme.warnText : Theme.accentText)
                 if let summary {
                     Text(summary)
@@ -313,6 +342,57 @@ struct ScreenChip: View {
         .padding(14)
         .glassSurface(.pill, cornerRadius: Theme.Radius.xxl)
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Near the orb while the agent looks at the latest screenshot: a small preview of it (or an
+/// eye when the server sends no preview) and the words, never the icon alone.
+private struct SeeingChip: View {
+    let thumbnail: Data?
+    let failed: Bool
+
+    @Environment(\.typeScale) private var type
+
+    var body: some View {
+        HStack(spacing: 10) {
+            preview
+            Text(failed ? "Couldn't read your screen" : "Seeing your screen")
+                .font(type.label)
+                .foregroundStyle(Theme.textPrimary)
+                .lineLimit(1)
+                .contentTransition(.opacity)
+        }
+        .padding(.leading, image == nil || failed ? 14 : 6)
+        .padding(.trailing, 18)
+        .padding(.vertical, 6)
+        .frame(minHeight: Theme.Size.touchMin)
+        .glassSurface(.pill, cornerRadius: 22)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.updatesFrequently)
+    }
+
+    private var image: UIImage? { thumbnail.flatMap(UIImage.init(data:)) }
+
+    @ViewBuilder
+    private var preview: some View {
+        if failed {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Theme.textPrimary)
+        } else if let image {
+            let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 22, height: 40)
+                .clipShape(shape)
+                .overlay(shape.strokeBorder(Theme.borderGlass, lineWidth: 1))
+                .accessibilityHidden(true)
+        } else {
+            Image(systemName: "eye")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Theme.textPrimary)
+        }
     }
 }
 

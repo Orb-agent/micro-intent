@@ -36,9 +36,10 @@ sequenceDiagram
   participant G as Gradium
   participant A as Agent (WP3)
   SC->>S: POST /screenshot
+  S->>App: screen_seen {thumbnail}
   S->>V: read_screen(image), in the background
   V-->>S: ScreenContext
-  S->>App: screen_ok {summary}
+  S->>App: screen_ok {summary, thumbnail}
   App->>S: audio × n, then audio_end
   S->>G: stream mic audio, flush
   G-->>S: transcript segments
@@ -79,7 +80,8 @@ JSON text frames only, one object per frame, discriminated by `type`. Audio is b
 | `a2ui` | `messages`: list of A2UI v0.9 messages, see [A2UI](#a2ui) | Right after `reply`, when it has cards |
 | `audio` | `data`: base64 PCM | TTS chunks for the last `reply` |
 | `audio_end` | — | TTS for the last `reply` is complete |
-| `screen_ok` | `summary`?: string | Vision has read a new screenshot; `summary` is missing if vision failed |
+| `screen_seen` | `thumbnail`: base64 JPEG, 240 px on the long side | A new screenshot arrived, sent at once, before vision has read it; the app shows "Seeing your screen" with it. Missing if the image can't be decoded |
+| `screen_ok` | `summary`?: string, `thumbnail`?: as in `screen_seen` | Vision has read a new screenshot; `summary` is missing if vision failed. Always after that screenshot's `screen_seen` |
 | `error` | `message` | Turn failed; the server then sends `state: idle` |
 
 The orb shows `speaking` while the app still has audio queued, even after the server has sent `state: idle`.
@@ -104,6 +106,7 @@ The user interrupts a proactive turn like any other; an interrupted one is not r
 | --- | --- |
 | `POST /screenshot` | From the iPhone Shortcut. `Authorization: Bearer <APP_TOKEN>`, body is the raw image (`image/jpeg` or `image/png`, max 8 MB). Returns `204` and starts vision |
 | `GET /health` | `{"ok": true, "workspace": "rest" \| "fixture"}` |
+| `GET /extension-config` | Desktop/Chrome clients send `X-Orbs-Client: orbs-ui`. Returns `{"backend_url": "https://…", "app_token": "…"}` with `Cache-Control: no-store`; responds `404` without the client header or `503` when configuration is missing/invalid. Never log or cache the token. |
 
 **Screenshot rule:** the server keeps only the latest screenshot and its `ScreenContext`. A turn gets the context if the screenshot is less than 120 s old and no earlier turn has used it (a [proactive turn](#websocket-ws) that speaks counts); if vision is still running, the turn waits for it. A screenshot with the same bytes (and `recent` frames) as the one before reuses its context without calling vision, for up to 120 s after that read began; `screen_ok` is still sent, and a failed read is never reused.
 
@@ -270,7 +273,7 @@ class Agent:
 **Voice.** The agent changes how it sounds in two ways, and the newest change wins. Both end in `Reply.voice_id`.
 
 - **On request** ("talk like a pirate"): `design_voice`. `voice.design_voice(description, language)` makes one candidate with Gradium [Voice Design](https://docs.gradium.ai/guides/voices/voice-design), `json_config.cfg_scale` 10, waits until it is ready (at most 30 s) and converts it into a permanent voice. About 4 s. Each design permanently takes a custom-voice slot; past the allowance Gradium answers `409`.
-- **By mood:** once, early in a conversation, the agent asks how the user feels and sets `mood` in `respond` when it knows. A new mood switches the voice from that reply on: calmer for `stressed`, softer for `tired` (also sad), brighter for `happy`, the default voice for `neutral`. `voice.mood_voice(mood)` designs each mood's voice once from one mascot brief, names it `Beaver mood <mood>`, and finds it by name in the library (`GET /voices/`) after that, so the moods take three slots in total.
+- **By mood:** the agent sets `mood` in `respond` when the user says how they feel or it is clear from how they talk; it never asks. A new mood switches the voice from that reply on: calmer for `stressed`, softer for `tired` (also sad), brighter for `happy`, the default voice for `neutral`. `voice.mood_voice(mood)` designs each mood's voice once from one mascot brief, names it `Beaver mood <mood>`, and finds it by name in the library (`GET /voices/`) after that, so the moods take three slots in total.
 
 Gradium Voice Design facts: REST at `https://api.gradium.ai/api` with `x-api-key`. `POST /voice-generator/generate` returns candidate ids with `ready: false`; poll `GET /voice-generator/embeddings?embedding_id=…`; `POST /voices/from-embedding` returns the voice's `uid`. Candidates work over REST only (100 characters); the TTS socket needs the converted voice. Languages `en`, `fr`, `es`, `pt`, `de`, no Italian. An unknown `json_config` key returns `201` and the candidate never gets ready.
 
@@ -280,7 +283,7 @@ Gradium Voice Design facts: REST at `https://api.gradium.ai/api` with `x-api-key
 - Declare functions with `parameters_json_schema`. For `cards.items`, use `anyOf` with one object per kind, each with a single-value `enum` on `kind`. Don't use `const`, `oneOf` or `$defs`, keep it shallow, and validate the arguments in code anyway.
 - Function calling mode `ANY` on every step, so the model always calls a tool or `respond` and never returns free text. On the last step add `allowed_function_names=["respond"]`.
 - Append `response.candidates[0].content` to the history unmodified; it carries the thought signatures, and dropping them gives a 400. Then add one function response per call, with the call's `id` and `name`, after all the calls.
-- `agent.py` uses the Interactions API (`client.aio.interactions.create`) with the same rules: functions as `{"type": "function", "parameters": …}`, `tool_choice: "any"`, and `{"allowed_tools": {"mode": "any", "tools": ["respond"]}}` on the last step; `store=True` with `previous_interaction_id` keeps the thought signatures server side; `function_result` steps carry the call's `call_id` and `name`.
+- `agent.py` uses the Interactions API (`client.aio.interactions.create`) with the same rules: functions as `{"type": "function", "parameters": …}`, `tool_choice: "any"`, and `{"allowed_tools": {"mode": "any", "tools": ["respond"]}}` on the last step; `store=False`, and the agent keeps the conversation as steps and resends them, its own unmodified with their thought signatures (`store=True` with `previous_interaction_id` added 1.5–6 s to every step, checked 2026-10-10); `function_result` steps carry the call's `call_id` and `name`.
 - Vision attaches the screenshot as an inline image part at medium media resolution (560 tokens); use high if small chat text comes back wrong. Earlier frames (`recent`) go before it, each labelled `Frame -Ns`, at low resolution per part.
 
 **Context.** `context.load_context()` runs once per session and goes into the system prompt as JSON:
@@ -298,11 +301,12 @@ Events cover now to 7 days ahead. `source` is `luma` when the event's descriptio
 
 ## Environment
 
-`backend/.env`, never committed; `backend/.env.example` lists them all. The app keeps the server URL and token in its settings sheet, and the Shortcut has the token in its header.
+`backend/.env` or the repo-root `.env`, never committed; `backend/.env.example` lists them all. Desktop and Chrome clients fetch `BACKEND_URL` and `APP_TOKEN` from `/extension-config`; they do not ask for or display either value. The Shortcut still needs `APP_TOKEN` in its authorization header.
 
 | Variable | Used by | Notes |
 | --- | --- | --- |
-| `APP_TOKEN` | WP2, the app, the Shortcut | Any long random string |
+| `APP_TOKEN` | WP2, desktop/Chrome config, the Shortcut | Any long random string; never returned by logs or UI |
+| `BACKEND_URL` | WP2, desktop/Chrome config | HTTP(S) origin used for WebSocket and HTTP requests; defaults to `http://localhost:8000` |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | WP2 vision, WP3 agent | `gemini-3.8-flash` |
 | `GRADIUM_API_KEY`, `GRADIUM_VOICE_ID` | WP2, WP3 voice design | The default voice: the cloned mascot or a stock voice. A reply's `voice_id` overrides it |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | WP3 | Temporary account only, read-only scopes: `calendar.readonly`, `gmail.readonly`, `tasks.readonly`, `drive.readonly`. With `WORKSPACE_MODE=rest` they also turn on the Workspace tools |

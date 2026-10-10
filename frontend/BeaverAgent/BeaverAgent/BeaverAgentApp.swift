@@ -10,6 +10,7 @@ struct BeaverAgentApp: App {
     @AppStorage(SettingsKey.appearance) private var appearance = Appearance.system
     @AppStorage(SettingsKey.largeText) private var largeText = false
     @AppStorage(SettingsKey.handsFree) private var handsFree = false
+    @AppStorage(ProfileKey.hasCompletedFirstRun) private var hasCompletedFirstRun = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
@@ -26,6 +27,14 @@ struct BeaverAgentApp: App {
                             simulateScreenshot: session.simulateScreenshot
                         )
                         .presentationDetents([.medium, .large])
+                    case .travel:
+                        if let plan = session.travelPlan { TravelSheet(plan: plan) }
+                    case .profile:
+                        ProfileSheet(initialTab: .profile)
+                    case .family:
+                        ProfileSheet(initialTab: .family)
+                    case .onboarding:
+                        FirstRunSheet()
                     }
                 }
                 .preferredColorScheme(appearance.colorScheme)
@@ -33,8 +42,18 @@ struct BeaverAgentApp: App {
                 .task {
                     applySettings()
                     DemoLaunch.apply(to: session, sheet: $sheet)
+                    if !hasCompletedFirstRun && UserDefaults.standard.string(forKey: "demoScene") == nil && sheet == nil {
+                        sheet = .onboarding
+                    }
                 }
                 .onChange(of: settingsKey) { applySettings() }
+                .onChange(of: session.replyRevision) {
+                    if session.travelPlan != nil { sheet = .travel }
+                    else if sheet == .travel { sheet = nil }
+                }
+                .onChange(of: session.serverState) { _, state in
+                    if sheet == .travel && (state == .thinking || state == .listening) { sheet = nil }
+                }
                 .onChange(of: largeText, initial: true) { session.typeScale = typeScale }
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active { session.appBecameActive() }
@@ -112,6 +131,17 @@ enum DemoLaunch {
             session.handle(.state(scene == "speaking" ? .speaking : .idle, label: nil))
         case "screen":
             session.simulateScreenshot()
+        case "travel":
+            session.handle(.transcript("Can I attend dinner without conflicts?"))
+            session.handle(.state(.thinking, label: nil))
+            Fixtures.travel.frames.forEach(session.receive)
+            session.handle(.state(.idle, label: nil))
+        case "seeing":
+            session.simulateScreenshot()
+            session.handle(.state(.thinking, label: nil))
+            session.handle(.state(.searching, label: "Checking your calendar…"))
+        case "screen-failed":
+            session.receive(Data(#"{"type": "screen_ok"}"#.utf8))
         case "error":
             session.handle(.transcript(question))
             session.handle(.error("Sorry, something went wrong."))

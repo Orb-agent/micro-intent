@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbs</title>
+<link rel="icon" type="image/png" href="icons/icon-32-light.png" media="(prefers-color-scheme: light)">
+<link rel="icon" type="image/png" href="icons/icon-32.png" media="(prefers-color-scheme: dark)">
+<!--
+  Desktop and Chrome extension client for the /ws protocol in docs/contracts.md:
+  text, microphone, mascot voice, screen sharing and cards. Open the Chrome extension
+  and launch this desktop UI from the configured backend.
+-->
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fafafa; --panel: #fff; --ink: #171717; --muted: #666; --line: #dedede;
+    --red: #111; --listening: #111; --thinking: #111; --searching: #111; --speaking: #111;
+    --orb-bg: #fff; --orb-ink: #111;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111; --panel: #1a1a1a; --ink: #f5f5f5; --muted: #aaa; --line: #383838; --orb-bg: #050505; --orb-ink: #fff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { width: min(100%, 1040px); min-height: 100svh; margin: 0 auto; padding: 28px 24px 36px; display: grid; grid-template-rows: auto minmax(430px, 1fr) auto auto; gap: 22px; }
+  header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+  h1 { font-size: 19px; letter-spacing: -.02em; margin: 0; }
+  .wordmark { display: inline-flex; align-items: center; gap: 9px; }
+  .wordmark svg { width: 28px; height: 28px; color: var(--ink); }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button, select, input { font: inherit; color: inherit; }
+  button { min-height: 44px; border: 1px solid var(--line); background: var(--panel); border-radius: 12px;
+           padding: 10px 16px; cursor: pointer; transition: transform 120ms cubic-bezier(.4,0,.2,1), background 120ms cubic-bezier(.4,0,.2,1); }
+  button:disabled { opacity: .5; cursor: default; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  select { min-height: 44px; padding: 10px 32px 10px 13px; border: 1px solid var(--line); border-radius: 12px; background-color: var(--panel); color: var(--ink); }
+  .top-controls { justify-content: flex-end; gap: 9px; }
+  .top-controls button { min-height: 44px; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; white-space: nowrap; }
+  .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #bd8c36; }
+  .pill.ok { color: var(--ink); border-color: var(--line); }
+  .pill.ok::before { background: #4d9a70; }
+  .stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 38px 22px; border: 1px solid var(--line); border-radius: 24px; background: var(--bg); text-align: center; }
+  .stage-intro { margin-bottom: 13px; }
+  .eyebrow { margin: 0 0 10px; color: var(--muted); font-size: 11px; font-weight: 650; letter-spacing: .15em; text-transform: uppercase; }
+  .stage h2 { margin: 0; font-size: clamp(25px, 3vw, 34px); line-height: 1.15; letter-spacing: -.045em; font-weight: 570; }
+  .stage-subtitle { margin: 10px 0 0; color: var(--muted); }
+  #orb { display: grid; place-items: center; width: 64px; height: 64px; flex: 0 0 auto; border-radius: 50%;
+         border: 0; background: transparent; color: var(--orb-ink); padding: 0;
+         transition: transform .15s; touch-action: none; }
+  #orb svg { width: 88%; height: 88%; filter: drop-shadow(0 0 12px color-mix(in srgb, currentColor 10%, transparent)); }
+  #orb:active { transform: scale(.96); }
+  #orb[data-state="listening"] { animation: orbs-listen 2.6s ease-in-out infinite; }
+  #orb[data-state="thinking"] { animation: orbs-think 4.5s linear infinite; }
+  #orb[data-state="searching"] { animation: orbs-act 2.2s cubic-bezier(.2,.7,.2,1) infinite; }
+  #orb[data-state="speaking"] svg { animation: breathe .7s ease-in-out infinite; }
+  #orb[data-state="idle"] svg { animation: idlePulse 4s ease-in-out infinite; }
+  @keyframes orbs-listen { 0%,100% { transform: scale(.9); } 16% { transform: scale(1.16); } 32% { transform: scale(.94); } 47% { transform: scale(1.08); } 61% { transform: scale(.88); } 78% { transform: scale(1.2); } 90% { transform: scale(.97); } }
+  @keyframes orbs-think { to { transform: rotate(360deg); } }
+  @keyframes orbs-act { 0% { transform: rotate(0) scale(1); } 22% { transform: rotate(120deg) scale(1.12); } 34% { transform: rotate(120deg) scale(1); } 56% { transform: rotate(240deg) scale(1.12); } 68% { transform: rotate(240deg) scale(1); } 90% { transform: rotate(360deg) scale(1.12); } 100% { transform: rotate(360deg) scale(1); } }
+  @keyframes breathe { 50% { transform: scale(.9); opacity: .68; } }
+  @keyframes idlePulse { 50% { transform: scale(.96); opacity: .8; } }
+  body.orbs-widget { width: 128px; height: 112px; min-height: 0; overflow: hidden; color-scheme: dark; background: transparent; --ink: #fff; --muted: #c7c7c7; --orb-ink: #fff; }
+  body.orbs-widget main { width: 100%; height: 112px; min-height: 0; margin: 0; padding: 4px; display: flex; align-items: center; justify-content: center; }
+  body.orbs-widget main > :not(.stage) { display: none !important; }
+  body.orbs-widget .stage { width: 100%; min-height: 0; padding: 0; gap: 2px; border: 0; border-radius: 0; background: transparent; }
+  body.orbs-widget .stage-intro, body.orbs-widget .hint { display: none; }
+  body.orbs-widget #orb { width: 64px; height: 64px; border: 1px solid #ffffff36; border-radius: 50%; background: #080808; box-shadow: 0 8px 30px #0008, 0 0 0 5px #ffffff0d; cursor: pointer; }
+  body.orbs-widget #orb svg { width: 68%; height: 68%; }
+  body.orbs-widget #orb:hover { transform: scale(1.05); }
+  body.orbs-widget #orb[data-state="listening"] { box-shadow: 0 0 0 7px #ffffff22, 0 8px 30px #0009; }
+  body.orbs-widget #label { max-width: 140px; min-height: 0; padding: 4px 8px; border: 1px solid #ffffff20; border-radius: 999px; background: #111e; color: #fff; font-size: 10px; line-height: 1.2; text-align: center; }
+  @media (prefers-reduced-motion: reduce) { #orb, #orb svg { animation: none !important; transform: none !important; } }
+  [hidden] { display: none !important; }
+  #conflictPopup { position: fixed; z-index: 10; top: 18px; right: 18px; width: min(360px, calc(100vw - 36px)); max-height: min(360px, 60vh); overflow: auto; padding: 16px; border: 1px solid var(--line); border-radius: 24px; background: var(--panel); box-shadow: 0 12px 40px #0004; }
+  #conflictPopup header { flex-wrap: nowrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+  #conflictPopup h2 { margin: 0; font-size: 14px; }
+  #dismissConflict { padding: 4px; min-width: 44px; font-size: 24px; border: 0; background: transparent; }
+  #conflictContent { --a2ui-color-background: var(--panel); --a2ui-color-surface: var(--panel); --a2ui-color-on-surface: var(--ink); --a2ui-color-on-background: var(--ink); --a2ui-color-primary: var(--ink); --a2ui-color-border: var(--line); --a2ui-font-size: 14px; --a2ui-font-scale: 1.12; --a2ui-border-radius: 12px; }
+  #conflictContent .card { border: 0; padding: 0; background: transparent; }
+  body.orbs-widget.has-notice { width: 100vw; height: 100dvh; }
+  body.orbs-widget.has-notice main { position: absolute; bottom: 0; right: 0; width: 128px; }
+  body.orbs-widget #conflictPopup { top: 8px; right: 8px; width: calc(100vw - 16px); max-height: calc(100dvh - 136px); --panel: #1a1a1a; --line: #383838; --ink: #f5f5f5; --muted: #aaa; }
+  #label { color: var(--ink); min-height: 1.4em; font-weight: 550; }
+  .hint { color: var(--muted); font-size: 13px; text-align: center; }
+  .bubble { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 20px; }
+  .you { color: var(--muted); padding: 0 4px; }
+  #you:empty, #cards:empty { display: none; }
+  #cards { display: grid; gap: 12px; width: min(100%, 400px); justify-self: center; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 20px; display: grid; gap: 8px; }
+  .card .kind { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .card .big { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .card .meta { color: var(--muted); }
+  .badge { display: inline-block; background: var(--red); color: #fff; border-radius: 6px; padding: 0 6px; font-weight: 600; }
+  .verdict-fits { color: var(--listening); } .verdict-tight { color: var(--searching); } .verdict-clash { color: var(--red); }
+  #screenThumb { max-width: 160px; border-radius: 8px; border: 1px solid var(--line); display: none; }
+  #log { width: min(100%, 400px); justify-self: center; font: 12px/1.5 ui-monospace, Menlo, monospace; color: var(--muted); white-space: pre-wrap;
+         max-height: 180px; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+  #log[hidden] { display: none; }
+  form { display: flex; gap: 9px; padding: 9px; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); transition: box-shadow 200ms cubic-bezier(.4,0,.2,1); }
+  form:focus-within { box-shadow: 0 0 0 2px var(--ink); }
+  form input { flex: 1; min-width: 0; min-height: 48px; border: 0; outline: 0; background: transparent; border-radius: 14px; padding: 8px 14px; }
+  form input::placeholder { color: var(--muted); opacity: .8; }
+  form button { min-width: 86px; border: 0; background: var(--ink); color: var(--bg); font-weight: 600; }
+  form button:hover { opacity: .82; }
+  @media (max-width: 640px) {
+    main { min-height: 100svh; padding: 16px 14px 24px; grid-template-rows: auto minmax(390px, 1fr) auto auto; gap: 14px; }
+    header { align-items: flex-start; }
+    .top-controls { justify-content: flex-start; width: 100%; }
+    .top-controls button, .top-controls select { font-size: 12px; }
+    .stage { border-radius: 22px; padding: 28px 14px; }
+    #orb { width: 64px; height: 64px; }
+    form { padding: 6px; }
+    form input { min-height: 44px; padding-inline: 9px; }
+    form button { min-width: 72px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="wordmark"><svg id="brandMark" viewBox="0 0 100 100" aria-hidden="true"></svg><h1>Orbs</h1></div>
+    <div class="row top-controls">
+      <span id="conn" class="pill">disconnected</span>
+      <select id="mode" title="Voice mode">
+        <option value="ptt">Push to talk</option>
+        <option value="handsfree">Hands-free (use headphones)</option>
+      </select>
+      <button id="share">Share screen</button>
+      <button id="sendScreen" disabled>Send screen now</button>
+    </div>
+  </header>
+
+  <section class="stage">
+    <div class="stage-intro"><p class="eyebrow">Orbs · personal assistant</p><h2>What’s on your mind?</h2><p class="stage-subtitle">Talk naturally, or type a question below.</p></div>
+    <button id="orb" data-state="idle" aria-label="Enable microphone, then hold to talk"></button>
+    <div id="label"></div>
+    <div class="hint" id="hint">Select the orb to enable your microphone. Then hold it, or hold Space, while you talk.</div>
+  </section>
+
+  <div class="row"><img id="screenThumb" alt="Last screen frame sent"><span id="screenSummary" class="pill" hidden></span></div>
+  <div id="you" class="you"></div>
+  <div id="say" class="bubble" hidden></div>
+  <div id="cards"></div>
+
+  <form id="textForm"><input id="text" aria-label="Your question" placeholder="Ask Orbs anything…" autocomplete="off"><button>Send</button></form>
+  <div id="log" hidden></div>
+</main>
+
+<aside id="conflictPopup" role="region" aria-labelledby="conflictTitle" aria-live="polite" hidden>
+  <header><h2 id="conflictTitle">Calendar needs attention</h2><button id="dismissConflict" type="button" aria-label="Dismiss calendar conflict">×</button></header>
+  <div id="conflictContent"></div>
+</aside>
+<script type="module" src="client.js"></script>
+</body>
+</html>

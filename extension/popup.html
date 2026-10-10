@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Orbs</title>
+    <style>
+      :root { color-scheme: light dark; font: 14px/1.45 system-ui, sans-serif; }
+      body { width: 320px; margin: 0; padding: 18px; color: CanvasText; background: Canvas; }
+      .brand { display: flex; align-items: center; gap: 10px; }
+      .brand-icon { width: 30px; height: 30px; border-radius: 9px; background: url("icons/icon-48-light.png") center / cover no-repeat; }
+      @media (prefers-color-scheme: dark) { .brand-icon { background-image: url("icons/icon-48.png"); } }
+      h1 { margin: 0; font-size: 18px; }
+      p { margin: 6px 0 16px; color: GrayText; }
+      label { display: grid; gap: 5px; margin: 12px 0; font-size: 12px; font-weight: 600; }
+      input { box-sizing: border-box; width: 100%; padding: 9px 10px; border: 1px solid #8886; border-radius: 8px; background: Canvas; color: CanvasText; font: inherit; }
+      button { width: 100%; min-height: 38px; margin-top: 8px; border: 0; border-radius: 9px; background: #111; color: white; font: inherit; font-weight: 650; cursor: pointer; }
+      button.secondary { border: 1px solid #8886; background: transparent; color: CanvasText; }
+      @media (prefers-color-scheme: dark) { button:not(.secondary) { background: white; color: #111; } }
+      button:disabled { opacity: .55; cursor: wait; }
+      #status { min-height: 1.4em; margin: 10px 0 0; font-size: 12px; }
+      .hint { margin-top: 14px; font-size: 11px; }
+      select { box-sizing: border-box; width: 100%; padding: 9px 10px; border: 1px solid #8886; border-radius: 8px; background: Canvas; color: CanvasText; font: inherit; }
+    </style>
+  </head>
+  <body>
+    <div class="brand"><span class="brand-icon" aria-hidden="true"></span><h1>Orbs</h1></div>
+    <p>Desktop voice and text assistant</p>
+    <label for="mode">Voice mode</label>
+    <select id="mode"><option value="ptt">Click to talk</option><option value="handsfree">Hands-free listening</option></select>
+    <button id="open" type="button">Open assistant</button>
+    <div id="status" role="status" aria-live="polite"></div>
+    <p class="hint">The floating orb appears automatically in the bottom-right corner of websites. Choose click-to-talk or hands-free listening above.</p>
+    <script src="popup.js"></script>
+  </body>
+</html>

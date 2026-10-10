@@ -1,10 +1,12 @@
 import asyncio
 import base64
+import io
 import json
 import time
 
 import pytest
 from fastapi.testclient import TestClient
+from PIL import Image
 
 import app as server
 from tests.test_app import FakeTranscriber, fake_speak, kinds, receive_turn
@@ -51,7 +53,7 @@ def connect(client):
     (AUTH, b"x" * (server.SCREEN_MAX_BYTES + 1), 413),
     (AUTH, PNG, 204),
     ({"Authorization": "Bearer test-token", "Content-Type": "image/jpeg"}, b"\xff\xd8\xff", 204),
-])
+], ids=["missing-auth", "wrong-token", "missing-bearer", "wrong-mime", "over-8mb", "png", "jpeg"])
 def test_post_screenshot_status(client, headers, body, status):
     assert client.post("/screenshot", content=body, headers=headers).status_code == status
     assert (server.latest is not None) == (status == 204)
@@ -265,3 +267,15 @@ def test_interrupted_turn_leaves_the_screen_for_the_re_ask(client, agent, monkey
     receive_turn(ws)
     ctx.__exit__(None, None, None)
     assert calls == [SCREEN, SCREEN]
+
+
+def test_real_screenshot_is_seen_with_a_thumbnail_before_it_is_read(client):
+    png = (server.FIXTURES / "screen.png").read_bytes()
+    ws, conn = connect(client)
+    client.post("/screenshot", content=png, headers=AUTH)
+    seen = conn.receive_json()
+    assert seen["type"] == "screen_seen"
+    thumb = Image.open(io.BytesIO(base64.b64decode(seen["thumbnail"])))
+    assert thumb.format == "JPEG" and max(thumb.size) == server.THUMBNAIL_SIZE
+    assert conn.receive_json() == {"type": "screen_ok", "summary": SCREEN["summary"], "thumbnail": seen["thumbnail"]}
+    ws.__exit__(None, None, None)

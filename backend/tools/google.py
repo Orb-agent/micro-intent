@@ -93,6 +93,18 @@ FLIGHTS_DECLARATION = _fn(
     {"return_date": _DATE},
 )
 
+SCOPE = "https://www.googleapis.com/auth/"
+# The scope each Workspace tool needs; a token without it gets HTTP 403, a wasted model step.
+NEEDS = {
+    "calendar_events": "calendar.readonly",
+    "calendar_free_slots": "calendar.readonly",
+    "gmail_search": "gmail.readonly",
+    "gmail_read": "gmail.readonly",
+    "tasks_list": "tasks.readonly",
+    "drive_search": "drive.readonly",
+    "drive_read": "drive.readonly",
+}
+
 GOOGLE_TOOLS: dict[str, tuple[Callable[..., Awaitable[dict]], str]] = {
     "calendar_events": (calendar_events, "Checking your calendar…"),
     "calendar_free_slots": (calendar_free_slots, "Finding a free slot…"),
@@ -109,8 +121,23 @@ def workspace_enabled() -> bool:
     return os.environ.get("WORKSPACE_MODE", "fixture").lower() == "rest" and google_auth.oauth_configured()
 
 
-def google_declarations() -> list[dict]:
-    return [*(WORKSPACE_DECLARATIONS if workspace_enabled() else []), FLIGHTS_DECLARATION]
+def _granted(name: str, scopes: set[str]) -> bool:
+    need = NEEDS[name]
+    broader = need.removesuffix(".readonly")  # e.g. calendar covers calendar.readonly
+    return bool({SCOPE + need, SCOPE + broader} & scopes) or (name.startswith("gmail") and "https://mail.google.com/" in scopes)
+
+
+def google_declarations(scopes: set[str] | None = None) -> list[dict]:
+    """With `scopes` known, only the Workspace tools the token may call."""
+    if not workspace_enabled():
+        return [FLIGHTS_DECLARATION]
+    tools = [d for d in WORKSPACE_DECLARATIONS if scopes is None or _granted(d["name"], scopes)]
+    return [*tools, FLIGHTS_DECLARATION]
+
+
+async def granted_scopes() -> set[str] | None:
+    """The Workspace token's scopes, or None without Workspace or when Google can't say."""
+    return await google_auth.granted_scopes() if workspace_enabled() else None
 
 
 async def run(name: str, args: dict[str, Any]) -> dict[str, Any]:

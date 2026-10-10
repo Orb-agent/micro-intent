@@ -4,7 +4,7 @@ FastAPI server for the voice agent: `/ws` for the app, `POST /screenshot` for th
 
 ## Run it
 
-Keys go in `backend/.env` or the repo-root `.env` (see `.env.example`): `APP_TOKEN`, `GEMINI_API_KEY`, `GRADIUM_API_KEY`.
+Keys go in `backend/.env` or the repo-root `.env` (see `backend/.env.example`). Set `BACKEND_URL` to the backend's HTTP(S) origin; `APP_TOKEN` is loaded automatically by the desktop UI and Chrome extension through `/extension-config` and is never displayed in their settings.
 
 ```bash
 cd backend
@@ -13,18 +13,20 @@ uv run uvicorn app:app --port 8000
 
 The agent is WP3's `agent.py` when it exists, else the prototype `dev_agent.py`. Set `MOCK_AGENT=1` for the fixed demo reply.
 
-## Try it on a Mac
+## Desktop and Chrome
 
-Open the prototype client in desktop Chrome, with your token in the URL fragment (it's stored, then removed from the address bar):
+The Orbs desktop client at `/` supports typed questions, push-to-talk, hands-free voice, spoken replies, screen sharing, and cards. It loads its runtime configuration directly from the backend:
 
 ```bash
-open -a "Google Chrome" "http://localhost:8000/#token=$(grep '^APP_TOKEN=' .env | cut -d= -f2-)"
+open -a "Google Chrome" "http://localhost:8000/"
 ```
 
-1. Click the orb once to allow the mic.
+1. Click the orb once to allow the microphone.
 2. Click **Share screen** and pick a screen or window. A frame goes with each question, and the server reads it with Gemini.
-3. Hold the orb or Space while you talk. Click or press again to interrupt the beaver.
-4. **Hands-free** in the menu: just talk; talking over the beaver interrupts it. Use headphones, or it hears itself.
+3. Hold the orb or Space while you talk. Click or press again to interrupt the beaver. You can also type a question and select **Send**.
+4. Select **Hands-free** in the menu to talk without holding the orb. Talking over the beaver interrupts it. Use headphones to prevent feedback.
+
+To use the Chrome toolbar extension, run `npm ci` and `npm run build` in `extension/`, then load `extension/dist/` from `chrome://extensions` with Developer mode on and choose **Open assistant**. The extension reads `APP_TOKEN` and `BACKEND_URL` through `/extension-config`; no token or server URL needs to be entered in Chrome. Calendar attention cards also appear over the active website, such as Luma, through the extension's floating orb. See [extension/README.md](../extension/README.md).
 
 ## Checks
 

@@ -33,15 +33,42 @@ enum Fixtures {
         )
     }
 
+    /// A no-conflict travel rehearsal. These relative times are demo data, not a timetable.
+    static var travel: Turn {
+        let now = Date()
+        let iso = ISO8601DateFormatter()
+        iso.timeZone = TimeZone(identifier: "Europe/Zurich")
+        func at(_ minutes: Double) -> String { iso.string(from: now.addingTimeInterval(minutes * 60)) }
+        return Turn(label: "Checking trains…", frames: [frame(type: "reply", merging: [
+            "say": "Demo connection: you have time to get to dinner from Winterthur.",
+            "cards": [
+                ["kind": "event", "title": "Dinner in Bern", "start": at(180), "end": at(300),
+                 "location": "Bern", "source": "calendar"],
+                ["kind": "train", "line": "IC 1", "from": "Winterthur", "to": "Bern",
+                 "departure": at(120), "arrival": at(165), "transfers": 0],
+            ],
+        ])])
+    }
+
     /// Picks the fixture turn for a typed question.
     static func turn(for question: String) -> Turn {
         let q = question.lowercased()
+        if q.contains("no conflict") || q.contains("sin conflicto") { return travel }
         let other = ["flight", "fly", "event", "week", "calendar", "on today"]
         return other.contains(where: q.contains) ? otherKinds : demo
     }
 
     static var screenOK: Data {
-        frame(type: "screen_ok", merging: ["summary": object("screen")["summary"] ?? NSNull()])
+        frame(type: "screen_ok", merging: [
+            "summary": object("screen")["summary"] ?? NSNull(),
+            "thumbnail": object("screen_seen")["thumbnail"] ?? NSNull(),
+        ])
+    }
+
+    /// What the server sends the moment a screenshot arrives (`screen_seen.json`, made from
+    /// backend/fixtures/screen.png by `app.make_thumbnail`).
+    static var screenSeen: Data {
+        frame(type: "screen_seen", merging: object("screen_seen"))
     }
 
     // MARK: - Loading

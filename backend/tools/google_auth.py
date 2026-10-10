@@ -22,6 +22,7 @@ OAUTH_VARS = ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"
 TIMEOUT = 8.0
 
 _token: tuple[str, float] | None = None  # access token and its monotonic expiry
+_scopes: set[str] | None = None  # what the refresh token grants, from the last token response
 
 
 class NotConfigured(RuntimeError):
@@ -39,7 +40,7 @@ def require_oauth() -> None:
 
 
 async def access_token(client: httpx.AsyncClient) -> str:
-    global _token
+    global _token, _scopes
     require_oauth()
     if _token and time.monotonic() < _token[1]:
         return _token[0]
@@ -54,13 +55,27 @@ async def access_token(client: httpx.AsyncClient) -> str:
     )
     r.raise_for_status()
     data = r.json()
+    if "scope" in data:
+        _scopes = set(data["scope"].split())
     _token = (data["access_token"], time.monotonic() + int(data.get("expires_in", 3600)) - 60)
     return _token[0]
 
 
 def clear_token() -> None:
-    global _token
-    _token = None
+    global _token, _scopes
+    _token = _scopes = None
+
+
+async def granted_scopes() -> set[str] | None:
+    """The scopes the refresh token grants, or None if unknown (not configured, or Google failed)."""
+    if not oauth_configured():
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as http:
+            await access_token(http)
+    except httpx.HTTPError:
+        return None
+    return _scopes
 
 
 async def request(

@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 import pytest
 from fastapi.testclient import TestClient
@@ -57,6 +58,54 @@ def connect(client):
     conn.send_json({"type": "hello", "token": "test-token"})
     assert conn.receive_json() == {"type": "ready"}
     return ws, conn
+
+
+def test_real_agent_websocket_startup(client, monkeypatch):
+    """Exercise the production factory/import path without calling Google or Gemini."""
+    import agent
+
+    context = json.loads((server.FIXTURES / "context.json").read_text(encoding="utf-8"))
+    started = []
+
+    async def fixture_context():
+        started.append("context")
+        return context
+
+    async def fixture_scopes():
+        started.append("scopes")
+        return set()
+
+    monkeypatch.setenv("MOCK_AGENT", "0")
+    monkeypatch.setattr(agent, "load_context", fixture_context)
+    monkeypatch.setattr(agent.google, "granted_scopes", fixture_scopes)
+    assert isinstance(server.make_agent(), agent.Agent)
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "hello", "token": "test-token"})
+        assert ws.receive_json() == {"type": "ready"}
+        assert sorted(started) == ["context", "scopes"]
+
+
+def test_conflict_popup_client_is_served(client):
+    page = client.get("/")
+    assert page.status_code == 200
+    assert 'id="conflictPopup"' in page.text
+    module = client.get("/static/conflict-ui.mjs")
+    assert module.status_code == 200
+    assert "javascript" in module.headers["content-type"]
+    assert "@a2ui/lit@0.13.0" in module.text
+
+
+def test_extension_config_is_not_cached_or_included_in_page(client, monkeypatch):
+    monkeypatch.setenv("BACKEND_URL", "http://localhost:8000")
+    assert client.get("/extension-config").status_code == 404
+    response = client.get("/extension-config", headers={"X-Orbs-Client": "orbs-ui"})
+    assert response.json() == {"backend_url": "http://localhost:8000", "app_token": "test-token"}
+    assert response.headers["cache-control"] == "no-store"
+    assert "test-token" not in client.get("/").text
+    monkeypatch.setenv("BACKEND_URL", "https://example.com/invalid-path")
+    assert client.get("/extension-config", headers={"X-Orbs-Client": "orbs-ui"}).status_code == 503
+    monkeypatch.setenv("APP_TOKEN", "")
+    assert client.get("/extension-config", headers={"X-Orbs-Client": "orbs-ui"}).status_code == 503
 
 
 def receive_turn(ws):
