@@ -9,3 +9,7 @@ __pycache__/
 .derived/
 xcuserdata/
 *.xcuserstate
+
+# Chrome package output and dependencies
+extension/dist/
+extension/node_modules/

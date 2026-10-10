@@ -69,6 +69,19 @@ def test_conflict_popup_client_is_served(client):
     assert "@a2ui/lit@0.13.0" in module.text
 
 
+def test_extension_config_is_not_cached_or_included_in_page(client, monkeypatch):
+    monkeypatch.setenv("BACKEND_URL", "http://localhost:8000")
+    assert client.get("/extension-config").status_code == 404
+    response = client.get("/extension-config", headers={"X-Orbs-Client": "orbs-ui"})
+    assert response.json() == {"backend_url": "http://localhost:8000", "app_token": "test-token"}
+    assert response.headers["cache-control"] == "no-store"
+    assert "test-token" not in client.get("/").text
+    monkeypatch.setenv("BACKEND_URL", "https://example.com/invalid-path")
+    assert client.get("/extension-config", headers={"X-Orbs-Client": "orbs-ui"}).status_code == 503
+    monkeypatch.setenv("APP_TOKEN", "")
+    assert client.get("/extension-config", headers={"X-Orbs-Client": "orbs-ui"}).status_code == 503
+
+
 def receive_turn(ws):
     """Messages up to and including the final `state: idle`."""
     msgs = []

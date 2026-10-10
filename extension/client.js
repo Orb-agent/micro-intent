@@ -1,3 +1,4 @@
+import { attentionIndices, createConflictPopup } from "./conflict-ui.mjs";
 "use strict";
 const RATE = 24000; // 24 kHz mono, contracts § Audio
 const $ = (id) => document.getElementById(id);
@@ -45,8 +46,10 @@ function onMessage(m) {
     case "transcript": $("you").textContent = "You: " + m.text; log("transcript", JSON.stringify(m.text)); break;
     case "reply":
       dropAudio = false; firstAudioLogged = false;
-      $("say").hidden = false; $("say").textContent = m.say; renderCards(m.cards || []); break;
-    case "a2ui": log("a2ui", m.messages.length, "messages (rendered from reply.cards here)"); break;
+      $("say").hidden = false; $("say").textContent = m.say;
+      renderCards((m.cards || []).filter((_, index) => !attentionIndices(m.cards || []).includes(index)));
+      conflictPopup.setReply(m.cards || []); publishUI(m); break;
+    case "a2ui": void conflictPopup.receiveMessages(m.messages); publishUI(m); break;
     case "audio": if (!dropAudio) playChunk(m.data); break;
     case "audio_end": break;
     case "screen_ok":
@@ -157,8 +160,9 @@ if (widgetMode) {
 } else {
   for (const ev of ["pointerup", "pointerleave", "pointercancel"]) $("orb").addEventListener(ev, release);
 }
-addEventListener("keydown", (e) => { if (!widgetMode && e.code === "Space" && !e.repeat && document.activeElement !== $("text")) { e.preventDefault(); press(); } });
-addEventListener("keyup", (e) => { if (!widgetMode && e.code === "Space" && document.activeElement !== $("text")) { e.preventDefault(); release(); } });
+const editing = () => document.activeElement?.matches("input,textarea,select,button,a,[contenteditable=true]");
+addEventListener("keydown", (e) => { if (!widgetMode && e.code === "Space" && !e.repeat && !editing()) { e.preventDefault(); press(); } });
+addEventListener("keyup", (e) => { if (!widgetMode && e.code === "Space" && !editing()) { e.preventDefault(); release(); } });
 
 $("mode").addEventListener("change", () => {
   mode = $("mode").value; stopPlayback(); talking = false;
@@ -207,7 +211,9 @@ const day = (iso) => iso ? new Date(iso).toLocaleDateString("en-GB", { weekday: 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 function renderCards(cards) {
-  $("cards").innerHTML = cards.map((c) => {
+  $("cards").innerHTML = cards.map(cardMarkup).join("");
+}
+function cardMarkup(c) {
     if (c.kind === "train") return `<div class="card"><div class="kind">Train</div>
       <div class="big">${hm(c.departure)} → ${hm(c.arrival)}</div>
       <div>${esc(c.line)} · ${esc(c.from)} → ${esc(c.to)}</div>
@@ -223,8 +229,41 @@ function renderCards(cards) {
       <div>${esc(c.flight_number)} · ${day(c.departure)} ${hm(c.departure)} → ${hm(c.arrival)}</div>
       ${c.booking_ref ? `<div class="meta">Booking ${esc(c.booking_ref)}</div>` : ""}</div>`;
     return `<div class="card"><pre>${esc(JSON.stringify(c, null, 2))}</pre></div>`;
-  }).join("");
 }
+
+let noticePort;
+const conflictPopup = createConflictPopup({
+  popup: $("conflictPopup"), content: $("conflictContent"), dismissButton: $("dismissConflict"),
+  renderFallback: (cards) => { $("conflictContent").innerHTML = cards.map(cardMarkup).join(""); }, log,
+  onVisibilityChange: (visible) => {
+    document.body.classList.toggle("has-notice", visible);
+    if (widgetMode) parent.postMessage({ type: "orbs-layout", expanded: visible }, "*");
+  },
+  onDismiss: (keys) => {
+    if (noticePort) { try { noticePort.postMessage({ type: "dismiss", keys }); } catch {} }
+    else void chrome.runtime.sendMessage({ type: "orbs-ui", message: { type: "dismiss", keys } }).catch(() => {});
+  },
+});
+function publishUI(message) {
+  const payload = message.type === "reply" ? { type: "reply", cards: message.cards || [] }
+    : { type: "a2ui", messages: message.messages };
+  void chrome.runtime.sendMessage({ type: "orbs-ui", message: payload }).catch(() => {});
+}
+function connectNotices() {
+  if (!widgetMode) return;
+  noticePort = chrome.runtime.connect({ name: "orbs-notices" });
+  noticePort.onMessage.addListener((message) => {
+    if (message.type === "clear") conflictPopup.setReply([]);
+    if (message.type === "acknowledge") conflictPopup.acknowledge(message.keys);
+    if (message.type === "notice") {
+      conflictPopup.acknowledge(message.dismissed || []);
+      conflictPopup.setReply(message.cards);
+      if (message.messages?.length) void conflictPopup.receiveMessages(message.messages);
+    }
+  });
+  noticePort.onDisconnect.addListener(() => { noticePort = undefined; setTimeout(connectNotices, 1000); });
+}
+connectNotices();
 
 async function initialize() {
   const settings = await chrome.storage.local.get({ voiceMode: "ptt" });

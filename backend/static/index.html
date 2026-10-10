@@ -260,13 +260,9 @@ const RATE = 24000, CHUNK = 1920; // 80 ms of 24 kHz mono, contracts § Audio
 const $ = (id) => document.getElementById(id);
 const log = (...a) => { const l = $("log"); l.textContent += a.join(" ") + "\n"; l.scrollTop = l.scrollHeight; };
 
-// Token: from #token=... once, then remembered.
-let token = new URLSearchParams(location.hash.slice(1)).get("token");
-try {
-  if (token) { localStorage.setItem("beaverToken", token); history.replaceState(null, "", location.pathname); }
-  else token = localStorage.getItem("beaverToken");
-} catch {}
-if (!token) token = prompt("APP_TOKEN (from backend/.env)") || "";
+// Runtime credentials stay in memory, never in page messages or browser storage.
+let token = "";
+try { localStorage.removeItem("beaverToken"); } catch {}
 
 let ws, ctx, micNode, screenStream, screenVideo;
 let mode = "ptt", talking = false, serverState = "idle", dropAudio = false;
@@ -299,8 +295,9 @@ function onMessage(m) {
     case "reply":
       dropAudio = false; firstAudioLogged = false;
       $("say").hidden = false; $("say").textContent = m.say;
-      renderCards(m.cards || []); conflictPopup.setReply(m.cards || []); showTravel(m.cards || []); break;
-    case "a2ui": void conflictPopup.receiveMessages(m.messages); break;
+      renderCards(m.cards || []); conflictPopup.setReply(m.cards || []); showTravel(m.cards || []);
+      publishUI({ type: "reply", cards: m.cards || [] }); break;
+    case "a2ui": void conflictPopup.receiveMessages(m.messages); publishUI(m); break;
     case "audio": if (!dropAudio) playChunk(m.data); break;
     case "audio_end": break;
     case "screen_ok":
@@ -503,8 +500,22 @@ $("dismissTravel").addEventListener("click", () => $("travelPopup").close());
 const conflictPopup = createConflictPopup({
   popup: $("conflictPopup"), content: $("conflictContent"), dismissButton: $("dismissConflict"),
   renderFallback: (cards) => { $("conflictContent").innerHTML = cards.map(cardMarkup).join(""); }, log,
+  onDismiss: (keys) => publishUI({ type: "dismiss", keys }),
 });
-connect();
+function publishUI(message) {
+  window.postMessage({ channel: "orbs-a2ui", message }, location.origin);
+}
+async function start() {
+  try {
+    const response = await fetch("/extension-config", { cache: "no-store", headers: { "X-Orbs-Client": "orbs-ui" } });
+    if (!response.ok) throw new Error("Configuration unavailable");
+    const config = await response.json();
+    if (typeof config.app_token !== "string" || !config.app_token) throw new Error("Configuration incomplete");
+    token = config.app_token;
+    connect();
+  } catch { setConn("configuration unavailable", false); $("label").textContent = "Start the Orbs backend to connect."; }
+}
+start();
 </script>
 </body>
 </html>

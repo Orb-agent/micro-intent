@@ -26,7 +26,7 @@ open -a "Google Chrome" "http://localhost:8000/"
 3. Hold the orb or Space while you talk. Click or press again to interrupt the beaver. You can also type a question and select **Send**.
 4. Select **Hands-free** in the menu to talk without holding the orb. Talking over the beaver interrupts it. Use headphones to prevent feedback.
 
-To use the Chrome toolbar extension, load the repository's `extension/` directory from `chrome://extensions` with Developer mode on, then choose **Open assistant**. The extension reads `APP_TOKEN` and `BACKEND_URL` through `/extension-config`; no token or server URL needs to be entered in Chrome.
+To use the Chrome toolbar extension, run `npm ci` and `npm run build` in `extension/`, then load `extension/dist/` from `chrome://extensions` with Developer mode on and choose **Open assistant**. The extension reads `APP_TOKEN` and `BACKEND_URL` through `/extension-config`; no token or server URL needs to be entered in Chrome. Calendar attention cards also appear over the active website, such as Luma, through the extension's floating orb. See [extension/README.md](../extension/README.md).
 
 ## Checks
 

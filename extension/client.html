@@ -73,6 +73,16 @@
   body.orbs-widget #orb[data-state="listening"] { box-shadow: 0 0 0 7px #ffffff22, 0 8px 30px #0009; }
   body.orbs-widget #label { max-width: 140px; min-height: 0; padding: 4px 8px; border: 1px solid #ffffff20; border-radius: 999px; background: #111e; color: #fff; font-size: 10px; line-height: 1.2; text-align: center; }
   @media (prefers-reduced-motion: reduce) { #orb, #orb svg { animation: none !important; transform: none !important; } }
+  [hidden] { display: none !important; }
+  #conflictPopup { position: fixed; z-index: 10; top: 18px; right: 18px; width: min(360px, calc(100vw - 36px)); max-height: min(360px, 60vh); overflow: auto; padding: 16px; border: 1px solid var(--line); border-radius: 24px; background: var(--panel); box-shadow: 0 12px 40px #0004; }
+  #conflictPopup header { flex-wrap: nowrap; gap: 8px; margin-bottom: 12px; }
+  #conflictPopup h2 { margin: 0; font-size: 14px; }
+  #dismissConflict { padding: 4px; min-width: 44px; font-size: 24px; border: 0; background: transparent; }
+  #conflictContent { --a2ui-color-background: var(--panel); --a2ui-color-surface: var(--panel); --a2ui-color-on-surface: var(--ink); --a2ui-color-on-background: var(--ink); --a2ui-color-primary: var(--ink); --a2ui-color-border: var(--line); --a2ui-font-size: 14px; --a2ui-font-scale: 1.12; --a2ui-border-radius: 12px; }
+  #conflictContent .card { border: 0; padding: 0; background: transparent; }
+  body.orbs-widget.has-notice { width: 100vw; height: 100dvh; }
+  body.orbs-widget.has-notice main { position: absolute; bottom: 0; right: 0; width: 128px; }
+  body.orbs-widget #conflictPopup { top: 8px; right: 8px; width: calc(100vw - 16px); max-height: calc(100dvh - 136px); --panel: #1a1a1a; --line: #383838; --ink: #f5f5f5; --muted: #aaa; }
   #label { color: var(--ink); min-height: 1.4em; font-weight: 550; }
   .hint { color: var(--muted); font-size: 13px; text-align: center; }
   .bubble { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 20px; }
@@ -139,6 +149,10 @@
   <div id="log" hidden></div>
 </main>
 
-<script src="client.js"></script>
+<aside id="conflictPopup" role="region" aria-labelledby="conflictTitle" aria-live="polite" hidden>
+  <header><h2 id="conflictTitle">Calendar needs attention</h2><button id="dismissConflict" type="button" aria-label="Dismiss calendar conflict">×</button></header>
+  <div id="conflictContent"></div>
+</aside>
+<script type="module" src="client.js"></script>
 </body>
 </html>
