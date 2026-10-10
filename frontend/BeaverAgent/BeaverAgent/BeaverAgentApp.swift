@@ -6,7 +6,7 @@ struct BeaverAgentApp: App {
     @State private var sheet: AppSheet?
     @AppStorage(SettingsKey.serverURL) private var serverURL = ""
     @AppStorage(SettingsKey.token) private var token = ""
-    @AppStorage(SettingsKey.useFixtures) private var useFixtures = true
+    @AppStorage(SettingsKey.useFixtures) private var useFixtures: Bool?
     @AppStorage(SettingsKey.appearance) private var appearance = Appearance.system
     @AppStorage(SettingsKey.largeText) private var largeText = false
     @AppStorage(SettingsKey.handsFree) private var handsFree = false
@@ -53,10 +53,10 @@ struct BeaverAgentApp: App {
 
     private var typeScale: TypeScale { largeText ? .large : .regular }
 
-    private var settingsKey: String { "\(useFixtures)|\(serverURL)|\(token)|\(handsFree)" }
+    private var settingsKey: String { "\(String(describing: useFixtures))|\(serverURL)|\(token)|\(handsFree)" }
 
     private func applySettings() {
-        session.configure(useFixtures: useFixtures, serverURL: serverURL, token: token, handsFree: handsFree)
+        session.configure(useFixtures: SettingsKey.replays(useFixtures, serverURL: serverURL), serverURL: serverURL, token: token, handsFree: handsFree)
     }
 }
 

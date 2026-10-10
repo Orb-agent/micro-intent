@@ -86,6 +86,13 @@ enum Theme {
         static let think = 4.5
         static let act = 2.2
         static let speak = 2.6
+
+        /// Brand kit motion: enter 320 ms, exit 160 ms, state change 200 ms, no spring overshoot.
+        static let enter = Animation.timingCurve(0.16, 1, 0.3, 1, duration: panel)
+        static let exit = Animation.timingCurve(0.4, 0, 1, 1, duration: 0.16)
+        static let standard = Animation.timingCurve(0.4, 0, 0.2, 1, duration: base)
+        /// Reduced motion: immediate placement with a short opacity fade.
+        static let reduced = Animation.linear(duration: 0.1)
     }
 }
 
@@ -177,28 +184,69 @@ extension Color {
 
 // MARK: - Surfaces
 
-/// Solid surface with a fine border and a restrained shadow on panels.
+/// Floating surface: iOS 26 Liquid Glass in the given shape, interactive on tappable
+/// controls; older iOS gets `.ultraThinMaterial` with the token fill and a fine border.
+/// Content inside stays flat; only the floating surface itself is glass.
 struct GlassSurface: ViewModifier {
     enum Kind { case panel, pill, flat }
     var kind: Kind = .panel
     var cornerRadius: CGFloat = Theme.Radius.xxl
+    var interactive = false
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        content
-            .background(shape.fill(kind == .panel ? Theme.glassPanel : Theme.glassPill))
-            .overlay(shape.strokeBorder(Theme.borderGlass, lineWidth: 1))
-            .shadow(
-                color: kind == .panel ? Theme.shadowPanel : .clear,
-                radius: kind == .panel ? 8 : 0,
-                y: kind == .panel ? 4 : 0
-            )
+        if #available(iOS 26.0, *) {
+            content.glassEffect(interactive ? .regular.interactive() : .regular, in: shape)
+        } else {
+            content
+                .background {
+                    shape.fill(.ultraThinMaterial)
+                        .overlay(shape.fill((kind == .panel ? Theme.glassPanel : Theme.glassPill).opacity(0.7)))
+                }
+                .overlay(shape.strokeBorder(Theme.borderGlass, lineWidth: 1))
+                .shadow(
+                    color: kind == .panel ? Theme.shadowPanel : .clear,
+                    radius: kind == .panel ? 8 : 0,
+                    y: kind == .panel ? 4 : 0
+                )
+        }
     }
 }
 
 extension View {
-    func glassSurface(_ kind: GlassSurface.Kind = .panel, cornerRadius: CGFloat = Theme.Radius.xxl) -> some View {
-        modifier(GlassSurface(kind: kind, cornerRadius: cornerRadius))
+    func glassSurface(_ kind: GlassSurface.Kind = .panel, cornerRadius: CGFloat = Theme.Radius.xxl, interactive: Bool = false) -> some View {
+        modifier(GlassSurface(kind: kind, cornerRadius: cornerRadius, interactive: interactive))
+    }
+
+    /// Ties a glass surface to an identity so it morphs into its neighbours inside the same
+    /// `GlassEffectContainer` when states change (iOS 26; no-op before).
+    @ViewBuilder
+    func glassID(_ id: String, in namespace: Namespace.ID) -> some View {
+        if #available(iOS 26.0, *) {
+            glassEffectID(id, in: namespace)
+        } else {
+            self
+        }
+    }
+
+    /// Groups glass surfaces so they blend and morph together (iOS 26; plain group before).
+    @ViewBuilder
+    func glassGroup(spacing: CGFloat = 12) -> some View {
+        if #available(iOS 26.0, *) {
+            GlassEffectContainer(spacing: spacing) { self }
+        } else {
+            self
+        }
+    }
+
+    /// Round glass icon button, 44 pt and up (`.buttonStyle(.glass)` on iOS 26).
+    @ViewBuilder
+    func glassIconButton() -> some View {
+        if #available(iOS 26.0, *) {
+            buttonStyle(.glass).buttonBorderShape(.circle)
+        } else {
+            buttonStyle(.plain)
+        }
     }
 
     /// Small uppercase label above content, `text.eyebrow`.
@@ -207,14 +255,29 @@ extension View {
     }
 }
 
+extension AnyTransition {
+    /// Brand kit card motion: enter 320 ms (opacity, y 8 to 0, scale .98 to 1),
+    /// exit 160 ms (opacity, y 0 to 4). Reduced motion keeps only the fade.
+    static func orbsCard(reduceMotion: Bool) -> AnyTransition {
+        if reduceMotion { return .opacity.animation(Theme.Motion.reduced) }
+        return .asymmetric(
+            insertion: .opacity.combined(with: .offset(y: 8)).combined(with: .scale(scale: 0.98))
+                .animation(Theme.Motion.enter),
+            removal: .opacity.combined(with: .offset(y: 4)).animation(Theme.Motion.exit)
+        )
+    }
+}
+
 /// ConfirmCard-style buttons: Cancel left, primary right, the same height
-/// (`size.touch-min` and up; 72 in large mode).
+/// (`size.touch-min` and up; 72 in large mode). On iOS 26 both are Liquid Glass:
+/// the primary is ink-tinted (the kit's text-color fill), the secondary clear glass.
 struct BigButtonStyle: ButtonStyle {
     enum Kind { case primary, secondary }
     var kind: Kind
 
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.typeScale) private var type
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
         let shape = RoundedRectangle(cornerRadius: Theme.Radius.lg, style: .continuous)
@@ -222,14 +285,31 @@ struct BigButtonStyle: ButtonStyle {
             .font(type.button)
             .foregroundStyle(kind == .primary ? Theme.canvas : Theme.textPrimary)
             .frame(maxWidth: .infinity, minHeight: type.control)
-            .background(shape.fill(kind == .primary ? Theme.accent : Theme.surfaceControl))
-            .overlay {
-                if kind == .secondary { shape.strokeBorder(Theme.borderInput, lineWidth: 1) }
-            }
-            .shadow(color: .clear, radius: 0)
-            .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : 0.4)
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .contentShape(shape)
+            .modifier(ButtonFill(kind: kind, shape: shape))
+            .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.98 : 1)
             .animation(.timingCurve(0.4, 0, 0.2, 1, duration: Theme.Motion.fast), value: configuration.isPressed)
+    }
+
+    private struct ButtonFill: ViewModifier {
+        let kind: Kind
+        let shape: RoundedRectangle
+
+        func body(content: Content) -> some View {
+            if #available(iOS 26.0, *) {
+                content.glassEffect(
+                    kind == .primary ? .regular.tint(Theme.accent).interactive() : .regular.interactive(),
+                    in: shape
+                )
+            } else {
+                content
+                    .background(shape.fill(kind == .primary ? Theme.accent : Theme.surfaceControl))
+                    .overlay {
+                        if kind == .secondary { shape.strokeBorder(Theme.borderInput, lineWidth: 1) }
+                    }
+            }
+        }
     }
 }
 

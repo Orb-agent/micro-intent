@@ -30,6 +30,7 @@ def client(monkeypatch):
     monkeypatch.setattr(server.voice, "Transcriber", FakeTranscriber)
     monkeypatch.setattr(server, "read_screen", fake_read_screen)
     monkeypatch.setattr(server, "latest", None)
+    monkeypatch.setenv("PROACTIVE_SCREEN", "0")  # tests/test_proactive.py covers it
     with TestClient(server.app) as client:  # one event loop, so vision tasks outlive the POST
         yield client
 
@@ -50,7 +51,7 @@ def connect(client):
     (AUTH, b"x" * (server.SCREEN_MAX_BYTES + 1), 413),
     (AUTH, PNG, 204),
     ({"Authorization": "Bearer test-token", "Content-Type": "image/jpeg"}, b"\xff\xd8\xff", 204),
-])
+], ids=["missing-auth", "wrong-token", "missing-bearer", "wrong-mime", "over-8mb", "png", "jpeg"])
 def test_post_screenshot_status(client, headers, body, status):
     assert client.post("/screenshot", content=body, headers=headers).status_code == status
     assert (server.latest is not None) == (status == 204)
