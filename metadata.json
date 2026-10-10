@@ -1,0 +1,18 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K3T85PH8PMBVJEVQDKRH69",
+  "strategy": "manual-commit",
+  "branch": "fm/micro-intent-agent-wp3-v1",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "backend/evals.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ]
+}
