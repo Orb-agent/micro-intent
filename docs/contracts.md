@@ -258,7 +258,8 @@ Events cover now to 7 days ahead. `source` is `luma` when the event's descriptio
 | Variable | Used by | Notes |
 | --- | --- | --- |
 | `APP_TOKEN` | WP2, the app, the Shortcut | Any long random string |
-| `GEMINI_API_KEY`, `GEMINI_MODEL` | WP2 vision, WP3 | `gemini-3.8-flash` |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | WP3 agent | `gemini-3.8-flash` |
+| `VISION_MODEL` | WP2 vision | `gemini-3.6-flash` with thinking `minimal`: steadier and faster for reading a screenshot (1.9–2.2 s) |
 | `GRADIUM_API_KEY`, `GRADIUM_VOICE_ID` | WP2 | Voice: the cloned mascot or a stock voice |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | WP3 | Temporary account only, read-only scopes |
 | `WORKSPACE_MODE` | WP3 | `rest` or `fixture` |
