@@ -59,6 +59,16 @@ def connect(client):
     return ws, conn
 
 
+def test_conflict_popup_client_is_served(client):
+    page = client.get("/")
+    assert page.status_code == 200
+    assert 'id="conflictPopup"' in page.text
+    module = client.get("/static/conflict-ui.mjs")
+    assert module.status_code == 200
+    assert "javascript" in module.headers["content-type"]
+    assert "@a2ui/lit@0.13.0" in module.text
+
+
 def receive_turn(ws):
     """Messages up to and including the final `state: idle`."""
     msgs = []
