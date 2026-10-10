@@ -1,0 +1,21 @@
+what if i do not want to hold the orb, its should stream always, it this feasible Mic, hold the orb
+
+---
+
+<task-notification>
+<task-id>bvkcm1f4o</task-id>
+<tool-use-id>toolu_01RFqBCw4F9y5HtVdAJBfXY8</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-macbook-Documents-GitHub-micro-intent/f1c27adf-0d4f-4a29-9192-d1742af6da60/tasks/bvkcm1f4o.output</output-file>
+<status>failed</status>
+<summary>Background command "Start backend server with stub agent" failed with exit code 144</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bcrvik006</task-id>
+<tool-use-id>toolu_01R6pxE3CkFYrBL8K65dNKu3</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-macbook-Documents-GitHub-micro-intent/f1c27adf-0d4f-4a29-9192-d1742af6da60/tasks/bcrvik006.output</output-file>
+<status>failed</status>
+<summary>Background command "Restart backend server with stub agent" failed with exit code 144</summary>
+</task-notification>
