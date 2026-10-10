@@ -202,3 +202,34 @@ async def test_model_error_returns_apology(ag, fake_interactions):
 
     reply = await ag.turn("Can I make it?", None, on_status)
     assert reply == {"say": SORRY, "cards": []}
+
+
+def test_maps_tools_declared_only_with_key(monkeypatch):
+    monkeypatch.delenv("GOOGLE_MAPS_API_KEY", raising=False)
+    assert [t["name"] for t in agent.tool_declarations()] == ["sbb_connections", "respond"]
+    monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "test-key")
+    assert {"maps_search_places", "maps_route"} <= {t["name"] for t in agent.tool_declarations()}
+
+
+@pytest.mark.asyncio
+async def test_agent_turn_with_maps_route(ag, fake_interactions, monkeypatch):
+    monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "test-key")
+    route = (FIXTURES / "maps_route.json").read_bytes()
+    real = httpx.AsyncClient
+    monkeypatch.setattr(
+        httpx, "AsyncClient",
+        lambda **kw: real(transport=httpx.MockTransport(lambda r: httpx.Response(200, content=route)), **kw),
+    )
+    walk = {"origin": "Bern station", "destination": "Bundesplatz 3, Bern", "mode": "WALK"}
+    answer = {"say": "It's a nine-minute walk.", "cards": []}
+    i0 = FakeInteraction("i-0", [FakeStep("function_call", "maps_route", walk, id="call-route")])
+    i1 = FakeInteraction("i-1", [FakeStep("function_call", "respond", answer)])
+    inter = fake_interactions(i0, i1)
+    seen, on_status = statuses()
+
+    assert await ag.turn("How far is the Bundeshaus from the station on foot?", None, on_status) == answer
+    assert seen == ["Checking the route…"]
+    assert "maps_route" in {t["name"] for t in inter.calls[0]["tools"]}
+    result = inter.calls[1]["input"][0]
+    assert result["call_id"] == "call-route"
+    assert json.loads(result["result"]) == {"duration_min": 9, "distance_km": 0.6}
