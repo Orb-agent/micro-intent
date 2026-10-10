@@ -5,6 +5,8 @@
   "branch": "feature/wp2-backend-voice-vision",
   "checkpoints_count": 1,
   "files_touched": [
+    "backend/.gitignore",
+    "backend/app.py",
     "backend/fake_app.py",
     "backend/tests/test_app.py",
     "backend/voice.py"
@@ -19,10 +21,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 30,
-    "cache_creation_tokens": 29068,
-    "cache_read_tokens": 4916233,
-    "output_tokens": 14382,
-    "api_call_count": 15
+    "input_tokens": 2,
+    "cache_creation_tokens": 944,
+    "cache_read_tokens": 341663,
+    "output_tokens": 305,
+    "api_call_count": 1
   }
 }
