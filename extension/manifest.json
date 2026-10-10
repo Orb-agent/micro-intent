@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Orbs",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "A desktop voice and text assistant, connected to your Orbs backend.",
   "icons": {
     "16": "icons/icon-16.png",
@@ -9,13 +9,8 @@
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
-  "permissions": ["storage", "scripting", "activeTab"],
-  "optional_host_permissions": [
-    "http://*/*",
-    "http://localhost/*",
-    "http://127.0.0.1/*",
-    "https://*/*"
-  ],
+  "permissions": ["storage"],
+  "host_permissions": ["http://*/*", "https://*/*"],
   "action": {
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -28,6 +23,13 @@
     {
       "resources": ["client.html", "client.js", "pcm-worklet.js"],
       "matches": ["http://*/*", "https://*/*"]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["floating-orb.js"],
+      "run_at": "document_idle"
     }
   ],
   "content_security_policy": {

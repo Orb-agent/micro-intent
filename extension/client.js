@@ -25,7 +25,7 @@ function connect() {
   ws.onopen = () => ws.send(JSON.stringify({ type: "hello", token, mode }));
   ws.onclose = (e) => {
     setConn(e.code === 1008 ? "invalid token" : "reconnecting", false);
-    if (e.code === 1008) { $("label").textContent = "The backend rejected this token. Check that it matches APP_TOKEN in backend/.env, update it in the Orbs popup, then reload this tab."; return; }
+    if (e.code === 1008) { $("label").textContent = "The backend rejected its configured credentials. Check the backend environment configuration."; return; }
     $("label").textContent = `Waiting for backend at ${new URL(server).host}…`;
     setTimeout(connect, 1000);
   };
@@ -233,8 +233,8 @@ async function initialize() {
   $("mode").value = mode;
   if (widgetMode) $("label").textContent = mode === "handsfree" ? "Tap to listen" : "Tap to talk";
   if (!token) {
-    setConn("token required", false);
-    $("label").textContent = "Open the Orbs popup and save your APP_TOKEN.";
+    setConn("configuration unavailable", false);
+    $("label").textContent = "Start the Orbs backend to load assistant configuration.";
     return;
   }
   connect();

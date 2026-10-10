@@ -13,4 +13,4 @@ The extension includes the same desktop interface and connects it to the same ba
 
 For a deployed backend, use its HTTPS origin. The popup requests host access only for the origin entered. The app token is stored in Chrome's local extension storage and is passed to the desktop page in the URL fragment; the desktop client removes the fragment after reading it.
 
-The floating orb stays at the bottom-right of enabled sites. Select **Click to talk** to tap once to start speaking and again to send, or **Hands-free listening** to tap to start and pause continuous listening. Its animation reflects the assistant state. Site access is requested one origin at a time. **Open assistant** remains available for the full text, voice, cards and screen-sharing interface.
+Chrome asks for access to websites when the extension is installed because automatic injection requires site access. Select **Click to talk** to tap once to start speaking and again to send, or **Hands-free listening** to tap to start and pause continuous listening. Its animation reflects the assistant state. **Open assistant** remains available for the full text, voice, cards and screen-sharing interface.
