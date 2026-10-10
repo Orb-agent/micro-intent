@@ -1,0 +1,125 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K3KT62TRAPSG3XWFJ6VGC9",
+  "session_id": "7196198a-08a0-4644-ae9d-82027077c6f2",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T14:31:34.382321Z",
+  "branch": "fm/micro-intent-agent-wp3-v1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "backend/agent_engine.py",
+    "backend/pyproject.toml",
+    "backend/requirements.txt",
+    "backend/services/auth_client.py",
+    "backend/services/docs_auth.py",
+    "backend/services/flights_service.py",
+    "backend/tests/test_backend.py",
+    "backend/uv.lock",
+    "docs/brand-kit/OrbsIndicator.tsx",
+    "docs/brand-kit/README.md",
+    "docs/brand-kit/THIRD-PARTY-NOTICES.txt",
+    "docs/brand-kit/index.html",
+    "docs/brand-kit/orb-motion.css",
+    "docs/brand-kit/package.json",
+    "docs/brand-kit/tokens.css",
+    "docs/brand-kit/tokens.json",
+    "docs/design-system/README.md",
+    "docs/design-system/design-tokens.css",
+    "docs/design-system/design-tokens.json",
+    "frontend/BeaverAgent/BeaverAgent.xcodeproj/project.pbxproj",
+    "frontend/BeaverAgent/BeaverAgent/AgentSession.swift",
+    "frontend/BeaverAgent/BeaverAgent/BeaverAgentApp.swift",
+    "frontend/BeaverAgent/BeaverAgent/ContentView.swift",
+    "frontend/BeaverAgent/BeaverAgent/Protocol.swift",
+    "frontend/BeaverAgent/BeaverAgent/Sheets.swift",
+    "frontend/BeaverAgent/BeaverAgent/Theme.swift",
+    "frontend/BeaverAgent/BeaverAgent/VoiceIO.swift",
+    "frontend/BeaverAgent/BeaverAgent/WebSocketClient.swift",
+    "frontend/BeaverAgent/NativeCards/CardModels.swift",
+    "frontend/BeaverAgent/NativeCards/CardStyle.swift",
+    "frontend/BeaverAgent/NativeCards/ConflictCardView.swift",
+    "frontend/BeaverAgent/NativeCards/EventCardView.swift",
+    "frontend/BeaverAgent/NativeCards/FlightCardView.swift",
+    "frontend/BeaverAgent/NativeCards/NativeCardView.swift",
+    "frontend/BeaverAgent/NativeCards/TrainCardView.swift",
+    "frontend/README.md",
+    "frontend/screenshots/cards/conflict_card.png",
+    "frontend/screenshots/cards/conflict_clash_card.png",
+    "frontend/screenshots/cards/event_card.png",
+    "frontend/screenshots/cards/flight_card.png",
+    "frontend/screenshots/cards/train_card.png",
+    "frontend/screenshots/voice-handsfree-listening.jpg",
+    "frontend/screenshots/voice-handsfree-setting.jpg",
+    "frontend/screenshots/voice-handsfree-speaking.jpg",
+    "frontend/screenshots/voice-ptt-listening.jpg"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "a0a1296bd0bd",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 46,
+    "cache_creation_tokens": 103953,
+    "cache_read_tokens": 2489499,
+    "output_tokens": 13887,
+    "api_call_count": 23
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_018THS4GrVgtrXbnjtZpMHjo",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "gradium-docs"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "a0a1296bd0bd",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 31,
+        "end": 32,
+        "entry_ids": [
+          "a7aaa473-8166-44b9-bfdc-bdc3738bc831"
+        ],
+        "tool_use_id": "toolu_018THS4GrVgtrXbnjtZpMHjo"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_018THS4GrVgtrXbnjtZpMHjo"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: gradium-docs",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T14:31:34.364125Z",
+    "agent_lines": 6651,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 6651,
+    "total_lines_changed": 6651,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}
