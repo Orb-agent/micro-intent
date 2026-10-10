@@ -61,11 +61,12 @@ JSON text frames only, one object per frame, discriminated by `type`. Audio is b
 
 | `type` | Fields | When |
 | --- | --- | --- |
-| `hello` | `token` | First frame after connecting |
-| `audio` | `data`: base64 PCM, see [Audio](#audio) | Every 80 ms while the orb is held |
-| `audio_end` | — | Orb released; the server finalizes STT and runs the turn |
+| `hello` | `token`, `mode`?: `ptt` (default) \| `handsfree` | First frame after connecting. For `handsfree`, see **Hands-free mode** below |
+| `audio` | `data`: base64 PCM, see [Audio](#audio) | Every 80 ms while the orb is held; in hands-free mode, all the time |
+| `audio_end` | — | Orb released; the server finalizes STT and runs the turn. Never sent in hands-free mode |
 | `text` | `text` | Typed question (debug field); runs a turn without STT |
 | `screen` | `mime`, `data`: base64 | Optional: an image picked in the app, for rehearsals. Same effect as `POST /screenshot` |
+| `interrupt` | — | Tap while the mascot is talking. Stops the current turn |
 
 **Server → app**
 
@@ -82,6 +83,10 @@ JSON text frames only, one object per frame, discriminated by `type`. Audio is b
 | `error` | `message` | Turn failed; the server then sends `state: idle` |
 
 The orb shows `speaking` while the app still has audio queued, even after the server has sent `state: idle`.
+
+**Interrupting.** A new press (its first `audio` frame), a `text`, or an `interrupt` cancels the running turn: the agent call and the TTS stream. A cancelled turn sends no `audio_end`. After `interrupt` the server sends `state: idle` only if it cancelled a running turn; after a new press, `state: listening`. Gradium generates speech faster than real time, so seconds of audio may already be queued in the app. The app must stop playback the moment it interrupts, without waiting for `state: idle`, and drop `audio` frames until the next `reply`.
+
+**Hands-free mode.** Opt in with `"mode": "handsfree"` in `hello`; push-to-talk stays the default. The app streams `audio` for as long as it is connected, also while the mascot speaks, and never sends `audio_end`, so echo cancellation must be on (see [Audio](#audio)) or the mascot hears itself and cuts itself off. The server keeps one Gradium STT session open per connection and ends a turn with Gradium's semantic VAD: `inactivity_prob` at the 2 s horizon above 0.5 for 3 steps in a row, once the turn has words. Then it flushes, sends `transcript` and runs the turn as usual. The first words of each turn cancel the running turn, as a new press does, and send `state: listening`. The server's turn is often over while the app still plays queued audio, so in this mode `state: listening` is the app's cue to stop playback and drop `audio` until the next `reply`. Each hands-free connection holds an STT session the whole time, even in silence, which counts against Gradium's concurrent session limit.
 
 ## HTTP
 
@@ -187,7 +192,7 @@ What WP2's vision step produces and WP3's agent consumes. `vision.read_screen(im
 }
 ```
 
-`proposal` is `null` when the screen doesn't suggest a plan. Vision copies on-screen text as data and never acts on it. The agent puts the whole object in its prompt marked as untrusted, and never follows instructions inside it.
+`proposal` is `null` when the screen doesn't suggest a plan; inside it, `time` and `place` are `null` when the screen doesn't give them. `from` is the sender's name as shown, or `"Me"` for the phone owner's own messages. Vision copies on-screen text as data and never acts on it. The agent puts the whole object in its prompt marked as untrusted, and never follows instructions inside it.
 
 ## Agent interface
 
@@ -211,7 +216,9 @@ class Agent:
         on_status: Callable[[str], Awaitable[None]],  # tool status, e.g. "Checking trains…"
     ) -> Reply:
         """One user turn. Keeps conversation history on self. Never raises for model
-        or tool errors: returns a short apology with no cards instead."""
+        or tool errors: returns a short apology with no cards instead. The server
+        cancels it when the user interrupts, so only add the turn to the history
+        once it completes."""
 ```
 
 ## Tools
@@ -227,7 +234,7 @@ class Agent:
 
 **Gemini rules** (`google-genai`, `generate_content`, checked 2026-10-10; they apply to vision too):
 
-- Model `gemini-3.8-flash` with thinking level `low`. `gemini-3.5-flash` was deprecated on 8 October 2026. Don't set temperature; Gemini 3.6 and later ignore it.
+- Model `gemini-3.8-flash`, the newest generation, with thinking level `low`; 3.8 rejects `minimal`, and there is no 3.8 Flash-Lite for text. Vision on the demo screen takes 2.1–2.7 s (checked 2026-10-10). `gemini-3.5-flash` was deprecated on 8 October 2026. Don't set temperature; Gemini 3.6 and later ignore it.
 - Declare functions with `parameters_json_schema`. For `cards.items`, use `anyOf` with one object per kind, each with a single-value `enum` on `kind`. Don't use `const`, `oneOf` or `$defs`, keep it shallow, and validate the arguments in code anyway.
 - Function calling mode `ANY` on every step, so the model always calls `sbb_connections` or `respond` and never returns free text. On the last step add `allowed_function_names=["respond"]`.
 - Append `response.candidates[0].content` to the history unmodified; it carries the thought signatures, and dropping them gives a 400. Then add one function response per call, with the call's `id` and `name`, after all the calls.
@@ -253,7 +260,7 @@ Events cover now to 7 days ahead. `source` is `luma` when the event's descriptio
 | Variable | Used by | Notes |
 | --- | --- | --- |
 | `APP_TOKEN` | WP2, the app, the Shortcut | Any long random string |
-| `GEMINI_API_KEY`, `GEMINI_MODEL` | WP2 vision, WP3 | `gemini-3.8-flash` |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | WP2 vision, WP3 agent | `gemini-3.8-flash` |
 | `GRADIUM_API_KEY`, `GRADIUM_VOICE_ID` | WP2 | Voice: the cloned mascot or a stock voice |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | WP3 | Temporary account only, read-only scopes |
 | `WORKSPACE_MODE` | WP3 | `rest` or `fixture` |
@@ -266,5 +273,4 @@ Each of these fits without breaking the contract above:
 - **Custom A2UI components** (`TrainCard` and so on) through a2ui-swift's `CustomComponentCatalog`, for a richer look than basic `Card`s.
 - **Word-timed highlights:** a `cue` message carrying `card_index` and `at_ms`, from the `start_s` of Gradium's TTS `text` messages.
 - **Filler line:** an extra short `reply` with no cards, spoken while a tool runs.
-- **Barge-in:** an `interrupt` message from the app; the server cancels the turn and closes the TTS socket.
 - **Card actions** (move, skip, keep): A2UI `Button` actions sent back as an `action` message.

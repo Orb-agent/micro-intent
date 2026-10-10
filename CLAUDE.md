@@ -15,3 +15,5 @@ or changing code whose intent is unclear, check history instead of guessing:
     entire why <file>:<line>                  # commit, checkpoint, prompt behind a line
     entire search --compact "<query>"         # needs `entire login`
     entire experts <path|query> --json        # needs `entire login`, mirrored repo
+
+Team rules (commit every step, contracts first, stay in your paths): @AGENTS.md

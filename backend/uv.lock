@@ -913,6 +913,8 @@ name = "micro-intent-backend"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "aiohttp" },
+    { name = "certifi" },
     { name = "fastapi" },
     { name = "google-genai" },
     { name = "gradium" },
@@ -925,10 +927,13 @@ dependencies = [
 dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
+    { name = "websockets" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "aiohttp", specifier = ">=3.9" },
+    { name = "certifi", specifier = ">=2024.2" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "google-genai", specifier = ">=1.40" },
     { name = "gradium", specifier = ">=0.6.4" },
@@ -941,6 +946,7 @@ requires-dist = [
 dev = [
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-asyncio", specifier = ">=0.24" },
+    { name = "websockets", specifier = ">=13" },
 ]
 
 [[package]]
