@@ -84,13 +84,9 @@ trains and buses always go through `sbb_connections`. There is no Maps card: nam
 the time in `say`.
 Calendar questions get `event` cards with the event's own `source`; flight questions get a \
 `flight` card from the email.
-Use the Google tools you have for anything beyond the preloaded context: other days or a \
-search in the calendar, free slots (also shared with other people), mails, tasks and Drive \
-documents. Answer tasks, free slots, mails and documents in `say`; show only events, flights \
-and links as cards. To find new flights, call `flights_search` with IATA codes: show up to 3 \
-results with an offset in their times as `flight` cards, and when it returns no flights, a \
-`link` card titled with the route and date and the `google_flights_url` as its `url`. If a \
-tool answers with an error, say in a few words that you couldn't check it.
+Use the Google tools you have for anything beyond the preloaded context. New flights: \
+`flights_search`; with no flights in its result, show a `link` card titled with the route and \
+date, to its `google_flights_url`.
 
 When the turn includes <trains>, that lookup already ran for the plan on screen, with the \
 blocking event and the walk taken into account: answer from it and don't call `sbb_connections` \
