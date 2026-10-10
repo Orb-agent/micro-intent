@@ -37,6 +37,9 @@ final class AgentSession {
     private(set) var label: String?
     private(set) var transcript: String?
     private(set) var reply: Reply?
+    private(set) var travelPlan: TravelPlan?
+    /// Every reply, including a repeated answer, can present its own travel suggestion.
+    private(set) var replyRevision = 0
     /// Tool steps of the current turn, e.g. "Checking trains…", shown as a one-line trail.
     private(set) var steps: [String] = []
     private(set) var surfaces: [SurfaceViewModel] = []
@@ -242,6 +245,8 @@ final class AgentSession {
         case .reply(let reply):
             voice.beginSpeech()
             self.reply = reply
+            travelPlan = TravelPlan.make(cards: reply.cards, question: transcript ?? "")
+            replyRevision += 1
             surfaces = []
             errorMessage = nil
         case .a2ui(let messages):

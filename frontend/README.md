@@ -24,6 +24,12 @@ Move back to a version rule once a tag after 0.3.5 is released.
 
 The app starts in fixture mode ("Demo data"): typed questions replay the bundled fixtures as server frames, through the same decoding and rendering path as live frames.
 Questions about flights, events or the week return the event and flight cards; anything else returns the demo reply.
+Type `sin conflictos` or `no conflicts` to try the travel popup with a fixture connection from Winterthur.
+In live mode, a reply with a future connection and no conflict card opens the travel sheet, with
+departure/arrival times and a Google Maps transit link. Event-only replies open it for explicit
+attendance questions; calendar listings stay quiet. Maps URLs do not set an arrival time, so the
+sheet shows the event time to select with “Arrive by” in Maps. Train arrival is at the station;
+allow time to reach the venue.
 Turn off "Use demo data" in settings and enter the tunnel URL and `APP_TOKEN` to go live.
 
 The keyboard button next to the orb opens a sheet to type a question (the `text` frame).
@@ -68,7 +74,7 @@ xcrun simctl launch <udid> ch.microintent.BeaverAgent -appearance dark -demoScen
 
 | Argument | Values |
 | --- | --- |
-| `-demoScene` | `listening`, `thinking`, `searching`, `speaking`, `reply`, `kinds`, `screen`, `error` |
+| `-demoScene` | `listening`, `thinking`, `searching`, `speaking`, `reply`, `kinds`, `screen`, `error`, `travel` |
 | `-demoSheet` | `settings`, `debug` |
 | `-demoAsk` | A question sent 2 s after launch, live or in fixture mode |
 | `-appearance` | `system`, `light`, `dark` |

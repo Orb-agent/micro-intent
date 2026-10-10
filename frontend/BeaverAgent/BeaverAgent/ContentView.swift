@@ -168,7 +168,7 @@ struct ContentView: View {
 }
 
 enum AppSheet: String, Identifiable {
-    case settings, debug
+    case settings, debug, travel
     var id: String { rawValue }
 }
 

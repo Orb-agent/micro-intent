@@ -26,6 +26,8 @@ struct BeaverAgentApp: App {
                             simulateScreenshot: session.simulateScreenshot
                         )
                         .presentationDetents([.medium, .large])
+                    case .travel:
+                        if let plan = session.travelPlan { TravelSheet(plan: plan) }
                     }
                 }
                 .preferredColorScheme(appearance.colorScheme)
@@ -35,6 +37,13 @@ struct BeaverAgentApp: App {
                     DemoLaunch.apply(to: session, sheet: $sheet)
                 }
                 .onChange(of: settingsKey) { applySettings() }
+                .onChange(of: session.replyRevision) {
+                    if session.travelPlan != nil { sheet = .travel }
+                    else if sheet == .travel { sheet = nil }
+                }
+                .onChange(of: session.serverState) { _, state in
+                    if sheet == .travel && (state == .thinking || state == .listening) { sheet = nil }
+                }
                 .onChange(of: largeText, initial: true) { session.typeScale = typeScale }
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active { session.appBecameActive() }
@@ -112,6 +121,11 @@ enum DemoLaunch {
             session.handle(.state(scene == "speaking" ? .speaking : .idle, label: nil))
         case "screen":
             session.simulateScreenshot()
+        case "travel":
+            session.handle(.transcript("Can I attend dinner without conflicts?"))
+            session.handle(.state(.thinking, label: nil))
+            Fixtures.travel.frames.forEach(session.receive)
+            session.handle(.state(.idle, label: nil))
         case "error":
             session.handle(.transcript(question))
             session.handle(.error("Sorry, something went wrong."))
