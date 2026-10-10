@@ -236,7 +236,9 @@ $("mode").addEventListener("change", () => {
 // ---------- Screen ----------
 $("share").addEventListener("click", async () => {
   try {
-    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 2 }, audio: false });
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 2 }, audio: false });
+    screenStream?.getTracks().forEach((t) => t.stop()); // a re-share ends the old one; stop() fires no onended
+    screenStream = stream;
     screenVideo = Object.assign(document.createElement("video"), { srcObject: screenStream, muted: true });
     await screenVideo.play();
     screenStream.getVideoTracks()[0].onended = () => {
