@@ -423,7 +423,8 @@ class Agent:
             return None
         ends = [
             end for e in self.events
-            if (end := datetime.fromisoformat(e["end"])) <= start and end.date() == start.date()
+            if "T" in (e.get("end") or "")  # all-day events from Calendar carry a bare date
+            and (end := datetime.fromisoformat(e["end"])) <= start and end.date() == start.date()
         ]
         after = max(ends) + WALK if ends else start - timedelta(hours=2)
         after = max(after, now + WALK)

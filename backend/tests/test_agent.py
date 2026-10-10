@@ -128,6 +128,17 @@ async def test_agent_turn_with_prefetch(ag, fake_interactions, sbb_requests):
 
 
 @pytest.mark.asyncio
+async def test_prefetch_skips_all_day_events(ag, fake_interactions, sbb_requests):
+    # Calendar REST gives all-day events a bare date; comparing it with the plan's time used to raise.
+    ag.events.append({"title": "Holiday", "start": "2026-10-15", "end": "2026-10-16", "source": "calendar"})
+    fake_interactions(FakeInteraction("i-0", [FakeStep("function_call", "respond", DEMO)]))
+    seen, on_status = statuses()
+
+    assert await ag.turn("Can I make it?", SCREEN, on_status) == DEMO
+    assert len(sbb_requests) == 1
+
+
+@pytest.mark.asyncio
 async def test_agent_turn_with_tool_call_then_respond(ag, fake_interactions, sbb_requests):
     # Step 0: sbb_connections, Step 1: respond
     i0 = FakeInteraction("i-0", [FakeStep("function_call", "sbb_connections", SBB_ARGS, id="call-sbb")])
