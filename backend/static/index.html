@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Orbs</title>
+<link rel="icon" type="image/png" href="/static/orbs-icon-light.png" media="(prefers-color-scheme: light)">
+<link rel="icon" type="image/png" href="/static/orbs-icon-dark.png" media="(prefers-color-scheme: dark)">
 <!--
   Desktop and Chrome extension client for the /ws protocol in docs/contracts.md:
   text, microphone, mascot voice, screen sharing and cards. Open the Chrome extension
@@ -12,16 +14,16 @@
 <style>
   :root {
     color-scheme: light dark;
-    --bg: #f6f5f2; --panel: #fff; --ink: #1d1d1b; --muted: #6b6a66; --line: #e4e2dc;
+    --bg: #fafafa; --panel: #fff; --ink: #171717; --muted: #666; --line: #dedede;
     --red: #111; --listening: #111; --thinking: #111; --searching: #111; --speaking: #111;
     --orb-bg: #fff; --orb-ink: #111;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #151514; --panel: #1f1f1d; --ink: #f1efe9; --muted: #a09d95; --line: #33322f; --orb-bg: #050505; --orb-ink: #fff; }
+    :root { --bg: #111; --panel: #1a1a1a; --ink: #f5f5f5; --muted: #aaa; --line: #383838; --orb-bg: #050505; --orb-ink: #fff; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink);
-         font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; }
+         font: 15px/22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
   main { width: min(100%, 1040px); min-height: 100svh; margin: 0 auto; padding: 28px 24px 36px; display: grid; grid-template-rows: auto minmax(430px, 1fr) auto auto; gap: 22px; }
   header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
   h1 { font-size: 19px; letter-spacing: -.02em; margin: 0; }
@@ -29,50 +31,56 @@
   .wordmark svg { width: 28px; height: 28px; color: var(--ink); }
   .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   button, select, input { font: inherit; color: inherit; }
-  button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px;
-           padding: 6px 14px; cursor: pointer; }
+  button { min-height: 44px; border: 1px solid var(--line); background: var(--panel); border-radius: 12px;
+           padding: 10px 16px; cursor: pointer; transition: transform 120ms cubic-bezier(.4,0,.2,1), background 120ms cubic-bezier(.4,0,.2,1); }
   button:disabled { opacity: .5; cursor: default; }
-  select { min-height: 38px; padding: 7px 32px 7px 13px; border: 1px solid var(--line); border-radius: 999px; background-color: var(--panel); color: var(--ink); }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  select { min-height: 44px; padding: 10px 32px 10px 13px; border: 1px solid var(--line); border-radius: 12px; background-color: var(--panel); color: var(--ink); }
   .top-controls { justify-content: flex-end; gap: 9px; }
-  .top-controls button { min-height: 38px; }
-  .pill { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px; white-space: nowrap; }
+  .top-controls button { min-height: 44px; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; white-space: nowrap; }
   .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #bd8c36; }
   .pill.ok { color: var(--ink); border-color: var(--line); }
   .pill.ok::before { background: #4d9a70; }
-  .stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 38px 22px; border: 1px solid var(--line); border-radius: 28px; background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--panel) 72%, transparent), var(--bg) 78%); text-align: center; }
+  .stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 38px 22px; border: 1px solid var(--line); border-radius: 24px; background: var(--bg); text-align: center; }
   .stage-intro { margin-bottom: 13px; }
   .eyebrow { margin: 0 0 10px; color: var(--muted); font-size: 11px; font-weight: 650; letter-spacing: .15em; text-transform: uppercase; }
   .stage h2 { margin: 0; font-size: clamp(25px, 3vw, 34px); line-height: 1.15; letter-spacing: -.045em; font-weight: 570; }
   .stage-subtitle { margin: 10px 0 0; color: var(--muted); }
-  #orb { display: grid; place-items: center; width: 166px; height: 166px; flex: 0 0 auto; border-radius: 50%;
+  #orb { display: grid; place-items: center; width: 64px; height: 64px; flex: 0 0 auto; border-radius: 50%;
          border: 0; background: transparent; color: var(--orb-ink); padding: 0;
          transition: transform .15s; touch-action: none; }
   #orb svg { width: 88%; height: 88%; filter: drop-shadow(0 0 12px color-mix(in srgb, currentColor 10%, transparent)); }
   #orb:active { transform: scale(.96); }
-  #orb[data-state="listening"] svg { animation: orbit 3s linear infinite; }
-  #orb[data-state="thinking"] svg { animation: breathe 1.5s ease-in-out infinite; }
-  #orb[data-state="searching"] svg { animation: orbit 1.5s linear infinite; }
+  #orb[data-state="listening"] { animation: orbs-listen 2.6s ease-in-out infinite; }
+  #orb[data-state="thinking"] { animation: orbs-think 4.5s linear infinite; }
+  #orb[data-state="searching"] { animation: orbs-act 2.2s cubic-bezier(.2,.7,.2,1) infinite; }
   #orb[data-state="speaking"] svg { animation: breathe .7s ease-in-out infinite; }
-  @keyframes orbit { to { transform: rotate(360deg); } }
+  #orb[data-state="idle"] svg { animation: idlePulse 4s ease-in-out infinite; }
+  @keyframes orbs-listen { 0%,100% { transform: scale(.9); } 16% { transform: scale(1.16); } 32% { transform: scale(.94); } 47% { transform: scale(1.08); } 61% { transform: scale(.88); } 78% { transform: scale(1.2); } 90% { transform: scale(.97); } }
+  @keyframes orbs-think { to { transform: rotate(360deg); } }
+  @keyframes orbs-act { 0% { transform: rotate(0) scale(1); } 22% { transform: rotate(120deg) scale(1.12); } 34% { transform: rotate(120deg) scale(1); } 56% { transform: rotate(240deg) scale(1.12); } 68% { transform: rotate(240deg) scale(1); } 90% { transform: rotate(360deg) scale(1.12); } 100% { transform: rotate(360deg) scale(1); } }
   @keyframes breathe { 50% { transform: scale(.9); opacity: .68; } }
-  @media (prefers-reduced-motion: reduce) { #orb svg { animation: none !important; } }
+  @keyframes idlePulse { 50% { transform: scale(.96); opacity: .8; } }
+  @media (prefers-reduced-motion: reduce) { #orb, #orb svg { animation: none !important; transform: none !important; } }
   #label { color: var(--ink); min-height: 1.4em; font-weight: 550; }
   .hint { color: var(--muted); font-size: 13px; text-align: center; }
-  .bubble { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 17px; }
+  .bubble { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 20px; }
   .you { color: var(--muted); padding: 0 4px; }
   #you:empty, #cards:empty { display: none; }
-  #cards { display: grid; gap: 12px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: grid; gap: 4px; }
+  #cards { display: grid; gap: 12px; width: min(100%, 400px); justify-self: center; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 20px; display: grid; gap: 8px; }
   .card .kind { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
   .card .big { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; }
   .card .meta { color: var(--muted); }
   .badge { display: inline-block; background: var(--red); color: #fff; border-radius: 6px; padding: 0 6px; font-weight: 600; }
   .verdict-fits { color: var(--listening); } .verdict-tight { color: var(--searching); } .verdict-clash { color: var(--red); }
   #screenThumb { max-width: 160px; border-radius: 8px; border: 1px solid var(--line); display: none; }
-  #log { font: 12px/1.5 ui-monospace, Menlo, monospace; color: var(--muted); white-space: pre-wrap;
+  #log { width: min(100%, 400px); justify-self: center; font: 12px/1.5 ui-monospace, Menlo, monospace; color: var(--muted); white-space: pre-wrap;
          max-height: 180px; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
   #log[hidden] { display: none; }
-  form { display: flex; gap: 9px; padding: 9px; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); }
+  form { display: flex; gap: 9px; padding: 9px; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); transition: box-shadow 200ms cubic-bezier(.4,0,.2,1); }
+  form:focus-within { box-shadow: 0 0 0 2px var(--ink); }
   form input { flex: 1; min-width: 0; min-height: 48px; border: 0; outline: 0; background: transparent; border-radius: 14px; padding: 8px 14px; }
   form input::placeholder { color: var(--muted); opacity: .8; }
   form button { min-width: 86px; border: 0; background: var(--ink); color: var(--bg); font-weight: 600; }
@@ -83,7 +91,7 @@
     .top-controls { justify-content: flex-start; width: 100%; }
     .top-controls button, .top-controls select { font-size: 12px; }
     .stage { border-radius: 22px; padding: 28px 14px; }
-    #orb { width: 146px; height: 146px; }
+    #orb { width: 64px; height: 64px; }
     form { padding: 6px; }
     form input { min-height: 44px; padding-inline: 9px; }
     form button { min-width: 72px; }
