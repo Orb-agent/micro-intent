@@ -70,12 +70,10 @@ struct SettingsSheet: View {
                         }
                     }
                 }
-                .disabled(replays)
-                .opacity(replays ? 0.55 : 1)
+                // A new server address hands the choice back to the default (live).
+                .onChange(of: serverURL) { useFixtures = nil }
 
                 ToggleRow(title: "Hands-free", detail: "Just talk, no holding. Talk over the answer to stop it", isOn: $handsFree)
-                    .disabled(replays)
-                    .opacity(replays ? 0.55 : 1)
 
                 ToggleRow(title: "Large text", detail: "Bigger answers, cards and buttons", isOn: $largeText)
 
