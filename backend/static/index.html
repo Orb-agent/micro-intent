@@ -253,7 +253,10 @@ $("share").addEventListener("click", async () => {
 });
 $("sendScreen").addEventListener("click", () => grabScreen("button"));
 
-const RING = 9; // earlier frames kept while sharing, about 1 s apart (screen-clip.md)
+// Earlier frames kept while sharing, about 1 s apart (screen-clip.md). Warm read_screen on the clip
+// fixtures (2026-10-10), median of 3: 0 earlier 3.3 s, 3 earlier 3.7 s, 6 earlier 5.5 s, 9 earlier 4.5 s.
+// Even one frame is over the 3 s budget today, so keep the most that adds under ~1 s.
+const RING = 3;
 let lastGrab = 0, ring = [], ringTimer = 0;
 function snap() { // the shared screen now, at most 1280 wide, as base64 JPEG 0.8
   const scale = Math.min(1, 1280 / screenVideo.videoWidth);
