@@ -254,7 +254,7 @@ class Session:
             await self.send({"type": "a2ui", "messages": messages})
         await self.state("speaking")
         try:  # aclosing: an interrupt closes the TTS socket now, not when GC finds it
-            async with contextlib.aclosing(voice.speak(reply["say"])) as chunks:
+            async with contextlib.aclosing(voice.speak(reply["say"], reply.get("voice_id"))) as chunks:
                 async for chunk in chunks:
                     timings.setdefault("first_audio", time.monotonic() - t0)
                     await self.send({"type": "audio", "data": chunk})

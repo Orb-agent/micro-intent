@@ -171,3 +171,78 @@ async def test_no_train_prefetch_without_a_plan_on_screen(agent, fake, sbb_reque
     assert sbb_requests == [] and seen == []
     (user,) = models.calls[0]["contents"]
     assert [p.text.split(">")[0] for p in user.parts] == ["<screen_context", "Hello"]
+
+
+PIRATE = {"description": "A gruff Bristolian pirate, 45 to 60, low gravelly voice, for narration.", "language": "en"}
+
+
+async def test_designed_voice_speaks_every_later_reply(agent, fake, monkeypatch):
+    designed = []
+
+    async def design_voice(description, language):
+        designed.append((description, language))
+        return "pirate-voice"
+
+    monkeypatch.setattr(dev_agent.voice, "design_voice", design_voice)
+    models = fake(
+        calls(("design_voice", PIRATE)),
+        calls(("respond", {"say": "Arr, how do I sound?", "cards": []})),
+        calls(("respond", {"say": "Hello again.", "cards": []})),
+    )
+    seen, on_status = statuses()
+
+    assert await agent.turn("Talk like a pirate", None, on_status) == {
+        "say": "Arr, how do I sound?", "cards": [], "voice_id": "pirate-voice",
+    }  # fmt: skip
+    assert designed == [(PIRATE["description"], "en")] and seen == ["Designing a voice…"]
+    (response,) = function_responses(models.calls[1]["contents"][-1])
+    assert (response.name, response.response) == ("design_voice", {"ok": True})
+    assert (await agent.turn("Hi", None, on_status))["voice_id"] == "pirate-voice"
+
+
+async def test_failed_voice_design_keeps_the_default_voice(agent, fake, monkeypatch):
+    async def design_voice(description, language):
+        raise RuntimeError("Gradium 409: Custom voice limit reached")
+
+    monkeypatch.setattr(dev_agent.voice, "design_voice", design_voice)
+    models = fake(calls(("design_voice", PIRATE)), calls(("respond", {"say": "I can't change my voice.", "cards": []})))
+    seen, on_status = statuses()
+
+    assert await agent.turn("Talk like a pirate", None, on_status) == {"say": "I can't change my voice.", "cards": []}
+    (response,) = function_responses(models.calls[1]["contents"][-1])
+    assert response.response == {"error": "voice design failed: RuntimeError"}
+
+
+async def test_mood_switches_the_voice_once_per_change(agent, fake, monkeypatch):
+    looked_up = []
+
+    async def mood_voice(mood):
+        looked_up.append(mood)
+        return {"stressed": "calm-voice"}.get(mood)
+
+    monkeypatch.setattr(dev_agent.voice, "mood_voice", mood_voice)
+    fake(
+        calls(("respond", {"say": "Take the 18:01. How are you feeling?", "cards": []})),
+        calls(("respond", {"say": "Breathe, you'll make it.", "cards": [], "mood": "stressed"})),
+        calls(("respond", {"say": "Still on time.", "cards": [], "mood": "stressed"})),
+        calls(("respond", {"say": "Glad you're fine.", "cards": [], "mood": "neutral"})),
+    )
+    seen, on_status = statuses()
+
+    assert "voice_id" not in await agent.turn("Can I make it?", None, on_status)
+    assert (await agent.turn("Pretty stressed", None, on_status))["voice_id"] == "calm-voice"
+    assert seen == ["Tuning my voice…"]
+    assert (await agent.turn("Still on time?", None, on_status))["voice_id"] == "calm-voice"
+    assert "voice_id" not in await agent.turn("I'm fine now", None, on_status)  # neutral: the default voice
+    assert looked_up == ["stressed", "neutral"]
+
+
+async def test_invalid_mood_is_retried_like_any_bad_respond(agent, fake):
+    models = fake(
+        calls(("respond", {"say": "Hi.", "cards": [], "mood": "furious"})),
+        calls(("respond", {"say": "Hi.", "cards": []})),
+    )
+    seen, on_status = statuses()
+    assert await agent.turn("Hello", None, on_status) == {"say": "Hi.", "cards": []}
+    (error,) = function_responses(models.calls[1]["contents"][-1])
+    assert "respond.mood must be one of" in error.response["error"]
