@@ -333,7 +333,7 @@ struct ScreenChip: View {
                 .frame(width: 36, height: 36)
                 .background(Circle().fill(failed ? Theme.warnSoft : Theme.accentSoft))
             VStack(alignment: .leading, spacing: 4) {
-                Text(failed ? "Couldn't read that screen" : "I see")
+                Text(failed ? "Couldn't read your screen" : "I see")
                     .eyebrow(type, color: failed ? Theme.warnText : Theme.accentText)
                 if let summary {
                     Text(summary)
