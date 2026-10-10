@@ -1,7 +1,11 @@
 """
 Authentication client for Google Workspace APIs using GIS Bearer Tokens.
 """
+import os
+import time
 from typing import Optional
+
+import httpx
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from google.oauth2.credentials import Credentials
@@ -64,5 +68,43 @@ async def get_current_token(
             detail="Invalid authorization format. Expected 'Bearer <token>'",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
+    await verify_google_token(parts[1])
     return parts[1]
+
+
+TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
+# ponytail: grows by one entry per distinct live token; prune expired entries if the server runs for weeks
+_verified: dict[str, float] = {}  # token -> expiry, epoch seconds
+
+
+async def verify_google_token(token: str) -> None:
+    """Accepts only live Google access tokens issued to this app's OAuth client (GOOGLE_CLIENT_ID).
+
+    Without this, any string after Bearer would unlock the endpoints that spend the
+    server's Gemini, Maps and SerpApi keys.
+    """
+    if _verified.get(token, 0) > time.time():
+        return
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    if not client_id:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="GOOGLE_CLIENT_ID is not set, so Google access tokens cannot be verified.",
+        )
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.post(TOKENINFO_URL, data={"access_token": token})
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not reach Google to verify the access token. Retry.",
+        )
+    info = resp.json() if resp.is_success else {}
+    if client_id not in (info.get("aud"), info.get("azp")):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google access token is invalid, expired, or was not issued to this app. Reconnect in /docs.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    _verified[token] = float(info.get("exp", 0))

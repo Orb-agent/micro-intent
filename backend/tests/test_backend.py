@@ -1,6 +1,7 @@
 """
 Automated unit & integration tests for the Lumi Backend.
 """
+import httpx
 import pytest
 from httplib2 import Response
 from googleapiclient.errors import HttpError
@@ -9,10 +10,41 @@ from fastapi.testclient import TestClient
 
 from main import app
 from services.auth_client import get_credentials
-from services import maps_service, flights_service
+from services import auth_client, maps_service, flights_service
 from agent_engine import build_workspace_tool, dispatch_tool_call
 
 client = TestClient(app)
+REAL_VERIFY = auth_client.verify_google_token
+
+
+@pytest.fixture(autouse=True)
+def accept_any_google_token(monkeypatch):
+    """Endpoint tests use fake tokens; test_google_token_verification covers the real check."""
+    async def accept(token):
+        pass
+    monkeypatch.setattr(auth_client, "verify_google_token", accept)
+
+
+@pytest.mark.parametrize("tokeninfo_status,info,client_id,expected", [
+    (200, {"aud": "our-client", "exp": "9999999999"}, "our-client", 200),
+    (200, {"aud": "other-client", "exp": "9999999999"}, "our-client", 401),
+    (400, {"error": "invalid_token"}, "our-client", 401),
+    (200, {"aud": "our-client"}, None, 503),
+])
+@patch("main.maps_service.search_places", return_value=[])
+def test_google_token_verification(mock_search, monkeypatch, tokeninfo_status, info, client_id, expected):
+    monkeypatch.setattr(auth_client, "verify_google_token", REAL_VERIFY)
+    monkeypatch.setattr(auth_client, "_verified", {})
+    if client_id:
+        monkeypatch.setenv("GOOGLE_CLIENT_ID", client_id)
+    else:
+        monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
+    transport = httpx.MockTransport(lambda request: httpx.Response(tokeninfo_status, json=info))
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(auth_client.httpx, "AsyncClient", lambda **kw: real_client(transport=transport, **kw))
+    response = client.get("/api/maps/search?query=Bern", headers={"Authorization": "Bearer some-token"})
+    assert response.status_code == expected
+    assert mock_search.called == (expected == 200)
 
 
 def test_docs_google_connection(monkeypatch):
@@ -186,12 +218,8 @@ def test_workspace_tools_definition():
     function_names = [f.name for f in tool.function_declarations]
     expected_tools = [
         "calendar_list_events",
-        "calendar_create_event",
         "gmail_list_messages",
-        "gmail_send_email",
         "tasks_list_tasks",
-        "tasks_create_task",
-        "docs_create_document",
         "drive_search_files",
         "maps_search_places",
         "maps_get_directions",
@@ -200,6 +228,14 @@ def test_workspace_tools_definition():
     ]
     for expected in expected_tools:
         assert expected in function_names, f"Missing tool: {expected}"
+
+
+@pytest.mark.parametrize("tool", ["gmail_send_email", "calendar_create_event", "tasks_create_task", "docs_create_document"])
+def test_agent_is_read_only(tool):
+    """The agent reads untrusted email, so it must have no tool that writes."""
+    assert tool not in [f.name for f in build_workspace_tool().function_declarations]
+    with pytest.raises(ValueError, match="Unknown tool"):
+        dispatch_tool_call(tool, {"to": "evil@example.com", "subject": "x", "body": "x"}, "token")
 
 
 # ==================== Google Maps Service & Endpoints Tests ====================
@@ -295,7 +331,8 @@ def test_flights_service_build_url():
     assert "through" in url_round
 
 
-def test_flights_service_search():
+def test_flights_service_search_without_live_data_invents_nothing(monkeypatch):
+    monkeypatch.delenv("SERPAPI_API_KEY", raising=False)
     result = flights_service.search_flights(
         origin="ZRH",
         destination="LIS",
@@ -305,13 +342,8 @@ def test_flights_service_search():
     )
     assert result["origin"] == "ZRH"
     assert result["destination"] == "LIS"
-    assert "google_flights_url" in result
-    assert len(result["flights"]) > 0
-    flight = result["flights"][0]
-    assert flight["from"] == "ZRH"
-    assert flight["to"] == "LIS"
-    assert "flight_number" in flight
-    assert "google_flights_url" in flight
+    assert "https://www.google.com/travel/flights?q=" in result["google_flights_url"]
+    assert result["flights"] == []
 
 
 @patch("services.flights_service.gmail_service.list_messages")
@@ -334,6 +366,22 @@ def test_flights_service_get_reservations_from_gmail(mock_list):
     assert res["from"] == "ZRH"
     assert res["to"] == "LIS"
     assert "https://www.google.com/travel/flights?q=" in res["google_flights_url"]
+
+
+@patch("services.flights_service.gmail_service.list_messages")
+def test_flights_service_reservations_never_invent_details(mock_list):
+    mock_list.return_value = [
+        {"id": "hotel", "subject": "Your booking at Hotel Bern", "snippet": "See you soon", "from": "Hotel", "date": "2026-10-09"},
+        {"id": "flight", "subject": "Your SWISS flight", "snippet": "Flight LX 1820 is confirmed", "from": "SWISS", "date": "2026-10-09"},
+    ]
+    reservations = flights_service.get_user_flight_reservations("test_access_token")
+    assert len(reservations) == 1
+    res = reservations[0]
+    assert res["flight_number"] == "LX 1820"
+    assert res["airline"] == "SWISS"
+    assert res["booking_ref"] is None
+    assert res["from"] is None and res["to"] is None
+    assert res["departure"] is None
 
 
 @patch("main.flights_service.search_flights")
