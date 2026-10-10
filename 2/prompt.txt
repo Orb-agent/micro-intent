@@ -1,0 +1,5 @@
+Okay, how i can run app locally, give agent access to mic and screencast to validate idea on my mac? work in new branch
+
+---
+
+maybe in new workspace as well

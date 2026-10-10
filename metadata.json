@@ -3,7 +3,7 @@
   "checkpoint_id": "01M4JYAWKSWQ28HHCJ4GNTDDHT",
   "strategy": "manual-commit",
   "branch": "feature/wp2-backend-voice-vision",
-  "checkpoints_count": 3,
+  "checkpoints_count": 4,
   "files_touched": [
     "backend/fake_app.py"
   ],
@@ -21,6 +21,10 @@
       "compact_transcript": "/1/transcript.jsonl",
       "content_hash": "/1/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/2/metadata.json",
+      "prompt": "/2/prompt.txt"
     }
   ],
   "token_usage": {
