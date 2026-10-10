@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4KAZPZ1WMY6YRHTBG0G21SD",
+  "strategy": "manual-commit",
+  "branch": "fix/wp3-agent-no-small-talk",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "backend/agent.py",
+    "backend/tests/test_agent.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 8,
+    "cache_creation_tokens": 2640,
+    "cache_read_tokens": 919730,
+    "output_tokens": 2450,
+    "api_call_count": 4
+  }
+}
