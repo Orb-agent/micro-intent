@@ -40,13 +40,30 @@ final class AgentSession {
     /// Tool steps of the current turn, e.g. "Checking trains…", shown as a one-line trail.
     private(set) var steps: [String] = []
     private(set) var surfaces: [SurfaceViewModel] = []
+    private(set) var conflictSurfaces: [SurfaceViewModel] = []
+    private(set) var conflictIndices: Set<Int> = []
+    private var dismissedConflictKeys: Set<String> = []
+
+    var inlineCards: [CardPayload] { reply?.cards.filter { !$0.needsAttention } ?? [] }
+    var conflictCards: [CardPayload] {
+        reply?.cards.enumerated().filter { conflictIndices.contains($0.offset) }.map { $0.element } ?? []
+    }
+
+    func dismissConflict() {
+        dismissedConflictKeys.formUnion(conflictCards.map(\.conflictKey))
+        conflictIndices = []
+        conflictSurfaces = []
+    }
     private(set) var screen: ScreenNotice?
     private(set) var errorMessage: String?
     private(set) var connection: Connection = .fixtures
 
     /// Card text follows the app's type scale ("Large text" in settings).
     var typeScale: TypeScale = .regular {
-        didSet { surfaces.forEach { $0.applyAppStyle(typeScale) } }
+        didSet {
+            surfaces.forEach { $0.applyAppStyle(typeScale) }
+            conflictSurfaces.forEach { $0.applyConflictStyle(typeScale) }
+        }
     }
 
     /// A touch on the orb shorter than this is a tap (interrupt), longer is push-to-talk.
@@ -243,10 +260,18 @@ final class AgentSession {
             voice.beginSpeech()
             self.reply = reply
             surfaces = []
+            conflictSurfaces = []
+            conflictIndices = Set(reply.cards.enumerated().filter {
+                $0.element.needsAttention && !dismissedConflictKeys.contains($0.element.conflictKey)
+            }.map { $0.offset })
             errorMessage = nil
         case .a2ui(let messages):
-            surfaces = Self.surfaces(from: messages)
+            guard let reply else { break }
+            let inlineIndices = Set(reply.cards.enumerated().filter { !$0.element.needsAttention }.map { $0.offset })
+            surfaces = Self.surfaces(from: ConflictPresentation.messages(messages, including: inlineIndices))
             surfaces.forEach { $0.applyAppStyle(typeScale) }
+            conflictSurfaces = Self.surfaces(from: ConflictPresentation.messages(messages, including: conflictIndices))
+            conflictSurfaces.forEach { $0.applyConflictStyle(typeScale) }
         case .screenOK(let summary):
             showScreen(ScreenNotice(summary: summary))
         case .error(let message):
