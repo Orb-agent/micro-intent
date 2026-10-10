@@ -1,0 +1,12 @@
+{
+  "places": [
+    {
+      "formattedAddress": "Bundesplatz 3, 3005 Bern, Switzerland",
+      "displayName": {"text": "Federal Palace of Switzerland", "languageCode": "en"}
+    },
+    {
+      "formattedAddress": "Bundesplatz, 3011 Bern, Switzerland",
+      "displayName": {"text": "Bundesplatz", "languageCode": "de"}
+    }
+  ]
+}

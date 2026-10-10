@@ -1,16 +1,87 @@
 [
-  {"version": "v0.9", "createSurface": {"surfaceId": "reply-2", "catalogId": "https://a2ui.org/specification/v0_9/basic_catalog.json"}},
-  {"version": "v0.9", "updateComponents": {"surfaceId": "reply-2", "components": [
-    {"id": "root", "component": "Column", "children": ["c0", "c1"]},
-    {"id": "c0", "component": "Card", "child": "c0-body"},
-    {"id": "c0-body", "component": "Column", "children": ["c0-title", "c0-when", "c0-meta"]},
-    {"id": "c0-title", "component": "Text", "text": "Hackathon", "variant": "h2"},
-    {"id": "c0-when", "component": "Text", "text": "Sat 17 Oct 09:00 → Sun 18 Oct 18:00"},
-    {"id": "c0-meta", "component": "Text", "text": "Zürich · from Luma", "variant": "caption"},
-    {"id": "c1", "component": "Card", "child": "c1-body"},
-    {"id": "c1-body", "component": "Column", "children": ["c1-time", "c1-line", "c1-meta"]},
-    {"id": "c1-time", "component": "Text", "text": "07:10 → 10:15", "variant": "h2"},
-    {"id": "c1-line", "component": "Text", "text": "LX 1820 · ZRH → LIS"},
-    {"id": "c1-meta", "component": "Text", "text": "Tue 20 Oct · Booking K7Q2ZP", "variant": "caption"}
-  ]}}
+  {
+    "version": "v0.9",
+    "createSurface": {
+      "surfaceId": "cards",
+      "catalogId": "https://a2ui.org/specification/v0_9/basic_catalog.json"
+    }
+  },
+  {
+    "version": "v0.9",
+    "updateComponents": {
+      "surfaceId": "cards",
+      "components": [
+        {
+          "id": "root",
+          "component": "Column",
+          "children": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "id": "c0",
+          "component": "Card",
+          "child": "c0-body"
+        },
+        {
+          "id": "c0-body",
+          "component": "Column",
+          "children": [
+            "c0-title",
+            "c0-time",
+            "c0-meta"
+          ]
+        },
+        {
+          "id": "c0-title",
+          "component": "Text",
+          "text": "Hackathon",
+          "variant": "h2"
+        },
+        {
+          "id": "c0-time",
+          "component": "Text",
+          "text": "Sat 17 Oct 09:00 \u2192 Sun 18 Oct 18:00"
+        },
+        {
+          "id": "c0-meta",
+          "component": "Text",
+          "text": "Z\u00fcrich \u00b7 Luma",
+          "variant": "caption"
+        },
+        {
+          "id": "c1",
+          "component": "Card",
+          "child": "c1-body"
+        },
+        {
+          "id": "c1-body",
+          "component": "Column",
+          "children": [
+            "c1-time",
+            "c1-line",
+            "c1-meta"
+          ]
+        },
+        {
+          "id": "c1-time",
+          "component": "Text",
+          "text": "07:10 \u2192 10:15",
+          "variant": "h2"
+        },
+        {
+          "id": "c1-line",
+          "component": "Text",
+          "text": "LX 1820 \u00b7 ZRH \u2192 LIS"
+        },
+        {
+          "id": "c1-meta",
+          "component": "Text",
+          "text": "Tue 20 Oct \u00b7 Booking K7Q2ZP",
+          "variant": "caption"
+        }
+      ]
+    }
+  }
 ]
