@@ -30,6 +30,7 @@ def client(monkeypatch):
     monkeypatch.setattr(server.voice, "Transcriber", FakeTranscriber)
     monkeypatch.setattr(server, "read_screen", fake_read_screen)
     monkeypatch.setattr(server, "latest", None)
+    monkeypatch.setenv("PROACTIVE_SCREEN", "0")  # tests/test_proactive.py covers it
     with TestClient(server.app) as client:  # one event loop, so vision tasks outlive the POST
         yield client
 
