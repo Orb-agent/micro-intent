@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -438,3 +439,26 @@ async def test_turn_drops_the_feelings_question(ag, fake_interactions):
     fake_interactions(respond("Yes, take the 18:01. How are you feeling today?"))
     seen, on_status = statuses()
     assert (await ag.turn("Can I make it?", None, on_status))["say"] == "Yes, take the 18:01."
+
+
+def test_train_cards_become_the_connection_say_names():
+    conns = agent.compact(json.loads(SBB))["connections"]
+    real = {"kind": "train", **{k: conns[0][k] for k in agent.TRAIN_FIELDS if conns[0].get(k) is not None}}
+    # Live bug, 2026-10-10: a 09:00 card under a say about the evening train.
+    wrong = {**DEMO["cards"][1], "departure": "2026-10-15T09:00:00+02:00", "arrival": "2026-10-15T09:30:00+02:00"}
+    dep = datetime.fromisoformat(conns[0]["departure"])
+    for say in (f"Yes, take the {dep:%H:%M}.", f"Yes, take the {dep.hour % 12}:{dep:%M}.",
+                "Yes, take the six oh-one, right after your call."):
+        assert agent.match_trains([DEMO["cards"][0], wrong], say, conns) == [DEMO["cards"][0], real], say
+    assert agent.match_trains([wrong], "Yes, take the train.", conns) == []  # nothing to match: dropped
+    assert agent.match_trains([wrong], "Yes.", []) == [wrong]  # no lookup this session: unchecked
+
+
+@pytest.mark.asyncio
+async def test_turn_fixes_a_train_card_that_disagrees_with_say(ag, fake_interactions, sbb_requests):
+    wrong = {**DEMO["cards"][1], "departure": "2026-10-15T09:00:00+02:00", "arrival": "2026-10-15T09:30:00+02:00"}
+    answer = {"say": "Yes, take the 18:01, you're in Bern at 18:58.", "cards": [wrong]}
+    fake_interactions(FakeInteraction("i-0", [FakeStep("function_call", "respond", answer)]))
+    seen, on_status = statuses()
+    [train] = (await ag.turn("Can I make it?", SCREEN, on_status))["cards"]
+    assert (train["departure"], train["arrival"]) == ("2026-10-15T18:01:00+02:00", "2026-10-15T18:58:00+02:00")
