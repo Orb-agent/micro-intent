@@ -54,9 +54,9 @@ async def speak(text: str) -> AsyncIterator[str]:
     ) as tts:
         await tts.send_text(text)
         await tts.send_eos()
-        async for msg in tts:
+        async for msg in _messages(tts):  # raw frames: base64 audio passes through as is
             if msg["type"] == "audio":
-                yield base64.b64encode(msg["audio"]).decode()
+                yield msg["audio"]
             elif msg["type"] == "end_of_stream":
                 break
 
@@ -102,14 +102,14 @@ class Transcriber:
         return " ".join(p.strip() for p in parts if p.strip())
 
 
-async def _messages(stt) -> AsyncIterator[dict]:
-    """STT messages. Use instead of `async for msg in stt`: in gradium 0.6.4 that spins
-    forever, freezing the event loop, when the connection drops without a close frame."""
-    async for frame in stt._ws:  # aiohttp stops iterating on any close
+async def _messages(stream) -> AsyncIterator[dict]:
+    """STT or TTS messages. Use instead of `async for msg in stream`: in gradium 0.6.4 that
+    spins forever, freezing the event loop, when the connection drops without a close frame."""
+    async for frame in stream._ws:  # aiohttp stops iterating on any close
         if frame.type == aiohttp.WSMsgType.TEXT:
             msg = json.loads(frame.data)
             if msg["type"] == "error":
-                raise RuntimeError(f"Gradium STT error: {msg}")
+                raise RuntimeError(f"Gradium error: {msg}")
             yield msg
 
 
