@@ -186,12 +186,8 @@ def test_workspace_tools_definition():
     function_names = [f.name for f in tool.function_declarations]
     expected_tools = [
         "calendar_list_events",
-        "calendar_create_event",
         "gmail_list_messages",
-        "gmail_send_email",
         "tasks_list_tasks",
-        "tasks_create_task",
-        "docs_create_document",
         "drive_search_files",
         "maps_search_places",
         "maps_get_directions",
@@ -200,6 +196,14 @@ def test_workspace_tools_definition():
     ]
     for expected in expected_tools:
         assert expected in function_names, f"Missing tool: {expected}"
+
+
+@pytest.mark.parametrize("tool", ["gmail_send_email", "calendar_create_event", "tasks_create_task", "docs_create_document"])
+def test_agent_is_read_only(tool):
+    """The agent reads untrusted email, so it must have no tool that writes."""
+    assert tool not in [f.name for f in build_workspace_tool().function_declarations]
+    with pytest.raises(ValueError, match="Unknown tool"):
+        dispatch_tool_call(tool, {"to": "evil@example.com", "subject": "x", "body": "x"}, "token")
 
 
 # ==================== Google Maps Service & Endpoints Tests ====================

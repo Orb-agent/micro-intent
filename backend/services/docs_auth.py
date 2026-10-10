@@ -29,8 +29,7 @@ def google_docs_html() -> HTMLResponse:
         (<code id="google-origin"></code>) to Authorized JavaScript origins.
         Enable the Gmail API and, for calendar access, the Google Calendar API.
         If the consent screen is in Testing, add your Google account as a test user.</p>
-        <p>These buttons request read access only. Sending email or changing calendar events
-        requires a token with additional permissions via Authorize.</p>
+        <p>These buttons request read access only, which is all this API uses.</p>
       </details>
     </section>
     """
