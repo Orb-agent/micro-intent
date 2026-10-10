@@ -51,6 +51,12 @@ log = logging.getLogger("agent")
 TZ = ZoneInfo("Europe/Zurich")
 DEFAULT_MODEL = "gemini-3.8-flash"
 MAX_STEPS = 3
+# A step takes 2.6-3.9 s on 3.8 Flash with store=False, and now and then 9 s or more (2026-10-10).
+# One still running after HEDGE_AFTER gets a second, identical request; the first answer wins.
+HEDGE_AFTER = 4.5  # s
+# Events ending earlier than this before the plan don't hold the user up (a morning exam doesn't
+# block a 19:00 dinner), and the trains are searched from this long before the plan's start.
+BLOCKING = timedelta(hours=2)
 HOME_STATION = "Zürich HB"
 WALK = timedelta(minutes=10)
 SORRY = "Sorry, I got my paws tangled there. Could you ask again?"
@@ -70,9 +76,10 @@ Times are ISO 8601 with the offset, e.g. 2026-10-15T18:01:00+02:00.
 The user lives and works in Zürich, a 10-minute walk from Zürich HB, where their trains leave from.
 
 Can the user make a plan (a meal, meeting or trip)?
-1. Find calendar events that overlap it or end shortly before it.
+1. Find calendar events that overlap it or end shortly before it (within two hours). Others, \
+such as a morning event before an evening plan, are not in the way: don't mention them.
 2. For a plan in another town, call `sbb_connections` from Zürich HB with `depart_after` = the end \
-of that event (or now, if none) + the 10-minute walk.
+of that event + the 10-minute walk, or two hours before the plan if nothing is in the way.
 3. Answer with a `conflict` card (that event, the plan as `proposal`, the verdict) and a `train` \
 card for the best connection that arrives in time. Verdict: `fits` when a train gets them there by \
 the start, even if they must leave right after the event; `tight` when they would arrive a few \
@@ -91,6 +98,9 @@ date, to its `google_flights_url`.
 When the turn includes <trains>, that lookup already ran for the plan on screen, with the \
 blocking event and the walk taken into account: answer from it and don't call `sbb_connections` \
 again for the same trip.
+
+When a question is unclear and nothing on the screen or in the context explains it, ask what \
+they mean right away, without calling any tool.
 
 Speech recognition mishears names: synthetic voices turn "dinner in Bern" into "dinner and burn". \
 Read odd words as the place, person or event that sounds alike in the screen context or calendar.
@@ -243,10 +253,11 @@ MAPS_TOOLS = {
 }
 
 
-def tool_declarations() -> list[dict]:
-    """contracts § Tools: Maps only with GOOGLE_MAPS_API_KEY, Workspace only with its OAuth variables."""
+def tool_declarations(scopes: set[str] | None = None) -> list[dict]:
+    """contracts § Tools: Maps only with GOOGLE_MAPS_API_KEY, Workspace only with its OAuth variables,
+    and only the Workspace tools whose scope the token grants, when `scopes` is known."""
     maps = MAPS_DECLARATIONS if os.environ.get("GOOGLE_MAPS_API_KEY") else []
-    return [*maps, *google.google_declarations(), *TOOL_DECLARATIONS]
+    return [*maps, *google.google_declarations(scopes), *TOOL_DECLARATIONS]
 
 
 def _parses(value: Any, pattern: str, strptime_fmt: str) -> bool:
@@ -306,12 +317,54 @@ def client() -> genai.Client:
     return _client
 
 
+def thinking_level(model: str) -> str:
+    return "low" if model.startswith("gemini-3.8") else "minimal"  # 3.8 rejects minimal
+
+
+async def _create(**kwargs: Any) -> Any:
+    """One interactions.create, hedged: still running after HEDGE_AFTER, a second identical request
+    races it and the first to succeed wins. With store=False a request has no side effects, so the
+    loser is simply cancelled. Raises the last error if both fail."""
+    create = client().aio.interactions.create
+    tasks = {asyncio.ensure_future(create(**kwargs))}
+    try:
+        done, _ = await asyncio.wait(tasks, timeout=HEDGE_AFTER)
+        if not done:
+            log.info("step slower than %.1f s, hedging", HEDGE_AFTER)
+            tasks.add(asyncio.ensure_future(create(**kwargs)))
+        error: BaseException | None = None
+        while tasks:
+            done, tasks = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+            for t in done:
+                if t.exception() is None:
+                    return t.result()
+                error = t.exception()
+        raise error  # type: ignore[misc]
+    finally:
+        for t in tasks:
+            t.cancel()
+
+
 def _step_dict(step: Any) -> dict[str, Any]:
     if hasattr(step, "model_dump"):
         return step.model_dump(mode="json", exclude_none=True)
     if isinstance(step, dict):
         return step
     return dict(step)
+
+
+def _arguments(call: dict[str, Any]) -> dict[str, Any]:
+    args = call.get("arguments") or {}
+    if isinstance(args, str):
+        try:
+            args = json.loads(args)
+        except ValueError:
+            return {}
+    return args if isinstance(args, dict) else {}
+
+
+def _user_input(text: str) -> dict[str, Any]:
+    return {"type": "user_input", "content": [{"type": "text", "text": text}]}
 
 
 def _respond_results(calls: list[dict[str, Any]], respond_call: dict[str, Any], out: dict) -> list[dict[str, Any]]:
@@ -333,21 +386,24 @@ class Agent:
     def __init__(self) -> None:
         self.prompt = ""
         self.events: list[dict[str, Any]] = []
-        self.last_interaction_id: str | None = None
-        self.pending_results: list[dict[str, Any]] = []
+        # The conversation so far as Interactions steps, kept here rather than server side: store=True
+        # added 1.5-6 s to every step (2026-10-10). Model steps go back unmodified, with their thought
+        # signatures (contracts § Tools).
+        self.history: list[dict[str, Any]] = []
+        self.declarations: list[dict] = []
         self.voice_id: str | None = None  # from design_voice or the mood; every later reply is spoken in it
         self.mood: str | None = None
 
     async def start(self) -> None:
         """Once per WebSocket session: load_context() and build the system prompt."""
-        context_data = await load_context()
+        context_data, scopes = await asyncio.gather(load_context(), google.granted_scopes())
         self.events = context_data.get("events", [])
         context_json = json.dumps(context_data, ensure_ascii=False)
         self.prompt = (
             f"{PROMPT}\n\n<context>\nCalendar from now to 7 days ahead, and flight emails:\n{context_json}\n</context>"
         )
-        self.last_interaction_id = None
-        self.pending_results = []
+        self.declarations = tool_declarations(scopes)
+        self.history = []
 
     async def turn(
         self,
@@ -377,147 +433,92 @@ class Agent:
     ) -> Reply:
         now = datetime.now(TZ)
         model = os.environ.get("GEMINI_MODEL") or DEFAULT_MODEL
-        gen_client = client()
+        turn_t0 = time.monotonic()
 
-        # Build user turn prompt
         user_parts: list[str] = []
         if screen:
-            screen_json = json.dumps(screen, ensure_ascii=False)
-            user_parts.append(f"<screen_context>\n{screen_json}\n</screen_context>")
+            user_parts.append(f"<screen_context>\n{json.dumps(screen, ensure_ascii=False)}\n</screen_context>")
             if trains := await self._prefetch_trains(screen, now, on_status):
                 user_parts.append(f"<trains>\n{json.dumps(trains, ensure_ascii=False)}\n</trains>")
         user_parts.append(text)
-        user_input_str = "\n\n".join(user_parts)
+        steps = [*self.history, _user_input("\n\n".join(user_parts))]
 
-        common_config: dict[str, Any] = {
+        config: dict[str, Any] = {
             "model": model,
             "system_instruction": f"{self.prompt}\n\nNow: {now:%A %Y-%m-%d %H:%M} (Europe/Zurich).",
-            "tools": tool_declarations(),
-            "store": True,
+            "tools": self.declarations or tool_declarations(),
+            "store": False,
         }
-
+        only_respond = {"allowed_tools": {"mode": "any", "tools": ["respond"]}}
         retried = False
-        interaction = None
-        turn_t0 = time.monotonic()
 
         for step in range(MAX_STEPS):
             last = step == MAX_STEPS - 1
             step_t0 = time.monotonic()
-
-            tool_choice: Any = {"allowed_tools": {"mode": "any", "tools": ["respond"]}} if last else "any"
-            gen_cfg = {
-                "thinking_level": "low",
-                "tool_choice": tool_choice,
-            }
-
-            if step == 0:
-                turn_input: Any = user_input_str
-                if self.pending_results:
-                    user_step = {"type": "user_input", "content": [{"type": "text", "text": user_input_str}]}
-                    turn_input = [*self.pending_results, user_step]
-                interaction = await gen_client.aio.interactions.create(
-                    input=turn_input,
-                    previous_interaction_id=self.last_interaction_id,
-                    generation_config=gen_cfg,
-                    **common_config,
-                )
-            # Subsequent steps were created at the bottom of the loop
-
-            steps = [_step_dict(s) for s in (interaction.steps or [])]
-            calls = [s for s in steps if s.get("type") == "function_call"]
-            log.info(
-                "step %d took %.2f s: %s (status=%s)",
-                step,
-                time.monotonic() - step_t0,
-                [c.get("name") for c in calls],
-                getattr(interaction, "status", None),
+            interaction = await _create(
+                input=list(steps),  # a copy: steps grows after the call
+                generation_config={"thinking_level": thinking_level(model), "tool_choice": only_respond if last or retried else "any"},
+                **config,
             )
-
+            out_steps = [_step_dict(s) for s in (interaction.steps or [])]
+            calls = [s for s in out_steps if s.get("type") == "function_call"]
+            log.info("step %d took %.2f s: %s", step, time.monotonic() - step_t0, [c.get("name") for c in calls])
             if not calls:
                 raise ValueError("model answered without a function call")
+            steps += out_steps
 
             respond_call = next((c for c in calls if c.get("name") == "respond"), None)
-
             if respond_call is None:
-                # Execute tools (sbb_connections, Maps)
-                results: list[dict[str, Any]] = []
-                for call in calls:
-                    call_name = call.get("name")
-                    call_id = call.get("id") or ""
-                    call_args = call.get("arguments") or {}
-                    if isinstance(call_args, str):
-                        try:
-                            call_args = json.loads(call_args)
-                        except Exception:
-                            pass
-                    if call_name == "sbb_connections":
-                        await on_status("Checking trains…")
-                        out = await self._run_sbb(call_args)
-                    elif call_name in MAPS_TOOLS:
-                        fn, label = MAPS_TOOLS[call_name]
-                        await on_status(label)
-                        out = await self._run_maps(fn, call_args)
-                    elif call_name in google.GOOGLE_TOOLS:
-                        await on_status(google.GOOGLE_TOOLS[call_name][1])
-                        out = await google.run(call_name, call_args)
-                    elif call_name == "design_voice":
-                        await on_status("Designing a voice…")
-                        out = await self._run_design_voice(call_args)
-                    else:
-                        out = {"error": f"unknown function {call_name}"}
-                    results.append({
-                        "type": "function_result",
-                        "call_id": call_id,
-                        "name": call_name,
-                        "result": json.dumps(out, ensure_ascii=False),
-                    })
+                outs = await asyncio.gather(*(self._run_tool(c, on_status) for c in calls))
+                steps += [
+                    {"type": "function_result", "call_id": c.get("id") or "", "name": c.get("name"),
+                     "result": json.dumps(o, ensure_ascii=False)}
+                    for c, o in zip(calls, outs)
+                ]
+                continue
 
-                next_tool_choice: Any = {"allowed_tools": {"mode": "any", "tools": ["respond"]}} if (step + 1 == MAX_STEPS - 1) else "any"
-                interaction = await gen_client.aio.interactions.create(
-                    input=results,
-                    previous_interaction_id=interaction.id,
-                    generation_config={"thinking_level": "low", "tool_choice": next_tool_choice},
-                    **common_config,
-                )
-            else:
-                # respond was called
-                args = respond_call.get("arguments") or {}
-                if isinstance(args, str):
-                    try:
-                        args = json.loads(args)
-                    except Exception:
-                        args = {}
+            args = _arguments(respond_call)
+            err = schema_error(args, RESPOND_SCHEMA, "respond")
+            if err and not retried and not last:
+                retried = True
+                log.warning("invalid respond, retrying: %s", err)
+                steps += _respond_results(calls, respond_call, {"error": f"{err}. Call respond again with valid cards."})
+                continue
 
-                err = schema_error(args, RESPOND_SCHEMA, "respond")
-                if err and not retried and not last:
-                    retried = True
-                    log.warning("invalid respond, retrying: %s", err)
-                    results = _respond_results(calls, respond_call, {"error": f"{err}. Call respond again with valid cards."})
-                    interaction = await gen_client.aio.interactions.create(
-                        input=results,
-                        previous_interaction_id=interaction.id,
-                        generation_config={"thinking_level": "low", "tool_choice": {"allowed_tools": {"mode": "any", "tools": ["respond"]}}},
-                        **common_config,
-                    )
-                    continue
+            # The turn is done. Its calls get their results now: the next turn's input must not
+            # end on an unanswered call.
+            self.history = steps + _respond_results(calls, respond_call, {"ok": True})
+            say = args.get("say") if isinstance(args, dict) else None
+            if not isinstance(say, str):
+                return {"say": SORRY, "cards": []}
+            if not say:  # a proactive turn with nothing to say (contracts § Proactive turns)
+                return {"say": "", "cards": []}
 
-                # Finished turn successfully! The next turn answers these calls first:
-                # chaining onto an interaction with unanswered calls gets a 400.
-                self.last_interaction_id = interaction.id
-                self.pending_results = _respond_results(calls, respond_call, {"ok": True})
-                say = args.get("say") if isinstance(args, dict) else None
-                if not isinstance(say, str):
-                    return {"say": SORRY, "cards": []}
-                if not say:  # a proactive turn with nothing to say (contracts § Proactive turns)
-                    return {"say": "", "cards": []}
-
-                cards = [] if err else (args.get("cards") or [])
-                if not err:
-                    await self._set_mood(args.get("mood"), on_status)
-                log.info("turn completed in %.2f s", time.monotonic() - turn_t0)
-                return {"say": say, "cards": cards}
+            cards = [] if err else (args.get("cards") or [])
+            if not err:
+                await self._set_mood(args.get("mood"), on_status)
+            log.info("turn completed in %.2f s", time.monotonic() - turn_t0)
+            return {"say": say, "cards": cards}
 
         raise ValueError(f"no valid respond in {MAX_STEPS} steps")
+
+    async def _run_tool(self, call: dict[str, Any], on_status: Callable[[str], Awaitable[None]]) -> dict[str, Any]:
+        """One of the step's calls; they run concurrently. Never raises."""
+        name, args = call.get("name"), _arguments(call)
+        if name == "sbb_connections":
+            await on_status("Checking trains…")
+            return await self._run_sbb(args)
+        if name in MAPS_TOOLS:
+            fn, label = MAPS_TOOLS[name]
+            await on_status(label)
+            return await self._run_maps(fn, args)
+        if name in google.GOOGLE_TOOLS:
+            await on_status(google.GOOGLE_TOOLS[name][1])
+            return await google.run(name, args)
+        if name == "design_voice":
+            await on_status("Designing a voice…")
+            return await self._run_design_voice(args)
+        return {"error": f"unknown function {name}"}
 
     async def _prefetch_trains(
         self,
@@ -536,10 +537,9 @@ class Agent:
         ends = [
             end for e in self.events
             if "T" in (e.get("end") or "")  # all-day events from Calendar carry a bare date
-            and (end := datetime.fromisoformat(e["end"])) <= start and end.date() == start.date()
+            and start - BLOCKING < (end := datetime.fromisoformat(e["end"])) <= start
         ]
-        after = max(ends) + WALK if ends else start - timedelta(hours=2)
-        after = max(after, now + WALK)
+        after = max([start - BLOCKING, *(end + WALK for end in ends), now + WALK])
         args = {"from_station": HOME_STATION, "to_station": place, "depart_after": after.isoformat()}
         await on_status("Checking trains…")
         t0 = time.monotonic()

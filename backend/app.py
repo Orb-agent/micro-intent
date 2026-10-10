@@ -45,7 +45,10 @@ SCREEN_MAX_BYTES = 8 * 1024 * 1024
 SCREEN_MAX_RECENT = 9  # earlier frames in one `screen` message
 SCREEN_CLIP_MAX_BYTES = 8 * 1024 * 1024  # `data` and `recent` together, decoded
 SCREEN_MAX_AGE = 120  # s; contracts § HTTP, screenshot rule
-VISION_WAIT = 5  # s a turn waits for a running vision call
+# s a turn waits for a running vision call. 3.8 Flash read screen.png in 7.8-9.7 s at 18:00 on
+# 2026-10-10; past 5 s the turn went without the screen and wandered through 2-3 tool steps to an
+# off-topic answer, slower than waiting.
+VISION_WAIT = 12
 
 # contracts § Proactive turns: the turn's text when the agent speaks up on its own about a screen.
 PROACTIVE = """(Not the user speaking: they just shared this screen without a question.) \
