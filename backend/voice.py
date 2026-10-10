@@ -38,6 +38,19 @@ DESIGN_CFG_SCALE = 10.0  # the docs' value for one candidate per conversational 
 DESIGN_POLL_S = 1.0
 DESIGN_TIMEOUT_S = 30.0  # an unknown json_config key returns 201 and never gets ready
 
+# The voice that suits the user's mood: the same mascot, a different vibe. A "neutral" user
+# hears the default voice. Gradium has no per-request emotion control, so a mood is a voice.
+_MASCOT = "male voice, 30 to 40, light Swiss German accent"
+MOOD_BRIEFS = {
+    "stressed": f"A calm, reassuring {_MASCOT}, low-mid pitch, slow unhurried pacing, low energy and warm "
+    "soft resonance. For a friendly assistant soothing a stressed, rushed user.",
+    "tired": f"A gentle, soft-spoken {_MASCOT}, mid pitch, slow measured pacing, quiet low energy and a "
+    "warm, slightly breathy timbre. For a caring assistant talking to someone tired or sad.",
+    "happy": f"A bright, cheerful {_MASCOT}, mid-high pitch, fast lively pacing, high energy and sparkling "
+    "warm resonance. For an upbeat assistant sharing a happy user's good mood.",
+}
+_mood_voices: dict[str, str] = {}
+
 # Hands-free end of turn, from the semantic VAD in Gradium's `step` messages (one per 80 ms).
 END_HORIZON_S = 2.0  # read the `vad` entry with this horizon_s
 END_PROB = 0.5  # its inactivity_prob must be above this...
@@ -76,12 +89,26 @@ async def speak(text: str, voice_id: str | None = None) -> AsyncIterator[str]:
                 break
 
 
-async def design_voice(description: str, language: str = "en") -> str:
+async def mood_voice(mood: str) -> str | None:
+    """The voice for the user's mood; None for the default voice. Designed once, then found by
+    name in the Gradium library, so the moods take len(MOOD_BRIEFS) custom-voice slots, ever."""
+    if mood not in MOOD_BRIEFS:
+        return None
+    if mood not in _mood_voices:
+        name = f"Beaver mood {mood}"
+        async with _gradium() as http:
+            voices = _ok(await http.get("/voices/", params={"limit": 1000}))
+        found = next((v["uid"] for v in voices if v["name"] == name), None)
+        _mood_voices[mood] = found or await design_voice(MOOD_BRIEFS[mood], name=name)
+    return _mood_voices[mood]
+
+
+async def design_voice(description: str, language: str = "en", name: str | None = None) -> str:
     """A new voice from a casting brief: one candidate, waited for, then converted into a
     permanent voice_id that speak() accepts (candidates are REST-only). A few seconds."""
     # ponytail: every design takes a custom-voice slot and nothing frees it; past the
     # allowance Gradium answers 409. Delete the replaced voice if demos hit that.
-    async with httpx.AsyncClient(base_url=API_URL, headers={"x-api-key": os.environ["GRADIUM_API_KEY"]}) as http:
+    async with _gradium() as http:
         body = {"prompt": description, "language": language, "json_config": {"cfg_scale": DESIGN_CFG_SCALE}}
         candidate = _ok(await http.post("/voice-generator/generate", json=body))["embeddings"][0]["embedding_id"]
         deadline = time.monotonic() + DESIGN_TIMEOUT_S
@@ -92,8 +119,13 @@ async def design_voice(description: str, language: str = "en") -> str:
             if time.monotonic() > deadline:
                 raise TimeoutError(f"voice candidate {candidate} not ready after {DESIGN_TIMEOUT_S:.0f} s")
             await asyncio.sleep(DESIGN_POLL_S)
-        body = {"voxium_embedding_id": candidate, "name": f"Beaver {candidate[-6:]}", "description": description}
+        name = name or f"Beaver {candidate[-6:]}"
+        body = {"voxium_embedding_id": candidate, "name": name, "description": description}
         return _ok(await http.post("/voices/from-embedding", json=body))["uid"]
+
+
+def _gradium() -> httpx.AsyncClient:
+    return httpx.AsyncClient(base_url=API_URL, headers={"x-api-key": os.environ["GRADIUM_API_KEY"]})
 
 
 def _ok(r: httpx.Response) -> dict:

@@ -3,6 +3,7 @@
 Same shape as contracts § Agent interface; the Gemini rules and tools follow contracts § Tools.
 Check, from backend/:
     uv run python dev_agent.py "Can I make it?" --screen fixtures/screen.json
+    uv run python dev_agent.py "Can I make it?" "Honestly, I'm stressed" --screen fixtures/screen.json  # two turns
 """
 
 import argparse
@@ -64,6 +65,11 @@ again for the same trip.
 
 Speech recognition mishears names: synthetic voices turn "dinner in Bern" into "dinner and burn". \
 Read odd words as the place, person or event that sounds alike in the screen context or calendar.
+
+Once, early in the conversation, end `say` with a short question about how the user is feeling, \
+unless they already said. When they tell you, or it's clear from how they talk, set `mood` in \
+`respond` (tired includes sad). Your voice follows it: calmer for stressed, softer for tired, \
+brighter for happy. Let your words match it too.
 
 If the user asks you to sound different (another voice, accent, age or character), call \
 `design_voice` with a casting brief in one or two full English sentences: gender, an age range, \
@@ -129,6 +135,11 @@ RESPOND = {
     "properties": {
         "say": {"type": "string", "description": "Spoken aloud: one or two short sentences, at most 25 words"},
         "cards": {"type": "array", "maxItems": 3, "items": CARD},
+        "mood": {
+            "type": "string",
+            "enum": [*voice.MOOD_BRIEFS, "neutral"],
+            "description": "How the user feels, once they've said or it's clear; your voice adapts to it",
+        },
     },
     "required": ["say", "cards"],
 }
@@ -242,7 +253,8 @@ class DevAgent:
         self.events = json.loads(context).get("events", [])
         self.prompt = f"{PROMPT}\n\n<context>\nCalendar from now to 7 days ahead, and flight emails:\n{context}</context>"
         self.history: list[list[types.Content]] = []  # one list of contents per completed turn
-        self.voice_id: str | None = None  # from design_voice; every later reply is spoken in it
+        self.voice_id: str | None = None  # from design_voice or the mood; every later reply is spoken in it
+        self.mood: str | None = None
 
     async def turn(self, text, screen, on_status) -> dict:
         try:
@@ -304,6 +316,8 @@ class DevAgent:
                 say = respond.args.get("say") if isinstance(respond.args, dict) else None
                 if not isinstance(say, str) or not say:
                     return {"say": SORRY, "cards": []}
+                if not error:
+                    await self._set_mood(respond.args.get("mood"), on_status)
                 return {"say": say, "cards": [] if error else respond.args["cards"]}
             new.append(_responses(calls, results))
         raise ValueError(f"no respond in {MAX_STEPS} steps")
@@ -372,6 +386,18 @@ class DevAgent:
         self.voice_id = await voice.design_voice(description, language)
         return {"ok": True}
 
+    async def _set_mood(self, mood: str | None, on_status) -> None:
+        """A new mood switches the voice from this reply on. The first time a mood's voice is
+        designed, about 4 s; after that a lookup. On failure the voice stays as it was."""
+        if mood is None or mood == self.mood:
+            return
+        self.mood = mood  # set first: a failing lookup isn't retried every turn
+        await on_status("Tuning my voice…")
+        try:
+            self.voice_id = await voice.mood_voice(mood)
+        except Exception as e:
+            log.warning("no voice for mood %s: %r", mood, e)
+
 
 def _responses(calls: list[types.FunctionCall], results: list[dict]) -> types.Content:
     """One function response per call, with the call's id and name."""
@@ -382,7 +408,7 @@ def _responses(calls: list[types.FunctionCall], results: list[dict]) -> types.Co
     return types.Content(role="user", parts=parts)
 
 
-async def _cli(question: str, screen_path: str | None) -> None:
+async def _cli(questions: list[str], screen_path: str | None) -> None:
     agent = DevAgent()
     await agent.start()
     screen = json.loads(Path(screen_path).read_text()) if screen_path else None
@@ -390,10 +416,12 @@ async def _cli(question: str, screen_path: str | None) -> None:
     async def on_status(label: str) -> None:
         log.info("status: %s", label)
 
-    t0 = time.monotonic()
-    reply = await agent.turn(question, screen, on_status)
-    print(json.dumps(reply, indent=2, ensure_ascii=False))
-    print(f"took {time.monotonic() - t0:.2f} s")
+    for question in questions:  # one conversation; the screen goes with the first turn, as in the app
+        t0 = time.monotonic()
+        reply = await agent.turn(question, screen, on_status)
+        screen = None
+        print(json.dumps(reply, indent=2, ensure_ascii=False))
+        print(f"took {time.monotonic() - t0:.2f} s")
 
 
 if __name__ == "__main__":
@@ -403,7 +431,7 @@ if __name__ == "__main__":
     load_dotenv("../.env")
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     parser = argparse.ArgumentParser()
-    parser.add_argument("question")
+    parser.add_argument("questions", nargs="+", help="one or more turns of the same conversation")
     parser.add_argument("--screen", help="a ScreenContext JSON file, e.g. fixtures/screen.json")
     args = parser.parse_args()
-    asyncio.run(_cli(args.question, args.screen))
+    asyncio.run(_cli(args.questions, args.screen))

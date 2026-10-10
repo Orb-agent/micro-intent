@@ -25,6 +25,8 @@ def gradium(monkeypatch):
             return httpx.Response(200, json={"embeddings": [{"embedding_id": "vox_emb_abc123", "ready": polls >= state["ready_after"]}]})
         if request.url.path == "/api/voices/from-embedding":
             return httpx.Response(201, json={"uid": "VoiceUid123"})
+        if request.url.path == "/api/voices/":
+            return httpx.Response(200, json=state.get("library", []))
         return httpx.Response(404, json={"detail": "Not Found"})
 
     real = httpx.AsyncClient
@@ -49,3 +51,23 @@ async def test_candidate_never_ready_times_out(gradium, monkeypatch):
     with pytest.raises(TimeoutError):
         await voice.design_voice(BRIEF)
     assert not any(r.url.path.endswith("from-embedding") for r in gradium["requests"])
+
+
+async def test_mood_voice_is_designed_once_then_cached(gradium, monkeypatch):
+    monkeypatch.setattr(voice, "_mood_voices", {})
+    assert await voice.mood_voice("stressed") == "VoiceUid123"
+    assert await voice.mood_voice("stressed") == "VoiceUid123"
+
+    paths = [r.url.path.removeprefix("/api") for r in gradium["requests"]]
+    assert paths.count("/voices/") == 1 and paths.count("/voice-generator/generate") == 1  # the 2nd call: cache
+    convert = next(r for r in gradium["requests"] if r.url.path.endswith("from-embedding"))
+    assert json.loads(convert.content)["name"] == "Beaver mood stressed"
+    assert json.loads(gradium["requests"][1].content)["prompt"] == voice.MOOD_BRIEFS["stressed"]
+
+
+async def test_mood_voice_reuses_the_library_voice_across_restarts(gradium, monkeypatch):
+    monkeypatch.setattr(voice, "_mood_voices", {})
+    gradium["library"] = [{"uid": "Other", "name": "Beaver"}, {"uid": "HappyUid", "name": "Beaver mood happy"}]
+    assert await voice.mood_voice("happy") == "HappyUid"
+    assert await voice.mood_voice("neutral") is None
+    assert [r.url.path for r in gradium["requests"]] == ["/api/voices/"]  # no design, no slot used
