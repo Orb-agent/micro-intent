@@ -10,7 +10,7 @@ Design tokens and component spec for the Orb Agent app and overlay, derived from
 ### Token files
 
 - `design-tokens.json` is the source of truth.
-- design-tokens.css` is generated from the JSON, so both files carry identical values.
+- `design-tokens.css` is generated from the JSON, so both files carry identical values.
 - Naming: `--mi-<group>-<name>`; groups are color, gradient, effect, font, text, space, radius, size, duration, easing.
 - Text roles expand to `--mi-text-<role>-size | -line | -weight | -tracking`.
 - Large mode: set `data-mi-mode="large"` on the overlay root.
