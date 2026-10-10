@@ -1,0 +1,1 @@
+so i suggest also we willl have backend for the agent  and voice processing and from end the swift ui
