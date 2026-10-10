@@ -75,7 +75,7 @@ def search_flights(
     """
     Searches for flights on Google Flights.
     If SERPAPI_API_KEY is configured, calls the SerpApi Google Flights engine.
-    Otherwise, generates structured flight options for the route and the direct Google Flights search/booking link.
+    Otherwise, or if SerpApi fails, returns no flights and only the Google Flights search link.
     """
     clean_orig = origin.strip().upper()
     clean_dest = destination.strip().upper()
@@ -144,50 +144,7 @@ def search_flights(
                             "flights": formatted_flights,
                         }
         except Exception:
-            pass  # Fall back to structured schedule synthesis
-
-    # Default structured flight resolver with standard direct/connecting flight options
-    default_airline = "SWISS" if clean_orig == "ZRH" else ("Iberia" if clean_orig == "MAD" else "Lufthansa")
-    flight_code = "LX" if default_airline == "SWISS" else ("IB" if default_airline == "Iberia" else "LH")
-
-    sample_flights = [
-        {
-            "flight_number": f"{flight_code} 1820",
-            "airline": default_airline,
-            "from": clean_orig,
-            "to": clean_dest,
-            "departure": f"{departure_date}T07:10:00+02:00",
-            "arrival": f"{departure_date}T09:15:00+01:00",
-            "duration": "2h 45m",
-            "stops": 0,
-            "price_estimate": "180 CHF",
-            "google_flights_url": f"https://www.google.com/travel/flights?q={urllib.parse.quote(default_airline + ' ' + flight_code + ' 1820 ' + clean_orig + ' to ' + clean_dest + ' ' + departure_date)}",
-        },
-        {
-            "flight_number": f"{flight_code} 1824",
-            "airline": default_airline,
-            "from": clean_orig,
-            "to": clean_dest,
-            "departure": f"{departure_date}T16:45:00+02:00",
-            "arrival": f"{departure_date}T18:50:00+01:00",
-            "duration": "2h 45m",
-            "stops": 0,
-            "price_estimate": "210 CHF",
-            "google_flights_url": f"https://www.google.com/travel/flights?q={urllib.parse.quote(default_airline + ' ' + flight_code + ' 1824 ' + clean_orig + ' to ' + clean_dest + ' ' + departure_date)}",
-        },
-        {
-            "flight_number": "TP 927",
-            "airline": "TAP Air Portugal",
-            "from": clean_orig,
-            "to": clean_dest,
-            "departure": f"{departure_date}T12:00:00+02:00",
-            "arrival": f"{departure_date}T14:10:00+01:00",
-            "duration": "2h 50m",
-            "stops": 0,
-            "price_estimate": "165 EUR",
-            "google_flights_url": f"https://www.google.com/travel/flights?q={urllib.parse.quote('TAP TP 927 ' + clean_orig + ' to ' + clean_dest + ' ' + departure_date)}",
-        }
-    ]
+            pass  # No live data: return the search link only, never invented flights
 
     return {
         "search_query": f"Flights from {clean_orig} to {clean_dest} on {departure_date}",
@@ -198,7 +155,7 @@ def search_flights(
         "passengers": passengers,
         "travel_class": travel_class,
         "google_flights_url": google_flights_url,
-        "flights": sample_flights,
+        "flights": [],
     }
 
 
@@ -283,19 +240,21 @@ def get_user_flight_reservations(
                 origin = found_iatas[0]
                 destination = found_iatas[1]
 
-        # Google Flights search/tracking link
+        # A hotel or concert "booking" has no flight details; skip it
         query_parts = [p for p in [airline, flight_number, origin, destination] if p]
-        flights_query = " ".join(query_parts) if query_parts else subject
-        gflights_url = f"https://www.google.com/travel/flights?q={urllib.parse.quote(flights_query)}"
+        if not query_parts:
+            continue
+        gflights_url = f"https://www.google.com/travel/flights?q={urllib.parse.quote(' '.join(query_parts))}"
 
+        # Unparsed fields stay None: never fill in another booking's details
         reservations.append({
-            "flight_number": flight_number or "LX 1820",
-            "airline": airline or "SWISS",
-            "from": origin or "ZRH",
-            "to": destination or "LIS",
-            "departure": msg.get("date", ""),
-            "arrival": "",
-            "booking_ref": booking_ref or "K7Q2ZP",
+            "flight_number": flight_number,
+            "airline": airline,
+            "from": origin,
+            "to": destination,
+            "departure": None,
+            "arrival": None,
+            "booking_ref": booking_ref,
             "email_subject": subject,
             "email_date": msg.get("date", ""),
             "google_flights_url": gflights_url,
