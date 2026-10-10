@@ -3,7 +3,7 @@
   "checkpoint_id": "01M4K3YSC4KBKGFAGYD6DBX63E",
   "strategy": "manual-commit",
   "branch": "fix/ios-native-cards",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": null,
   "sessions": [
     {
@@ -12,6 +12,13 @@
       "compact_transcript": "/0/transcript.jsonl",
       "content_hash": "/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/1/metadata.json",
+      "transcript": "/1/full.jsonl",
+      "compact_transcript": "/1/transcript.jsonl",
+      "content_hash": "/1/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
@@ -19,6 +26,13 @@
     "cache_creation_tokens": 6341,
     "cache_read_tokens": 763416,
     "output_tokens": 5516,
-    "api_call_count": 4
+    "api_call_count": 4,
+    "subagent_tokens": {
+      "input_tokens": 22,
+      "cache_creation_tokens": 15667,
+      "cache_read_tokens": 1754131,
+      "output_tokens": 283,
+      "api_call_count": 11
+    }
   }
 }
