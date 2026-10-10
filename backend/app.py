@@ -15,17 +15,18 @@ import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 import voice
 
 HERE = Path(__file__).parent
-load_dotenv(HERE / ".env")
 load_dotenv(HERE.parent / ".env")
+load_dotenv(HERE / ".env")
 FIXTURES = HERE / "fixtures"
 
 log = logging.getLogger("app")
@@ -209,6 +210,27 @@ async def prototype_client():
 @app.get("/health")
 async def health():
     return {"ok": True, "workspace": os.environ.get("WORKSPACE_MODE", "fixture")}
+
+
+@app.get("/extension-config")
+async def extension_config(request: Request):
+    """Provide browser clients with runtime config without exposing it in the UI."""
+    if request.headers.get("x-orbs-client") != "orbs-ui":
+        raise HTTPException(404)
+    token = os.environ.get("APP_TOKEN", "").strip()
+    if not token:
+        raise HTTPException(503, "APP_TOKEN is not configured on the backend")
+
+    backend_url = os.environ.get("BACKEND_URL", "http://localhost:8000").strip().rstrip("/")
+    parsed = urlsplit(backend_url)
+    if (parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.path not in {"", "/"}
+            or parsed.query or parsed.fragment or parsed.username or parsed.password):
+        raise HTTPException(503, "BACKEND_URL must be an HTTP(S) origin")
+
+    return JSONResponse(
+        {"backend_url": backend_url, "app_token": token},
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.post("/screenshot", status_code=204)

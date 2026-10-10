@@ -1,4 +1,4 @@
-# Work packages: 3 devs, 3 hours
+# Work packages
 
 MVP of [the voice agent](voice-agent-architecture.md): the 20-second demo, end to end, on the iPhone. Interfaces between the packages are fixed in [contracts.md](contracts.md). Each package below is the plan its agent works through.
 
@@ -15,6 +15,9 @@ MVP of [the voice agent](voice-agent-architecture.md): the 20-second demo, end t
 | WP1 | iOS dev | Frontend: SwiftUI app with orb, mic, playback, A2UI cards, settings | `frontend/` |
 | WP2 | Voice dev | Backend, voice and vision: WebSocket, Gradium, Gemini vision, screenshot Shortcut, tunnel | `backend/app.py`, `backend/voice.py`, `backend/vision.py`, `backend/pyproject.toml`, `backend/.env.example`, `backend/fixtures/` except WP3's files |
 | WP3 | Agent dev | Backend, agent harness: Gemini loop, prompt, `respond`, cards → A2UI, SBB tool, Workspace context, planted data, evals | `backend/agent.py`, `backend/a2ui.py`, `backend/context.py`, `backend/tools/`, `backend/fixtures/{context,demo_a2ui,cards_a2ui}.json` |
+| WP4 | Desktop and Chrome dev | Desktop web client and Chrome MV3 app, using the existing WebSocket and audio contract | `extension/`, `backend/static/index.html`, `backend/README.md` |
+
+WP4 extends the desktop client around the existing WP2/WP3 backend. It does not change the WebSocket or card contracts: typed input, microphone streaming, TTS playback, hands-free mode, and screen sharing continue to use `/ws` as documented in [contracts.md](contracts.md).
 
 Nobody waits on anybody. WP1 renders fixture replies, WP2 runs a stub agent that returns the fixture reply, and WP3 develops the agent in a CLI against fixture context and a fixture screen.
 
