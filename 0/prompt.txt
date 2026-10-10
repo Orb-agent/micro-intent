@@ -1,0 +1,5 @@
+: Firstmate instruction waiting: list '/Users/batu/Projects/agentic/firstmate/state/micro-intent-ios-profile-v1.inbox'/*.msg and, in numeric order, read and act on each, then mv each handled file to '/Users/batu/Projects/agentic/firstmate/state/micro-intent-ios-profile-v1.inbox'/handled/.
+
+---
+
+: Firstmate instruction waiting: list '/Users/batu/Projects/agentic/firstmate/state/micro-intent-ios-profile-v1.inbox'/*.msg and, in numeric order, read and act on each, then mv each handled file to '/Users/batu/Projects/agentic/firstmate/state/micro-intent-ios-profile-v1.inbox'/handled/.
