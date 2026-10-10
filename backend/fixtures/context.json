@@ -1,0 +1,17 @@
+{
+  "events": [
+    {"title": "Hackathon", "start": "2026-10-10T09:00:00+02:00", "end": "2026-10-11T18:00:00+02:00", "location": "Zürich", "source": "luma"},
+    {"title": "Dinner with Lea", "start": "2026-10-11T19:30:00+02:00", "end": "2026-10-11T21:30:00+02:00", "location": "Kreis 4, Zürich", "source": "calendar"},
+    {"title": "Team standup", "start": "2026-10-12T09:30:00+02:00", "end": "2026-10-12T09:45:00+02:00", "location": "Zoom", "source": "calendar"},
+    {"title": "Dentist", "start": "2026-10-13T08:00:00+02:00", "end": "2026-10-13T08:45:00+02:00", "location": "Seefeld, Zürich", "source": "calendar"},
+    {"title": "Call with Acme", "start": "2026-10-15T17:30:00+02:00", "end": "2026-10-15T17:45:00+02:00", "location": "Zoom", "source": "calendar"}
+  ],
+  "flight_emails": [
+    {
+      "subject": "Your booking K7Q2ZP: Zürich – Lisbon",
+      "from": "SWISS",
+      "date": "2026-10-09",
+      "body": "Thank you for booking with SWISS.\n\nBooking reference: K7Q2ZP\n\nOutbound flight\nLX 1820, Tuesday 20 October 2026\nDepart Zürich (ZRH) 07:10, Terminal 1\nArrive Lisbon (LIS) 09:15 local time\nEconomy Light, 1 passenger, 1 personal item\n\nCheck-in opens 23 hours before departure in the SWISS app.\n\nWe wish you a pleasant flight."
+    }
+  ]
+}
