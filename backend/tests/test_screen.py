@@ -85,6 +85,42 @@ def test_bad_screen_frames_are_ignored(client):
     assert server.latest is None
 
 
+def b64(image):
+    return base64.b64encode(image).decode()
+
+
+def send_screen(client, monkeypatch, recent):
+    """A `screen` frame with `recent`; returns the read_screen calls as (image, mime, kwargs)."""
+    seen = []
+    monkeypatch.setattr(server, "read_screen", lambda image, mime, **kw: seen.append((image, mime, kw)) or SCREEN)
+    ctx, ws = connect(client)
+    ws.send_json({"type": "screen", "mime": "image/png", "data": b64(PNG), "recent": recent})
+    assert ws.receive_json() == {"type": "screen_ok", "summary": SCREEN["summary"]}
+    ctx.__exit__(None, None, None)
+    return seen
+
+
+def test_screen_frame_with_recent(client, monkeypatch):
+    frames = [b"frame 1", b"frame 2", b"frame 3"]
+    assert send_screen(client, monkeypatch, [b64(f) for f in frames]) == [(PNG, "image/png", {"earlier": frames})]
+
+
+MB = 1024 * 1024
+
+
+@pytest.mark.parametrize("recent", [
+    [b64(b"frame 1"), "not base64!", b64(b"frame 3")],
+    [b64(b"frame 1"), 7],
+    [b64(b"frame 1"), ""],
+    b64(b"frame 1"),
+    [b64(b"x" * 4 * MB)] * 2,  # 8 MB, over the limit with the current frame
+    [b64(b"frame")] * 10,
+], ids=["bad base64", "not a string", "empty image", "not a list", "over 8 MB", "10 frames"])
+def test_bad_recent_keeps_the_current_frame(client, monkeypatch, caplog, recent):
+    assert send_screen(client, monkeypatch, recent) == [(PNG, "image/png", {})]
+    assert "dropped recent screen frames" in caplog.text
+
+
 class RecordingAgent:
     def __init__(self):
         self.screens = []

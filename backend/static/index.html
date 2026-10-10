@@ -236,28 +236,47 @@ $("mode").addEventListener("change", () => {
 // ---------- Screen ----------
 $("share").addEventListener("click", async () => {
   try {
-    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 2 }, audio: false });
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 2 }, audio: false });
+    screenStream?.getTracks().forEach((t) => t.stop()); // a re-share ends the old one; stop() fires no onended
+    screenStream = stream;
     screenVideo = Object.assign(document.createElement("video"), { srcObject: screenStream, muted: true });
     await screenVideo.play();
-    screenStream.getVideoTracks()[0].onended = () => { screenStream = null; $("share").textContent = "Share screen"; $("sendScreen").disabled = true; };
+    screenStream.getVideoTracks()[0].onended = () => {
+      screenStream = screenVideo = null; clearInterval(ringTimer); ring = []; $("share").textContent = "Share screen"; $("sendScreen").disabled = true; };
+    clearInterval(ringTimer); ring = [];
+    ringTimer = setInterval(() => { // one frame a second; a still screen adds nothing
+      if (!screenVideo.videoWidth) return;
+      const f = snap().data;
+      if (f !== ring.at(-1)) { ring.push(f); if (ring.length > RING) ring.shift(); }
+    }, 1000);
     $("share").textContent = "Sharing ✓"; $("sendScreen").disabled = false;
     log("screen sharing on: a frame goes with each question");
   } catch (e) { log("screen share cancelled:", e.message); }
 });
 $("sendScreen").addEventListener("click", () => grabScreen("button"));
 
-let lastGrab = 0;
-function grabScreen(why) {
-  if (!screenVideo || !screenVideo.videoWidth || performance.now() - lastGrab < 1500) return;
-  lastGrab = performance.now();
+// Earlier frames kept while sharing, about 1 s apart (screen-clip.md). Warm read_screen on the clip
+// fixtures (2026-10-10), median of 3: 0 earlier 3.3 s, 3 earlier 3.7 s, 6 earlier 5.5 s, 9 earlier 4.5 s.
+// 5 is a chosen trade-off: about 5 s of history (the pointer changes every frame), for roughly 1 s
+// more than one frame.
+const RING = 5;
+let lastGrab = 0, ring = [], ringTimer = 0;
+function snap() { // the shared screen now, at most 1280 wide, as base64 JPEG 0.8
   const scale = Math.min(1, 1280 / screenVideo.videoWidth);
   const c = Object.assign(document.createElement("canvas"), {
     width: Math.round(screenVideo.videoWidth * scale), height: Math.round(screenVideo.videoHeight * scale) });
   c.getContext("2d").drawImage(screenVideo, 0, 0, c.width, c.height);
-  const url = c.toDataURL("image/jpeg", 0.8);
-  $("screenThumb").src = url; $("screenThumb").style.display = "block";
-  send({ type: "screen", mime: "image/jpeg", data: url.split(",")[1] });
-  log(`screen frame sent (${why}, ${c.width}x${c.height}, ${Math.round(url.length * 0.75 / 1024)} KB)`);
+  return { w: c.width, h: c.height, data: c.toDataURL("image/jpeg", 0.8).split(",")[1] };
+}
+function grabScreen(why) {
+  if (!screenVideo || !screenVideo.videoWidth || performance.now() - lastGrab < 1500) return;
+  lastGrab = performance.now();
+  const f = snap(), recent = ring.at(-1) === f.data ? ring.slice(0, -1) : ring; ring = [];
+  let bytes = [f.data, ...recent].reduce((n, d) => n + d.length * 0.75, 0);
+  while (recent.length && bytes > 8 << 20) bytes -= recent.shift().length * 0.75; // contract: all images ≤ 8 MB
+  $("screenThumb").src = "data:image/jpeg;base64," + f.data; $("screenThumb").style.display = "block";
+  send({ type: "screen", mime: "image/jpeg", data: f.data, ...(recent.length && { recent }) });
+  log(`screen frame sent (${why}, ${f.w}x${f.h}, ${recent.length} earlier, ${Math.round(bytes / 1024)} KB)`);
 }
 
 // ---------- Text ----------
