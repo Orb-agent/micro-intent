@@ -3,8 +3,11 @@
   "checkpoint_id": "01M4K54P1MP1HMM4KR4BSSVT6C",
   "strategy": "manual-commit",
   "branch": "feature/wp2-voice-design",
-  "checkpoints_count": 1,
-  "files_touched": null,
+  "checkpoints_count": 2,
+  "files_touched": [
+    "backend/agent.py",
+    "backend/tests/test_agent.py"
+  ],
   "sessions": [
     {
       "metadata": "/0/metadata.json",
@@ -12,13 +15,20 @@
       "compact_transcript": "/0/transcript.jsonl",
       "content_hash": "/0/content_hash.txt",
       "prompt": "/0/prompt.txt"
+    },
+    {
+      "metadata": "/1/metadata.json",
+      "transcript": "/1/full.jsonl",
+      "compact_transcript": "/1/transcript.jsonl",
+      "content_hash": "/1/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
-    "input_tokens": 34,
-    "cache_creation_tokens": 38752,
-    "cache_read_tokens": 3984635,
-    "output_tokens": 15298,
-    "api_call_count": 17
+    "input_tokens": 66,
+    "cache_creation_tokens": 95177,
+    "cache_read_tokens": 5323048,
+    "output_tokens": 21852,
+    "api_call_count": 33
   }
 }
