@@ -196,6 +196,32 @@ async def test_cancelled_turn_leaves_history_unchanged(ag, fake_interactions):
 
 
 @pytest.mark.asyncio
+async def test_next_turn_answers_the_last_respond_call(ag, fake_interactions):
+    # A chained interaction ending on an unanswered call gets a 400, so turn 2 answers turn 1's calls first.
+    i0 = FakeInteraction("i-0", [
+        FakeStep("function_call", "sbb_connections", SBB_ARGS, id="call-sbb"),
+        FakeStep("function_call", "respond", DEMO, id="call-resp"),
+    ])
+    i1 = FakeInteraction("i-1", [FakeStep("function_call", "respond", DEMO, id="call-resp-2")])
+    inter = fake_interactions(i0, i1)
+    seen, on_status = statuses()
+
+    await ag.turn("Can I make it?", None, on_status)
+    assert inter.calls[0]["input"] == "Can I make it?"
+
+    await ag.turn("And the next train?", None, on_status)
+    sent = inter.calls[1]["input"]
+    assert inter.calls[1]["previous_interaction_id"] == "i-0"
+    assert [(s["type"], s.get("call_id")) for s in sent] == [
+        ("function_result", "call-sbb"), ("function_result", "call-resp"), ("user_input", None)
+    ]
+    assert json.loads(sent[1]["result"]) == {"ok": True} and not sent[1]["is_error"]
+    assert sent[0]["is_error"]
+    assert sent[2]["content"] == [{"type": "text", "text": "And the next train?"}]
+    assert [r["call_id"] for r in ag.pending_results] == ["call-resp-2"]
+
+
+@pytest.mark.asyncio
 async def test_model_error_returns_apology(ag, fake_interactions):
     fake_interactions(RuntimeError("503 Service Unavailable"))
     seen, on_status = statuses()
@@ -206,7 +232,7 @@ async def test_model_error_returns_apology(ag, fake_interactions):
 
 def test_maps_tools_declared_only_with_key(monkeypatch):
     monkeypatch.delenv("GOOGLE_MAPS_API_KEY", raising=False)
-    assert [t["name"] for t in agent.tool_declarations()] == ["sbb_connections", "respond"]
+    assert [t["name"] for t in agent.tool_declarations()] == ["sbb_connections", "design_voice", "respond"]
     monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "test-key")
     assert {"maps_search_places", "maps_route"} <= {t["name"] for t in agent.tool_declarations()}
 
@@ -233,3 +259,74 @@ async def test_agent_turn_with_maps_route(ag, fake_interactions, monkeypatch):
     result = inter.calls[1]["input"][0]
     assert result["call_id"] == "call-route"
     assert json.loads(result["result"]) == {"duration_min": 9, "distance_km": 0.6}
+
+
+PIRATE = {"description": "A gruff Bristolian pirate, 45 to 60, low gravelly voice, for narration.", "language": "en"}
+
+
+def respond(say: str, mood: str | None = None, id: str = "i") -> FakeInteraction:
+    args = {"say": say, "cards": []} | ({"mood": mood} if mood else {})
+    return FakeInteraction(id, [FakeStep("function_call", "respond", args)])
+
+
+@pytest.mark.asyncio
+async def test_designed_voice_speaks_every_later_reply(ag, fake_interactions, monkeypatch):
+    designed = []
+
+    async def design_voice(description, language):
+        designed.append((description, language))
+        return "pirate-voice"
+
+    monkeypatch.setattr(agent.voice, "design_voice", design_voice)
+    i0 = FakeInteraction("i-0", [FakeStep("function_call", "design_voice", PIRATE, id="call-voice")])
+    inter = fake_interactions(i0, respond("Arr, how do I sound?"), respond("Hello again."))
+    seen, on_status = statuses()
+
+    reply = await ag.turn("Talk like a pirate", None, on_status)
+    assert reply == {"say": "Arr, how do I sound?", "cards": [], "voice_id": "pirate-voice"}
+    assert designed == [(PIRATE["description"], "en")] and seen == ["Designing a voice…"]
+    assert json.loads(inter.calls[1]["input"][0]["result"]) == {"ok": True}
+    assert (await ag.turn("Hi", None, on_status))["voice_id"] == "pirate-voice"
+
+
+@pytest.mark.asyncio
+async def test_failed_voice_design_keeps_the_default_voice(ag, fake_interactions, monkeypatch):
+    async def design_voice(description, language):
+        raise RuntimeError("Gradium 409: Custom voice limit reached")
+
+    monkeypatch.setattr(agent.voice, "design_voice", design_voice)
+    i0 = FakeInteraction("i-0", [FakeStep("function_call", "design_voice", PIRATE)])
+    inter = fake_interactions(i0, respond("I can't change my voice."))
+    seen, on_status = statuses()
+
+    assert await ag.turn("Talk like a pirate", None, on_status) == {"say": "I can't change my voice.", "cards": []}
+    assert json.loads(inter.calls[1]["input"][0]["result"]) == {"error": "voice design failed: RuntimeError"}
+
+
+@pytest.mark.asyncio
+async def test_mood_switches_the_voice_once_per_change(ag, fake_interactions, monkeypatch):
+    looked_up = []
+
+    async def mood_voice(mood):
+        looked_up.append(mood)
+        return {"stressed": "calm-voice"}.get(mood)
+
+    monkeypatch.setattr(agent.voice, "mood_voice", mood_voice)
+    fake_interactions(
+        respond("Take the 18:01. How are you feeling?"),
+        respond("Breathe, you'll make it.", "stressed"),
+        respond("Still on time.", "stressed"),
+        respond("Glad you're fine.", "neutral"),
+    )
+    seen, on_status = statuses()
+
+    assert "voice_id" not in await ag.turn("Can I make it?", None, on_status)
+    assert (await ag.turn("Pretty stressed", None, on_status))["voice_id"] == "calm-voice"
+    assert seen == ["Tuning my voice…"]
+    assert (await ag.turn("Still on time?", None, on_status))["voice_id"] == "calm-voice"
+    assert "voice_id" not in await ag.turn("I'm fine now", None, on_status)  # neutral: the default voice
+    assert looked_up == ["stressed", "neutral"]
+
+
+def test_invalid_mood_fails_the_respond_schema():
+    assert "respond.mood must be one of" in schema_error({"say": "Hi", "cards": [], "mood": "furious"}, RESPOND_SCHEMA, "respond")

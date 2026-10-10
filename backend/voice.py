@@ -4,6 +4,7 @@
 Checks, from backend/:
     uv run python voice.py tts "Hello from the beaver"   # writes out.wav, prints time to first audio
     uv run python voice.py stt out.wav                    # prints the transcript
+    uv run python voice.py design "A gruff old Swiss train conductor, 55 to 65, ..."  # new voice, then out.wav
 """
 
 import asyncio
@@ -24,10 +25,31 @@ os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 
 import aiohttp  # noqa: E402  (gradium's own transport)
 import gradium  # noqa: E402
+import httpx  # noqa: E402
 
 SAMPLE_RATE = 24000
 CHUNK_BYTES = 3840  # 80 ms
 DEFAULT_VOICE_ID = "JuMRs5W5S52hzuge"  # Cormac: bright, warm, cheerful (flagship catalog)
+
+# Voice Design (docs.gradium.ai/guides/voices/voice-design): a voice from a written description.
+API_URL = "https://api.gradium.ai/api"
+DESIGN_LANGUAGES = ["en", "fr", "es", "pt", "de"]
+DESIGN_CFG_SCALE = 10.0  # the docs' value for one candidate per conversational turn
+DESIGN_POLL_S = 1.0
+DESIGN_TIMEOUT_S = 30.0  # an unknown json_config key returns 201 and never gets ready
+
+# The voice that suits the user's mood: the same mascot, a different vibe. A "neutral" user
+# hears the default voice. Gradium has no per-request emotion control, so a mood is a voice.
+_MASCOT = "male voice, 30 to 40, light Swiss German accent"
+MOOD_BRIEFS = {
+    "stressed": f"A calm, reassuring {_MASCOT}, low-mid pitch, slow unhurried pacing, low energy and warm "
+    "soft resonance. For a friendly assistant soothing a stressed, rushed user.",
+    "tired": f"A gentle, soft-spoken {_MASCOT}, mid pitch, slow measured pacing, quiet low energy and a "
+    "warm, slightly breathy timbre. For a caring assistant talking to someone tired or sad.",
+    "happy": f"A bright, cheerful {_MASCOT}, mid-high pitch, fast lively pacing, high energy and sparkling "
+    "warm resonance. For an upbeat assistant sharing a happy user's good mood.",
+}
+_mood_voices: dict[str, str] = {}
 
 # Hands-free end of turn, from the semantic VAD in Gradium's `step` messages (one per 80 ms).
 END_HORIZON_S = 2.0  # read the `vad` entry with this horizon_s
@@ -52,9 +74,9 @@ def client() -> gradium.client.GradiumClient:
     return _client
 
 
-async def speak(text: str) -> AsyncIterator[str]:
+async def speak(text: str, voice_id: str | None = None) -> AsyncIterator[str]:
     """Yield base64 PCM chunks for `text`. One TTS socket per reply."""
-    voice_id = os.environ.get("GRADIUM_VOICE_ID") or DEFAULT_VOICE_ID
+    voice_id = voice_id or os.environ.get("GRADIUM_VOICE_ID") or DEFAULT_VOICE_ID
     async with client().tts_realtime(
         model_name="default", voice_id=voice_id, output_format="pcm_24000"
     ) as tts:
@@ -65,6 +87,52 @@ async def speak(text: str) -> AsyncIterator[str]:
                 yield msg["audio"]
             elif msg["type"] == "end_of_stream":
                 break
+
+
+async def mood_voice(mood: str) -> str | None:
+    """The voice for the user's mood; None for the default voice. Designed once, then found by
+    name in the Gradium library, so the moods take len(MOOD_BRIEFS) custom-voice slots, ever."""
+    if mood not in MOOD_BRIEFS:
+        return None
+    if mood not in _mood_voices:
+        name = f"Beaver mood {mood}"
+        async with _gradium() as http:
+            voices = _ok(await http.get("/voices/", params={"limit": 1000}))
+        found = next((v["uid"] for v in voices if v["name"] == name), None)
+        _mood_voices[mood] = found or await design_voice(MOOD_BRIEFS[mood], name=name)
+    return _mood_voices[mood]
+
+
+async def design_voice(description: str, language: str = "en", name: str | None = None) -> str:
+    """A new voice from a casting brief: one candidate, waited for, then converted into a
+    permanent voice_id that speak() accepts (candidates are REST-only). A few seconds."""
+    # ponytail: every design takes a custom-voice slot and nothing frees it; past the
+    # allowance Gradium answers 409. Delete the replaced voice if demos hit that.
+    async with _gradium() as http:
+        body = {"prompt": description, "language": language, "json_config": {"cfg_scale": DESIGN_CFG_SCALE}}
+        candidate = _ok(await http.post("/voice-generator/generate", json=body))["embeddings"][0]["embedding_id"]
+        deadline = time.monotonic() + DESIGN_TIMEOUT_S
+        while True:
+            found = _ok(await http.get("/voice-generator/embeddings", params={"embedding_id": candidate}))
+            if any(e["ready"] for e in found["embeddings"]):  # an unknown id is an empty list, not 404
+                break
+            if time.monotonic() > deadline:
+                raise TimeoutError(f"voice candidate {candidate} not ready after {DESIGN_TIMEOUT_S:.0f} s")
+            await asyncio.sleep(DESIGN_POLL_S)
+        name = name or f"Beaver {candidate[-6:]}"
+        body = {"voxium_embedding_id": candidate, "name": name, "description": description}
+        return _ok(await http.post("/voices/from-embedding", json=body))["uid"]
+
+
+def _gradium() -> httpx.AsyncClient:
+    return httpx.AsyncClient(base_url=API_URL, headers={"x-api-key": os.environ["GRADIUM_API_KEY"]})
+
+
+def _ok(r: httpx.Response) -> dict:
+    """The JSON body; Gradium's `detail` in the error, e.g. 409 Custom voice limit reached."""
+    if r.is_error:
+        raise RuntimeError(f"Gradium {r.status_code}: {r.text[:200]}")
+    return r.json()
 
 
 class Transcriber:
@@ -208,11 +276,11 @@ class ContinuousTranscriber:
                 await self._on_turn(turn.take())
 
 
-async def _cli_tts(text: str) -> None:
+async def _cli_tts(text: str, voice_id: str | None = None) -> None:
     t0 = time.monotonic()
     first = None
     pcm = bytearray()
-    async for chunk in speak(text):
+    async for chunk in speak(text, voice_id):
         first = first or time.monotonic() - t0
         pcm += base64.b64decode(chunk)
     with wave.open("out.wav", "wb") as f:
@@ -236,10 +304,17 @@ async def _cli_stt(path: str) -> None:
     print(f"transcript ({time.monotonic() - t0:.2f} s after end of audio): {text!r}")
 
 
+async def _cli_design(description: str) -> None:
+    t0 = time.monotonic()
+    voice_id = await design_voice(description)
+    print(f"voice_id {voice_id}, designed in {time.monotonic() - t0:.2f} s")
+    await _cli_tts("Hello! This is my brand new voice. How do I sound?", voice_id)
+
+
 if __name__ == "__main__":
     from dotenv import load_dotenv
 
     load_dotenv()
     load_dotenv("../.env")
     cmd, arg = sys.argv[1], sys.argv[2]
-    asyncio.run(_cli_tts(arg) if cmd == "tts" else _cli_stt(arg))
+    asyncio.run({"tts": _cli_tts, "stt": _cli_stt, "design": _cli_design}[cmd](arg))

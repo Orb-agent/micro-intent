@@ -31,12 +31,12 @@ class OfflineTranscriber(server.voice.Transcriber):
         pass
 
 
-async def fake_speak(text):
+async def fake_speak(text, voice_id=None):
     for chunk in ("AAAA", "BBBB"):
         yield chunk
 
 
-async def slow_speak(text):
+async def slow_speak(text, voice_id=None):
     yield "AAAA"
     await asyncio.sleep(5)  # long enough to interrupt
     yield "BBBB"
@@ -184,7 +184,7 @@ def test_release_replaces_a_text_turn_sent_while_held(client, monkeypatch):
 def test_interrupt_closes_the_tts_stream(client, monkeypatch):
     closed = []
 
-    async def endless_speak(text):
+    async def endless_speak(text, voice_id=None):
         try:
             for _ in range(10_000):  # never waits, so the interrupt lands at send()
                 yield "AAAA"
@@ -202,3 +202,25 @@ def test_interrupt_closes_the_tts_stream(client, monkeypatch):
     assert closed == [True]  # before the idle, not later through GC
     ctx.__exit__(None, None, None)
     assert "audio_end" not in kinds(msgs)
+
+
+def test_reply_voice_id_reaches_tts(client, monkeypatch):
+    voices = []
+
+    async def turn(self, text, screen, on_status):
+        reply = {"say": "Arr!", "cards": []}
+        return reply | {"voice_id": "pirate"} if text == "Be a pirate" else reply
+
+    async def speak(text, voice_id=None):
+        voices.append(voice_id)
+        yield "AAAA"
+
+    monkeypatch.setattr(server.StubAgent, "turn", turn)
+    monkeypatch.setattr(server.voice, "speak", speak)
+    ctx, ws = connect(client)
+    for text in ("Be a pirate", "Hello"):
+        ws.send_json({"type": "text", "text": text})
+        msgs = receive_turn(ws)
+        assert msgs[1] == {"type": "reply", "say": "Arr!", "cards": []}  # the frame keeps its contract shape
+    ctx.__exit__(None, None, None)
+    assert voices == ["pirate", None]  # None: speak() falls back to GRADIUM_VOICE_ID

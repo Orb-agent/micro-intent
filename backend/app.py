@@ -57,6 +57,7 @@ class Screenshot:
     task: asyncio.Task | None = None  # read_screen in the background; its result is the ScreenContext
     used: bool = False
     earlier: list[bytes] = field(default_factory=list)  # frames from the seconds before, oldest first
+    read_at: float = 0.0  # time.monotonic() when vision started on these frames, maybe for an earlier copy
 
 
 # Single user: one latest screenshot, shared by all sessions.
@@ -107,11 +108,14 @@ async def broadcast(msg: dict) -> None:
             log.warning("could not send %s to a session", msg["type"])
 
 
-async def read_latest(shot: Screenshot) -> dict | None:
-    """Run vision on one screenshot, tell every session, return its ScreenContext or None."""
+async def read_latest(shot: Screenshot, reuse: dict | None = None) -> dict | None:
+    """Run vision on one screenshot, or take `reuse`, an identical one's reading; tell every
+    session, return its ScreenContext or None."""
     t0 = time.monotonic()
-    screen = None
-    if read_screen is None:
+    screen = reuse
+    if screen is not None:
+        log.info("screenshot %d is unchanged, reusing its reading", shot.id)
+    elif read_screen is None:
         log.warning("vision.py not available, screenshot %d not read", shot.id)
     else:
         earlier = {"earlier": shot.earlier} if shot.earlier else {}
@@ -130,13 +134,27 @@ async def read_latest(shot: Screenshot) -> dict | None:
 
 
 def store_screenshot(image: bytes, mime: str, earlier=()) -> None:
-    """Keep only the latest screenshot and start reading it."""
+    """Keep only the latest screenshot and start reading it. The app sends a frame with every
+    question, often of a screen that hasn't changed: the same frames reuse the last reading."""
     global latest
-    if latest and latest.task:
-        latest.task.cancel()  # its context is stale now
-    latest = Screenshot(latest.id + 1 if latest else 1, image, mime, time.monotonic(), earlier=list(earlier))
-    latest.task = asyncio.create_task(read_latest(latest))
+    prev, earlier, now = latest, list(earlier), time.monotonic()
+    if prev and prev.task:
+        prev.task.cancel()  # its context is stale now; a no-op once it is read
+    same = prev is not None and (prev.image, prev.mime, prev.earlier) == (image, mime, earlier)
+    reuse = _reading(prev) if same else None
+    latest = Screenshot(prev.id + 1 if prev else 1, image, mime, now, earlier=earlier)
+    latest.read_at = prev.read_at if reuse is not None else now
+    latest.task = asyncio.create_task(read_latest(latest, reuse))
     log.info("screenshot %d: %d bytes %s, %d earlier", latest.id, len(image), mime, len(earlier))
+
+
+def _reading(shot: Screenshot) -> dict | None:
+    """The shot's ScreenContext once vision has read it, at most SCREEN_MAX_AGE after the read
+    began: vision resolves "today" and "Thursday" against the time it ran. None if it failed."""
+    task = shot.task
+    if task is None or not task.done() or task.cancelled() or time.monotonic() - shot.read_at > SCREEN_MAX_AGE:
+        return None
+    return task.result()
 
 
 def decode_recent(recent: object, current: int) -> list[bytes]:
@@ -254,7 +272,7 @@ class Session:
             await self.send({"type": "a2ui", "messages": messages})
         await self.state("speaking")
         try:  # aclosing: an interrupt closes the TTS socket now, not when GC finds it
-            async with contextlib.aclosing(voice.speak(reply["say"])) as chunks:
+            async with contextlib.aclosing(voice.speak(reply["say"], reply.get("voice_id"))) as chunks:
                 async for chunk in chunks:
                     timings.setdefault("first_audio", time.monotonic() - t0)
                     await self.send({"type": "audio", "data": chunk})
