@@ -1,0 +1,41 @@
+GEMINI_API_KEY and GRADIUM_API_KEY are ready
+
+---
+
+<bash-input>cd backend && uv run python vision.py fixtures/screen.png</bash-input><bash-stdout>2026-10-10 14:45:26,723 google_genai.models AFC is enabled with max remote calls: 10.
+2026-10-10 14:45:30,933 vision read_screen took 4.31 s
+{
+  "app": "WhatsApp",
+  "summary": "Anna suggests having dinner in Bern on Thursday at 7.",
+  "messages": [
+    {
+      "from": "Me",
+      "text": "Back in Zürich since yesterday 🙌"
+    },
+    {
+      "from": "Anna",
+      "text": "Welcome back!! How was Lisbon?"
+    },
+    {
+      "from": "Me",
+      "text": "Amazing, too much pastel de nata"
+    },
+    {
+      "from": "Anna",
+      "text": "Haha jealous"
+    },
+    {
+      "from": "Anna",
+      "text": "Dinner in Bern Thursday at 7?"
+    }
+  ],
+  "proposal": {
+    "title": "Dinner",
+    "date": "2026-10-15",
+    "time": "19:00",
+    "place": "Bern"
+  }
+}
+took 4.32 s
+
+╭─     ~/Doc/GitH/micro-intent/backend     feature/wp2-backend-voice-vision </bash-stdout><bash-stderr></bash-stderr>
