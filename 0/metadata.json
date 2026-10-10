@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4JW7695RGMDZWWMPC0Z08XH",
+  "session_id": "cc4e361b-cd7a-445b-843d-eb1bb08fe452",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T12:22:18.954632Z",
+  "branch": "fm/micro-intent-backend-v1-scaffold",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "docs/API.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "ff9cf1de04be",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 112,
+    "cache_creation_tokens": 127426,
+    "cache_read_tokens": 5148727,
+    "output_tokens": 66151,
+    "api_call_count": 56
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T12:22:18.930492Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 64,
+    "human_modified": 173,
+    "human_removed": 0,
+    "total_committed": 64,
+    "total_lines_changed": 237,
+    "agent_percentage": 0,
+    "metric_version": 2
+  }
+}
