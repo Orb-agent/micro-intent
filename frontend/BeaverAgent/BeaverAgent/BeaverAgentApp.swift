@@ -25,11 +25,21 @@ struct BeaverAgentApp: App {
                             simulateScreenshot: session.simulateScreenshot
                         )
                         .presentationDetents([.medium, .large])
+                    case .dashboard:
+                        DashboardView()
                     }
                 }
                 .preferredColorScheme(appearance.colorScheme)
                 .environment(\.typeScale, typeScale)
                 .task {
+                    let args = ProcessInfo.processInfo.arguments
+                    let defaults = UserDefaults.standard
+                    if let appStr = defaults.string(forKey: "appearance") ?? (args.firstIndex(of: "-appearance").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil }),
+                       let app = Appearance(rawValue: appStr),
+                       appearance != app {
+                        appearance = app
+                        try? await Task.sleep(for: .milliseconds(300))
+                    }
                     applySettings()
                     DemoLaunch.apply(to: session, sheet: $sheet)
                 }
@@ -50,19 +60,45 @@ struct BeaverAgentApp: App {
     }
 }
 
-/// Launch arguments for rehearsals and screenshots, e.g.
-/// `-demoScene searching`, `-demoSheet debug`, `-demoAsk "Can I make it?"`.
 @MainActor
 enum DemoLaunch {
     static func apply(to session: AgentSession, sheet: Binding<AppSheet?>) {
         let defaults = UserDefaults.standard
-        if let scene = defaults.string(forKey: "demoScene") {
-            play(scene, on: session)
+        let args = ProcessInfo.processInfo.arguments
+
+        func argValue(for key: String) -> String? {
+            if let val = defaults.string(forKey: key) { return val }
+            if let idx = args.firstIndex(of: "-\(key)"), idx + 1 < args.count {
+                return args[idx + 1]
+            }
+            return nil
         }
-        if let name = defaults.string(forKey: "demoSheet"), let value = AppSheet(rawValue: name) {
-            sheet.wrappedValue = value
+
+        if let scene = argValue(for: "demoScene") {
+            if scene == "dashboard" || scene == "helpers" {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(300))
+                    sheet.wrappedValue = .dashboard
+                }
+            } else {
+                play(scene, on: session)
+            }
         }
-        if let question = defaults.string(forKey: "demoAsk") {
+
+        if let name = argValue(for: "demoSheet") {
+            let targetSheet: AppSheet? = {
+                if name == "dashboard" || name == "helpers" { return .dashboard }
+                return AppSheet(rawValue: name)
+            }()
+            if let targetSheet {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(300))
+                    sheet.wrappedValue = targetSheet
+                }
+            }
+        }
+
+        if let question = argValue(for: "demoAsk") {
             Task {
                 try? await Task.sleep(for: .seconds(2))
                 session.ask(question)

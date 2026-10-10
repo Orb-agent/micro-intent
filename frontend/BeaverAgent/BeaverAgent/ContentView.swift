@@ -47,6 +47,16 @@ struct ContentView: View {
                 .font(.system(size: 20, weight: .bold))
                 .foregroundStyle(Theme.textPrimary)
             Spacer()
+            Button {
+                sheet = .dashboard
+            } label: {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(Theme.textPrimary)
+                    .frame(width: 48, height: 48)
+                    .glassSurface(.flat, cornerRadius: 24)
+            }
+            .accessibilityLabel("What my helpers are doing")
             ConnectionBadge(connection: session.connection)
             Button {
                 sheet = .settings
@@ -128,7 +138,7 @@ struct ContentView: View {
 }
 
 enum AppSheet: String, Identifiable {
-    case settings, debug
+    case settings, debug, dashboard
     var id: String { rawValue }
 }
 
