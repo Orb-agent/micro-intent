@@ -3,7 +3,7 @@
   "checkpoint_id": "01M4K3KT62TRAPSG3XWFJ6VGC9",
   "strategy": "manual-commit",
   "branch": "fm/micro-intent-agent-wp3-v1",
-  "checkpoints_count": 1,
+  "checkpoints_count": 3,
   "files_touched": [
     "backend/agent_engine.py",
     "backend/pyproject.toml",
@@ -58,13 +58,27 @@
       "compact_transcript": "/0/transcript.jsonl",
       "content_hash": "/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/1/metadata.json",
+      "transcript": "/1/full.jsonl",
+      "compact_transcript": "/1/transcript.jsonl",
+      "content_hash": "/1/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
-    "input_tokens": 46,
-    "cache_creation_tokens": 103953,
-    "cache_read_tokens": 2489499,
-    "output_tokens": 13887,
-    "api_call_count": 23
+    "input_tokens": 66,
+    "cache_creation_tokens": 160194,
+    "cache_read_tokens": 3303155,
+    "output_tokens": 25566,
+    "api_call_count": 33,
+    "subagent_tokens": {
+      "input_tokens": 198,
+      "cache_creation_tokens": 511653,
+      "cache_read_tokens": 8512346,
+      "output_tokens": 1804,
+      "api_call_count": 99
+    }
   }
 }
