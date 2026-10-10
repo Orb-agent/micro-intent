@@ -75,7 +75,8 @@ xcrun simctl launch <udid> ch.microintent.BeaverAgent -appearance dark -demoScen
 | Argument | Values |
 | --- | --- |
 | `-demoScene` | `listening`, `thinking`, `searching`, `speaking`, `reply`, `kinds`, `screen`, `error`, `travel` |
-| `-demoSheet` | `settings`, `debug` |
+| `-demoSheet` | `settings`, `debug`, `dashboard` |
+| `-demoDashboard` | With `-demoSheet dashboard`: `stop` opens the Stop confirmation, `confirmed` answers the train alert with Confirm |
 | `-demoAsk` | A question sent 2 s after launch, live or in fixture mode |
 | `-appearance` | `system`, `light`, `dark` |
 | `-largeText` | `YES`, `NO` |

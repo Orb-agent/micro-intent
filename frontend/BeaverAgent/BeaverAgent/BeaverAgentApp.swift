@@ -35,6 +35,8 @@ struct BeaverAgentApp: App {
                         ProfileSheet(initialTab: .family)
                     case .onboarding:
                         FirstRunSheet()
+                    case .dashboard:
+                        DashboardView()
                     }
                 }
                 .preferredColorScheme(appearance.colorScheme)
@@ -71,7 +73,7 @@ struct BeaverAgentApp: App {
 }
 
 /// Launch arguments for rehearsals and screenshots, e.g.
-/// `-demoScene searching`, `-demoSheet debug`, `-demoAsk "Can I make it?"`.
+/// `-demoScene searching`, `-demoSheet dashboard`, `-demoAsk "Can I make it?"`.
 /// Live server only: `-demoHold 3` holds the orb for 3 s once connected, `-demoTapAt 9`
 /// taps it 9 s after connecting; with `-micFile` this drives the voice path without a finger.
 @MainActor

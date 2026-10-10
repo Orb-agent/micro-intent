@@ -75,6 +75,16 @@ struct ContentView: View {
                         .transition(.opacity)
                 }
                 Button {
+                    sheet = .dashboard
+                } label: {
+                    Image(systemName: "checklist")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(Theme.textPrimary)
+                        .frame(width: Theme.Size.touchMin, height: Theme.Size.touchMin)
+                }
+                .glassIconButton()
+                .accessibilityLabel("What my helpers are doing")
+                Button {
                     sheet = .settings
                 } label: {
                     Image(systemName: "gearshape")
@@ -231,7 +241,7 @@ struct ContentView: View {
 }
 
 enum AppSheet: String, Identifiable {
-    case settings, debug, travel, profile, family, onboarding
+    case settings, debug, travel, profile, family, onboarding, dashboard
     var id: String { rawValue }
 }
 
