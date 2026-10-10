@@ -1,0 +1,15 @@
+<pasted_content id="9528">
+[entire] Pushing 4 checkpoint ref(s) to origin..... done
+Enumerating objects: 22, done.
+Counting objects: 100% (22/22), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (18/18), done.
+Writing objects: 100% (18/18), 5.30 KiB | 5.30 MiB/s, done.
+Total 18 (delta 11), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (11/11), completed with 3 local objects.        
+remote: error: unable to write file /data/repositories/d/nw/d5/4d/8f/1267811254/1413037484.git/objects/ghq_vIogSmeLAk3/pack/pack-e822981bf5891af2bd00f29b367cb3c76bfbebe7.pack: No such file or directory        
+remote: fatal: unable to rename temporary '*.pack' file to '/data/repositories/d/nw/d5/4d/8f/1267811254/1413037484.git/objects/ghq_vIogSmeLAk3/pack/pack-e822981bf5891af2bd00f29b367cb3c76bfbebe7.pack'        
+To https://github.com/Orb-agent/micro-intent.git
+ ! [remote rejected] feature/wp2-backend-voice-vision -> feature/wp2-backend-voice-vision (failed)
+error: failed to push some refs to 'https://github.com/Orb-agent/micro-intent.git'
+</pasted_content id="9528">
