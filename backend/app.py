@@ -15,6 +15,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
+import voice
+
 HERE = Path(__file__).parent
 load_dotenv(HERE / ".env")
 load_dotenv(HERE.parent / ".env")
@@ -70,6 +72,7 @@ class Session:
         self.ws = ws
         self.agent = make_agent()
         self.turns = 0
+        self.stt: voice.Transcriber | None = None
         self._send_lock = asyncio.Lock()
 
     async def send(self, msg: dict) -> None:
@@ -79,10 +82,10 @@ class Session:
     async def state(self, state: str, label: str | None = None) -> None:
         await self.send({"type": "state", "state": state} | ({"label": label} if label else {}))
 
-    async def run_turn(self, text: str) -> None:
+    async def run_turn(self, text: str, timings: dict[str, float] | None = None) -> None:
         self.turns += 1
         t0 = time.monotonic()
-        timings: dict[str, float] = {}
+        timings = timings or {}
         await self.state("thinking")
 
         async def on_status(label: str) -> None:
@@ -102,6 +105,12 @@ class Session:
             messages = cards_to_a2ui(f"reply-{self.turns}", reply["cards"])
             await self.send({"type": "a2ui", "messages": messages})
         await self.state("speaking")
+        try:
+            async for chunk in voice.speak(reply["say"]):
+                timings.setdefault("first_audio", time.monotonic() - t0)
+                await self.send({"type": "audio", "data": chunk})
+        except Exception:
+            log.exception("TTS failed")  # the reply text and cards are already on screen
         await self.send({"type": "audio_end"})
         await self.state("idle")
         timings["total"] = time.monotonic() - t0
@@ -109,10 +118,33 @@ class Session:
 
     async def handle(self, msg: dict) -> None:
         kind = msg.get("type")
-        if kind == "text" and isinstance(msg.get("text"), str):
+        if kind == "audio" and isinstance(msg.get("data"), str):
+            if self.stt is None:
+                self.stt = voice.Transcriber()
+                await self.state("listening")
+            self.stt.push(msg["data"])
+        elif kind == "audio_end" and self.stt is not None:
+            stt, self.stt = self.stt, None
+            t0 = time.monotonic()
+            try:
+                text = await stt.finish()
+            except Exception:
+                log.exception("STT failed")
+                text = ""
+            if not text:
+                await self.send({"type": "error", "message": "Sorry, I didn't catch that."})
+                await self.state("idle")
+                return
+            await self.send({"type": "transcript", "text": text})
+            await self.run_turn(text, {"stt": time.monotonic() - t0})
+        elif kind == "text" and isinstance(msg.get("text"), str):
             await self.run_turn(msg["text"])
         else:
             log.warning("ignored message type %r", kind)
+
+    def close(self) -> None:
+        if self.stt is not None:
+            self.stt.cancel()
 
 
 @app.websocket("/ws")
@@ -126,9 +158,12 @@ async def ws_endpoint(ws: WebSocket):
         session = Session(ws)
         await session.agent.start()
         await session.send({"type": "ready"})
-        while True:
-            msg = await ws.receive_json()
-            if isinstance(msg, dict):
-                await session.handle(msg)
+        try:
+            while True:
+                msg = await ws.receive_json()
+                if isinstance(msg, dict):
+                    await session.handle(msg)
+        finally:
+            session.close()
     except WebSocketDisconnect:
         pass

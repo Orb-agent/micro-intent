@@ -5,35 +5,86 @@ from starlette.websockets import WebSocketDisconnect
 import app as server
 
 
+class FakeTranscriber:
+    def __init__(self):
+        self.chunks = []
+
+    def push(self, b64):
+        self.chunks.append(b64)
+
+    async def finish(self):
+        return "Can I make it?" if self.chunks else ""
+
+    def cancel(self):
+        pass
+
+
+async def fake_speak(text):
+    for chunk in ("AAAA", "BBBB"):
+        yield chunk
+
+
 @pytest.fixture
 def client(monkeypatch):
     monkeypatch.setenv("APP_TOKEN", "test-token")
     monkeypatch.setenv("MOCK_AGENT", "1")
+    monkeypatch.setattr(server.voice, "speak", fake_speak)
+    monkeypatch.setattr(server.voice, "Transcriber", FakeTranscriber)
     return TestClient(server.app)
 
 
-def receive_until(ws, msg_type):
+def connect(client):
+    ws = client.websocket_connect("/ws")
+    conn = ws.__enter__()
+    conn.send_json({"type": "hello", "token": "test-token"})
+    assert conn.receive_json() == {"type": "ready"}
+    return ws, conn
+
+
+def receive_turn(ws):
+    """Messages up to and including the final `state: idle`."""
     msgs = []
     while True:
-        msg = ws.receive_json()
-        msgs.append(msg)
-        if msg["type"] == msg_type and msg.get("state", "idle") == "idle":
+        msgs.append(ws.receive_json())
+        if msgs[-1] == {"type": "state", "state": "idle"}:
             return msgs
 
 
+def kinds(msgs):
+    return [m["type"] + (":" + m["state"] if m["type"] == "state" else "") for m in msgs]
+
+
 def test_text_turn_order(client):
-    with client.websocket_connect("/ws") as ws:
-        ws.send_json({"type": "hello", "token": "test-token"})
-        assert ws.receive_json() == {"type": "ready"}
-        ws.send_json({"type": "text", "text": "Can I make it?"})
-        msgs = receive_until(ws, "state")
-    types = [(m["type"], m.get("state")) for m in msgs]
-    assert types[0] == ("state", "thinking")
-    assert ("state", "searching") in types
-    reply_at = types.index(("reply", None))
-    assert types.index(("state", "searching")) < reply_at < types.index(("state", "idle"))
-    reply = msgs[reply_at]
+    ctx, ws = connect(client)
+    ws.send_json({"type": "text", "text": "Can I make it?"})
+    msgs = receive_turn(ws)
+    ctx.__exit__(None, None, None)
+    assert kinds(msgs) == [
+        "state:thinking", "state:searching", "reply", "state:speaking",
+        "audio", "audio", "audio_end", "state:idle",
+    ]
+    reply = msgs[2]
     assert [c["kind"] for c in reply["cards"]] == ["conflict", "train"]
+    assert msgs[4]["data"] == "AAAA"
+
+
+def test_voice_turn(client):
+    ctx, ws = connect(client)
+    ws.send_json({"type": "audio", "data": "AAAA"})
+    ws.send_json({"type": "audio", "data": "BBBB"})
+    ws.send_json({"type": "audio_end"})
+    msgs = receive_turn(ws)
+    ctx.__exit__(None, None, None)
+    assert kinds(msgs)[:4] == ["state:listening", "transcript", "state:thinking", "state:searching"]
+    assert msgs[1]["text"] == "Can I make it?"
+
+
+def test_audio_end_without_audio_is_ignored(client):
+    ctx, ws = connect(client)
+    ws.send_json({"type": "audio_end"})  # no audio: ignored
+    ws.send_json({"type": "text", "text": "hi"})
+    assert ws.receive_json() == {"type": "state", "state": "thinking"}
+    ctx.__exit__(None, None, None)
 
 
 def test_wrong_token_is_rejected(client):
