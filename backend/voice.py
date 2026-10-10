@@ -8,11 +8,13 @@ Checks, from backend/:
 
 import asyncio
 import base64
+import json
+import logging
 import os
 import sys
 import time
 import wave
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 
 import certifi
 
@@ -20,12 +22,20 @@ import certifi
 # TLS context at import time, so this must run before `import gradium`.
 os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 
+import aiohttp  # noqa: E402  (gradium's own transport)
 import gradium  # noqa: E402
 
 SAMPLE_RATE = 24000
 CHUNK_BYTES = 3840  # 80 ms
 DEFAULT_VOICE_ID = "JuMRs5W5S52hzuge"  # Cormac: bright, warm, cheerful (flagship catalog)
 
+# Hands-free end of turn, from the semantic VAD in Gradium's `step` messages (one per 80 ms).
+END_HORIZON_S = 2.0  # read the `vad` entry with this horizon_s
+END_PROB = 0.5  # its inactivity_prob must be above this...
+END_STEPS = 3  # ...for this many steps in a row, once the turn has text
+REOPEN_AFTER_S = 1.0  # a closed hands-free session reopens on the next audio, at most once a second
+
+log = logging.getLogger("voice")
 _client: gradium.client.GradiumClient | None = None
 
 
@@ -82,7 +92,7 @@ class Transcriber:
 
             sender = asyncio.create_task(send())
             try:
-                async for msg in stt:
+                async for msg in _messages(stt):
                     if msg["type"] == "text":
                         parts.append(msg["text"])
                     elif msg["type"] == "end_of_stream":
@@ -90,6 +100,102 @@ class Transcriber:
             finally:
                 sender.cancel()
         return " ".join(p.strip() for p in parts if p.strip())
+
+
+async def _messages(stt) -> AsyncIterator[dict]:
+    """STT messages. Use instead of `async for msg in stt`: in gradium 0.6.4 that spins
+    forever, freezing the event loop, when the connection drops without a close frame."""
+    async for frame in stt._ws:  # aiohttp stops iterating on any close
+        if frame.type == aiohttp.WSMsgType.TEXT:
+            msg = json.loads(frame.data)
+            if msg["type"] == "error":
+                raise RuntimeError(f"Gradium STT error: {msg}")
+            yield msg
+
+
+class TurnDetector:
+    """Hands-free end of turn: inactivity_prob at END_HORIZON_S above END_PROB for
+    END_STEPS `step`s in a row, counted only once the turn has text."""
+
+    def __init__(self) -> None:
+        self.words: list[str] = []
+        self._streak = 0
+
+    def feed(self, msg: dict) -> bool:
+        """One STT message in; True when the turn has ended."""
+        if msg["type"] == "text" and msg["text"].strip():
+            self.words.append(msg["text"].strip())
+        elif msg["type"] == "step" and self.words:
+            p = next((v["inactivity_prob"] for v in msg["vad"] if v["horizon_s"] == END_HORIZON_S), 0.0)
+            self._streak = self._streak + 1 if p > END_PROB else 0
+            return self._streak >= END_STEPS
+        return False
+
+    def take(self) -> str:
+        """The turn's text; starts the next turn."""
+        text, self.words, self._streak = " ".join(self.words), [], 0
+        return text
+
+
+class ContinuousTranscriber:
+    """Hands-free: one STT session per WebSocket, open across turns. push() base64 chunks
+    for as long as the mic is on. Awaits on_speech() at a turn's first words and
+    on_turn(text) at its end. If Gradium closes the session, the next push() reopens it."""
+
+    def __init__(
+        self,
+        on_speech: Callable[[], Awaitable[None]],
+        on_turn: Callable[[str], Awaitable[None]],
+        language: str = "en",
+    ):
+        self._on_speech, self._on_turn, self._language = on_speech, on_turn, language
+        self._queue: asyncio.Queue[bytes] = asyncio.Queue()
+        self._task: asyncio.Task | None = None
+        self._opened = float("-inf")
+
+    def push(self, b64: str) -> None:
+        closed = self._task is None or self._task.done()
+        if closed and time.monotonic() - self._opened > REOPEN_AFTER_S:
+            self._opened = time.monotonic()
+            self._task = asyncio.create_task(self._run())
+        self._queue.put_nowait(base64.b64decode(b64))
+
+    def cancel(self) -> None:
+        if self._task is not None:
+            self._task.cancel()
+
+    async def _run(self) -> None:
+        try:
+            async with client().stt_realtime(
+                model_name="default", input_format="pcm", json_config={"language": self._language}
+            ) as stt:
+
+                async def send() -> None:
+                    while True:
+                        await stt.send_audio(await self._queue.get())
+
+                sender = asyncio.create_task(send())
+                try:
+                    await self._listen(stt)
+                finally:
+                    sender.cancel()
+        except Exception:
+            log.exception("hands-free STT failed")
+        log.info("hands-free STT session closed; the next audio reopens it")
+
+    async def _listen(self, stt) -> None:
+        turn, flushing = TurnDetector(), False
+        async for msg in _messages(stt):
+            fresh = not turn.words
+            ended = turn.feed(msg)
+            if fresh and turn.words:
+                await self._on_speech()
+            if ended and not flushing:  # flush makes Gradium emit the words it holds back
+                flushing = True
+                await stt.send_flush()
+            elif msg["type"] == "flushed" and flushing:
+                flushing = False
+                await self._on_turn(turn.take())
 
 
 async def _cli_tts(text: str) -> None:
