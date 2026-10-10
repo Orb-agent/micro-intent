@@ -1,0 +1,139 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4KC26D30RD080R6Q28DF7TY",
+  "session_id": "74148fb7-b740-4f13-846d-4bcc45cd0903",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T16:59:13.798869Z",
+  "branch": "fm/micro-intent-product-demo-v1",
+  "checkpoints_count": 7,
+  "save_step_count": 1,
+  "files_touched": [
+    "docs/demo/video/index.html"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "79122b6edb8d",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 244,
+    "cache_creation_tokens": 296926,
+    "cache_read_tokens": 25265266,
+    "output_tokens": 98251,
+    "api_call_count": 122
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01SXbXjxydjFVEXzUpYTuSfZ",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "hyperframes"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "79122b6edb8d",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 117,
+        "end": 118,
+        "entry_ids": [
+          "70f91007-018c-4827-ba42-fb409da4a9e5"
+        ],
+        "tool_use_id": "toolu_01SXbXjxydjFVEXzUpYTuSfZ"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01SXbXjxydjFVEXzUpYTuSfZ"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: hyperframes",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01AJc2sVrci65RoNCF5StkBA",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "general-video"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "79122b6edb8d",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 245,
+        "end": 246,
+        "entry_ids": [
+          "30de11ce-7637-4bc2-ad9a-5dc2ad401d54"
+        ],
+        "tool_use_id": "toolu_01AJc2sVrci65RoNCF5StkBA"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01AJc2sVrci65RoNCF5StkBA"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: general-video",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 7
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T16:59:13.444401Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 1622,
+    "human_modified": 276,
+    "human_removed": 0,
+    "total_committed": 1622,
+    "total_lines_changed": 1898,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 303,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 1,
+        "docs/demo/video/AGENTS.md": 109,
+        "docs/demo/video/CLAUDE.md": 109,
+        "docs/demo/video/hyperframes.json": 13,
+        "docs/demo/video/index.html": 55,
+        "docs/demo/video/meta.json": 5,
+        "docs/demo/video/package.json": 11
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 945,
+      "user_lines_removed": 138,
+      "agent_lines_added": 611,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 1,
+        "docs/demo/.gitignore": 2,
+        "docs/demo/README.md": 19,
+        "docs/demo/video/.gitignore": 6,
+        "docs/demo/video/index.html": 917
+      },
+      "user_removed_per_file": {
+        "docs/demo/video/index.html": 138
+      }
+    }
+  ]
+}
