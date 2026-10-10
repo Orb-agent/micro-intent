@@ -506,8 +506,10 @@ class Agent:
                 self.last_interaction_id = interaction.id
                 self.pending_results = _respond_results(calls, respond_call, {"ok": True})
                 say = args.get("say") if isinstance(args, dict) else None
-                if not isinstance(say, str) or not say:
+                if not isinstance(say, str):
                     return {"say": SORRY, "cards": []}
+                if not say:  # a proactive turn with nothing to say (contracts § Proactive turns)
+                    return {"say": "", "cards": []}
 
                 cards = [] if err else (args.get("cards") or [])
                 if not err:

@@ -47,6 +47,15 @@ SCREEN_CLIP_MAX_BYTES = 8 * 1024 * 1024  # `data` and `recent` together, decoded
 SCREEN_MAX_AGE = 120  # s; contracts § HTTP, screenshot rule
 VISION_WAIT = 5  # s a turn waits for a running vision call
 
+# contracts § Proactive turns: the turn's text when the agent speaks up on its own about a screen.
+PROACTIVE = """(Not the user speaking: they just shared this screen without a question.) \
+Speak only if there is something concrete to do about <screen_context> now, such as a plan to \
+check against the calendar and the trains. Then answer it as if they had asked "Can I make it?", \
+in the language they spoke before or else English, and end `say` with a short offer such as \
+"Shall I add it?". You never write anything yourself: whatever would be added, sent or changed \
+is only a suggestion the user confirms, shown in the cards. Don't ask how they feel in this turn. \
+If there is nothing concrete to do, call `respond` with an empty `say` and no cards: you stay silent."""
+
 
 @dataclass
 class Screenshot:
@@ -63,6 +72,7 @@ class Screenshot:
 # Single user: one latest screenshot, shared by all sessions.
 latest: Screenshot | None = None
 sessions: set["Session"] = set()
+offered: str | None = None  # the last screen offered for a proactive turn, see offer_screen()
 
 
 class StubAgent:
@@ -130,7 +140,29 @@ async def read_latest(shot: Screenshot, reuse: dict | None = None) -> dict | Non
     summary = screen.get("summary") if screen else None
     log.info("screenshot %d read in %.2fs: %r", shot.id, time.monotonic() - t0, summary)
     await broadcast({"type": "screen_ok"} | ({"summary": summary} if summary else {}))
+    if screen is not None and reuse is None:
+        offer_screen(shot, screen)
     return screen
+
+
+def proactive_on() -> bool:
+    return os.environ.get("PROACTIVE_SCREEN", "1") == "1"
+
+
+def offer_screen(shot: Screenshot, screen: dict) -> None:
+    """contracts § Proactive turns: a freshly read screen starts a turn in the newest session,
+    unless the user is talking there or a turn runs. Each screen at most once: a new screenshot
+    whose reading differs only in its summary is the same screen."""
+    global offered
+    key = json.dumps({k: v for k, v in screen.items() if k != "summary"}, sort_keys=True, ensure_ascii=False)
+    if not proactive_on() or not sessions or key == offered:
+        return
+    offered = key  # also when busy: the user's own turn takes this screen
+    session = max(sessions, key=lambda s: s.opened)
+    if session.busy:
+        log.info("screenshot %d: the user is talking or a turn runs, no proactive turn", shot.id)
+        return
+    session.turn_task = asyncio.create_task(session.run_turn(PROACTIVE, proactive=(shot, screen)))
 
 
 def store_screenshot(image: bytes, mime: str, earlier=()) -> None:
@@ -234,6 +266,7 @@ class Session:
         self.stt: voice.Transcriber | None = None
         self.listener = voice.ContinuousTranscriber(self.heard_speech, self.heard_turn) if handsfree else None
         self.turn_task: asyncio.Task | None = None
+        self.opened = time.monotonic()
         self._send_lock = asyncio.Lock()
 
     async def send(self, msg: dict) -> None:
@@ -243,7 +276,20 @@ class Session:
     async def state(self, state: str, label: str | None = None) -> None:
         await self.send({"type": "state", "state": state} | ({"label": label} if label else {}))
 
-    async def run_turn(self, text: str, timings: dict[str, float] | None = None) -> None:
+    @property
+    def busy(self) -> bool:
+        """The user is holding the orb or talking hands-free, or a turn runs."""
+        hearing = self.listener is not None and self.listener.hearing
+        return self.stt is not None or hearing or (self.turn_task is not None and not self.turn_task.done())
+
+    async def run_turn(
+        self,
+        text: str,
+        timings: dict[str, float] | None = None,
+        proactive: tuple[Screenshot, dict] | None = None,
+    ) -> None:
+        """One turn. `proactive`: the screenshot and reading the agent speaks up about unasked;
+        it stays silent if the reply's `say` is empty (contracts § Proactive turns)."""
         self.turns += 1
         t0 = time.monotonic()
         timings = timings or {}
@@ -252,17 +298,22 @@ class Session:
         async def on_status(label: str) -> None:
             await self.state("searching", label)
 
-        shot, screen = await take_screen()
+        shot, screen = proactive or await take_screen()
         timings["vision_wait"] = time.monotonic() - t0
         t_agent = time.monotonic()
         try:
             reply = await self.agent.turn(text, screen, on_status)
         except Exception:
             log.exception("turn failed")
-            await self.send({"type": "error", "message": "Sorry, something went wrong."})
+            if not proactive:  # nobody asked, so nothing to apologize for
+                await self.send({"type": "error", "message": "Sorry, something went wrong."})
             await self.state("idle")
             return
         timings["agent"] = time.monotonic() - t_agent
+        if proactive and not reply["say"]:
+            await self.state("idle")
+            log.info("proactive turn %d on screenshot %d: nothing to say, %.2fs", self.turns, shot.id, timings["agent"])
+            return
         if shot is not None:
             shot.used = True
 
@@ -281,7 +332,8 @@ class Session:
         await self.send({"type": "audio_end"})
         await self.state("idle")
         timings["total"] = time.monotonic() - t0
-        log.info("turn %d %r timings %s", self.turns, text, {k: round(v, 2) for k, v in timings.items()})
+        label = f"proactive on screenshot {shot.id}" if proactive else repr(text)
+        log.info("turn %d %s timings %s", self.turns, label, {k: round(v, 2) for k, v in timings.items()})
 
     async def voice_turn(self, stt: voice.Transcriber) -> None:
         t0 = time.monotonic()

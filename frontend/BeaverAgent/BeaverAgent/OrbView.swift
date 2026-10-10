@@ -34,6 +34,8 @@ struct OrbView: View {
 struct OrbLabel: View {
     let state: OrbState
     let label: String?
+    /// The dock's glass namespace, so the pill morphs with the chips around it.
+    var glass: Namespace.ID?
 
     @Environment(\.typeScale) private var type
 
@@ -50,8 +52,17 @@ struct OrbLabel: View {
         .padding(.horizontal, 12)
         .frame(minHeight: Theme.Size.pillHeight)
         .glassSurface(.pill, cornerRadius: Theme.Size.pillHeight / 2)
+        .modifier(StatusGlassID(glass: glass))
         .animation(.timingCurve(0.4, 0, 0.2, 1, duration: Theme.Motion.base), value: label)
         .animation(.timingCurve(0.4, 0, 0.2, 1, duration: Theme.Motion.base), value: state)
+    }
+}
+
+private struct StatusGlassID: ViewModifier {
+    let glass: Namespace.ID?
+
+    func body(content: Content) -> some View {
+        if let glass { content.glassID("status", in: glass) } else { content }
     }
 }
 

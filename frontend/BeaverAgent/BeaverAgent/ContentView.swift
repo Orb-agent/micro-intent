@@ -6,8 +6,10 @@ struct ContentView: View {
     @Binding var sheet: AppSheet?
 
     @Environment(\.typeScale) private var type
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pressing = false
     @State private var debugHold: Task<Void, Never>?
+    @Namespace private var glass
 
     var body: some View {
         VStack(spacing: 0) {
@@ -16,16 +18,19 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     if let screen = session.screen {
                         ScreenChip(summary: screen.summary)
-                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .transition(.orbsCard(reduceMotion: reduceMotion))
                     }
                     turn
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 16)
                 .padding(.top, 8)
                 .padding(.bottom, 28)
-                .animation(.timingCurve(0.16, 1, 0.3, 1, duration: Theme.Motion.panel), value: session.screen)
-                .animation(.timingCurve(0.16, 1, 0.3, 1, duration: Theme.Motion.panel), value: session.reply)
+                .glassGroup(spacing: 14)
+                .animation(motion, value: session.screen)
+                .animation(motion, value: session.reply)
+                .animation(motion, value: session.awaitingReply)
+                .animation(motion, value: session.errorMessage)
             }
             .scrollIndicators(.hidden)
             .mask {
@@ -41,6 +46,9 @@ struct ContentView: View {
         .background(AppBackground())
     }
 
+    /// State changes use the kit's 200 ms curve; reduced motion fades only.
+    private var motion: Animation { reduceMotion ? Theme.Motion.reduced : Theme.Motion.standard }
+
     // MARK: - Top bar
 
     private var topBar: some View {
@@ -50,19 +58,28 @@ struct ContentView: View {
                 .tracking(-0.68)
                 .foregroundStyle(Theme.textPrimary)
             Spacer()
-            ConnectionBadge(connection: session.connection)
-            Button {
-                sheet = .settings
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(Theme.textPrimary)
-                    .frame(width: 48, height: 48)
-                    .glassSurface(.flat, cornerRadius: 24)
+            HStack(spacing: 8) {
+                // Replayed answers need no server, so there is nothing to report.
+                if session.connection != .fixtures {
+                    ConnectionBadge(connection: session.connection)
+                        .glassID("connection", in: glass)
+                        .transition(.opacity)
+                }
+                Button {
+                    sheet = .settings
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(Theme.textPrimary)
+                        .frame(width: Theme.Size.touchMin, height: Theme.Size.touchMin)
+                }
+                .glassIconButton()
+                .accessibilityLabel("Settings")
             }
-            .accessibilityLabel("Settings")
+            .glassGroup(spacing: 8)
+            .animation(motion, value: session.connection)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
         .padding(.vertical, 8)
     }
 
@@ -76,36 +93,46 @@ struct ContentView: View {
                 .foregroundStyle(Theme.textMuted)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 4)
+                .contentTransition(.opacity)
         }
-        if let reply = session.reply {
+        if session.awaitingReply {
+            // The answer is on its way: soft placeholders where it will land, and the reply
+            // sheet morphs out of the first one.
+            PlaceholderCards(steps: session.steps, glass: glass)
+                .transition(.orbsCard(reduceMotion: reduceMotion))
+        } else if let reply = session.reply {
             MascotBubble(say: reply.say, steps: session.steps)
+                .glassID("reply", in: glass)
                 .id(reply.say)
-                .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
+                .transition(.orbsCard(reduceMotion: reduceMotion))
             CardsView(surfaces: session.surfaces, cards: reply.cards)
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
-            if session.orb == .idle {
-                // After the cards, never over them.
-                IntentChips { session.ask($0) }
-                    .padding(.horizontal, -20)
-                    .transition(.opacity)
-            }
+                .transition(.orbsCard(reduceMotion: reduceMotion))
         } else if session.transcript == nil {
             Welcome(listening: session.orb == .listening, handsFree: session.handsFree)
+                .transition(.opacity)
         }
         if let error = session.errorMessage {
-            Label(error, systemImage: "exclamationmark.triangle.fill")
-                .font(type.bodyStrong)
-                .foregroundStyle(Theme.dangerText)
-                .padding(20)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous).fill(Theme.dangerSoft))
+            ErrorCard(message: error, retry: retry)
+                .transition(.orbsCard(reduceMotion: reduceMotion))
         }
+    }
+
+    /// Asks the last question again; only offered when there is one.
+    private var retry: (() -> Void)? {
+        guard let transcript = session.transcript, session.orb == .idle else { return nil }
+        return { session.ask(transcript) }
     }
 
     // MARK: - Orb dock
 
+    /// Bottom-anchored, so the orb keeps its place whatever shows above it: the intent chips
+    /// grow upward, and the status pill under the orb only changes its text.
     private var orbDock: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 10) {
+            if showsChips {
+                IntentChips(glass: glass) { session.ask($0) }
+                    .transition(.opacity)
+            }
             OrbView(state: session.orb)
                 .contentShape(Circle())
                 .gesture(orbPress)
@@ -119,22 +146,29 @@ struct ContentView: View {
                     } label: {
                         Image(systemName: "keyboard")
                             .font(.system(size: 18, weight: .medium))
-                            .foregroundStyle(Theme.textSecondary)
-                            .frame(width: 48, height: 48)
-                            .glassSurface(.flat, cornerRadius: 24)
+                            .foregroundStyle(Theme.textPrimary)
+                            .frame(width: Theme.Size.touchMin, height: Theme.Size.touchMin)
                     }
-                    .padding(.trailing, 20)
+                    .glassIconButton()
+                    .padding(.trailing, 16)
                     .accessibilityLabel("Type a question")
                 }
-            OrbLabel(state: session.orb, label: orbLabel)
+            OrbLabel(state: session.orb, label: orbLabel, glass: glass)
         }
         .padding(.bottom, 8)
         .frame(maxWidth: .infinity)
-        .animation(.timingCurve(0.4, 0, 0.2, 1, duration: Theme.Motion.base), value: session.orb)
+        .glassGroup(spacing: 10)
+        .animation(motion, value: session.orb)
+        .animation(motion, value: showsChips)
+    }
+
+    /// Follow-up chips after an answer, once the orb is back to idle.
+    private var showsChips: Bool {
+        session.orb == .idle && session.reply != nil && !session.awaitingReply
     }
 
     /// Live: hold to talk, tap to stop the mascot (see `AgentSession.orbPressBegan`).
-    /// Demo data: hold to type a question, as before there was a mic.
+    /// Without a server: hold to type a question.
     private var orbPress: some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { _ in
@@ -282,8 +316,10 @@ struct ScreenChip: View {
     }
 }
 
-/// Spec "IntentChip" on iPhone: capsules in a horizontal scroll row; each sends a typed turn.
+/// Spec "IntentChip" on iPhone: glass capsules in a horizontal scroll row; each sends a typed
+/// turn. They share the dock's glass container, so they morph out of and back into the pill.
 private struct IntentChips: View {
+    let glass: Namespace.ID
     let ask: (String) -> Void
     @Environment(\.typeScale) private var type
 
@@ -300,33 +336,117 @@ private struct IntentChips: View {
                     Button { ask(text) } label: {
                         Label(text, systemImage: icon)
                             .font(type.label)
-                            .foregroundStyle(Theme.textSecondary)
+                            .foregroundStyle(Theme.textPrimary)
                             .padding(.horizontal, 16)
                             .frame(minHeight: Theme.Size.touchMin)
-                            .background(Capsule().fill(Theme.surfaceChip))
-                            .overlay(Capsule().strokeBorder(Theme.borderSubtle))
+                            .glassSurface(.pill, cornerRadius: Theme.Size.touchMin / 2, interactive: true)
+                            .glassID("chip-\(text)", in: glass)
                     }
+                    .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 4)
         }
         .scrollIndicators(.hidden)
+        .scrollClipDisabled()
     }
 }
 
+/// Soft placeholders where the answer will land while a turn runs: the reply sheet and two
+/// card outlines. No fake progress; the visible status stays in the pill.
+private struct PlaceholderCards: View {
+    let steps: [String]
+    let glass: Namespace.ID
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let t = timeline.date.timeIntervalSinceReferenceDate
+            let pulse = reduceMotion ? 0.7 : 0.55 + 0.25 * (0.5 + 0.5 * sin(t * 2 * .pi / 1.6))
+            VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 12) {
+                    bar(width: 0.9, height: 18)
+                    bar(width: 0.6, height: 18)
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .glassSurface(.panel, cornerRadius: Theme.Radius.xxl)
+                .glassID("reply", in: glass)
+                ForEach(0..<2, id: \.self) { i in
+                    VStack(alignment: .leading, spacing: 10) {
+                        bar(width: i == 0 ? 0.45 : 0.55, height: 22)
+                        bar(width: 0.75, height: 12)
+                        bar(width: 0.5, height: 12)
+                    }
+                    .padding(20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous).fill(Theme.surfaceCard))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous).strokeBorder(Theme.borderSubtle, lineWidth: 1))
+                }
+            }
+            .opacity(pulse)
+        }
+        .accessibilityElement()
+        .accessibilityLabel("Answer on its way")
+    }
+
+    private func bar(width: CGFloat, height: CGFloat) -> some View {
+        GeometryReader { proxy in
+            Capsule()
+                .fill(Theme.surfaceChip)
+                .frame(width: proxy.size.width * width, height: height)
+        }
+        .frame(height: height)
+    }
+}
+
+/// Kit "Error" card: what failed in words beside a warning icon, plus Retry when the
+/// last question can be asked again.
+private struct ErrorCard: View {
+    let message: String
+    let retry: (() -> Void)?
+
+    @Environment(\.typeScale) private var type
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Label {
+                Text(message)
+                    .font(type.bodyStrong)
+                    .foregroundStyle(Theme.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                Image(systemName: "exclamationmark.triangle")
+                    .foregroundStyle(Theme.dangerText)
+            }
+            if let retry {
+                Button("Retry", action: retry)
+                    .buttonStyle(BigButtonStyle(kind: .secondary))
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous).fill(Theme.surfaceCard))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous).strokeBorder(Theme.borderSubtle, lineWidth: 1))
+        .accessibilityElement(children: .contain)
+    }
+}
+
+/// Live connection status in words beside an icon (never color alone).
 struct ConnectionBadge: View {
     let connection: AgentSession.Connection
 
     var body: some View {
-        HStack(spacing: 8) {
-            Circle()
-                .fill(color)
-                .frame(width: 9, height: 9)
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .semibold))
             Text(text)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Theme.textTertiary)
+                .font(.system(size: 14, weight: .medium))
                 .lineLimit(1)
         }
+        .foregroundStyle(Theme.textPrimary)
         .padding(.horizontal, 14)
         .frame(height: 36)
         .glassSurface(.flat, cornerRadius: 18)
@@ -335,19 +455,19 @@ struct ConnectionBadge: View {
 
     private var text: String {
         switch connection {
-        case .fixtures: "Demo data"
+        case .fixtures: ""
         case .connecting: "Connecting…"
         case .live: "Live"
         case .offline: "Offline"
         }
     }
 
-    private var color: Color {
+    private var icon: String {
         switch connection {
-        case .fixtures: Theme.accentText
-        case .connecting: Theme.warnText
-        case .live: Theme.successText
-        case .offline: Theme.dangerText
+        case .fixtures: "circle"
+        case .connecting: "arrow.triangle.2.circlepath"
+        case .live: "checkmark.circle"
+        case .offline: "exclamationmark.triangle"
         }
     }
 }

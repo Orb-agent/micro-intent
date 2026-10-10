@@ -42,6 +42,9 @@ final class AgentSession {
     private(set) var surfaces: [SurfaceViewModel] = []
     private(set) var screen: ScreenNotice?
     private(set) var errorMessage: String?
+    /// A turn is running and its reply hasn't arrived yet: the screen shows placeholder
+    /// cards instead of the previous turn's answer.
+    private(set) var awaitingReply = false
     private(set) var connection: Connection = .fixtures
 
     /// Card text follows the app's type scale ("Large text" in settings).
@@ -231,6 +234,10 @@ final class AgentSession {
             if state == .thinking && serverState != .thinking && serverState != .searching {
                 steps = []  // a new turn starts
                 errorMessage = nil
+                awaitingReply = true
+            }
+            if state == .idle || state == .listening {
+                awaitingReply = false
             }
             if state == .searching, let label, steps.last != label {
                 steps.append(label)
@@ -244,6 +251,7 @@ final class AgentSession {
             self.reply = reply
             surfaces = []
             errorMessage = nil
+            awaitingReply = false
         case .a2ui(let messages):
             surfaces = Self.surfaces(from: messages)
             surfaces.forEach { $0.applyAppStyle(typeScale) }
@@ -251,6 +259,7 @@ final class AgentSession {
             showScreen(ScreenNotice(summary: summary))
         case .error(let message):
             errorMessage = message
+            awaitingReply = false
         }
     }
 
