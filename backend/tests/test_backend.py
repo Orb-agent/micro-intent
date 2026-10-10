@@ -295,7 +295,8 @@ def test_flights_service_build_url():
     assert "through" in url_round
 
 
-def test_flights_service_search():
+def test_flights_service_search_without_live_data_invents_nothing(monkeypatch):
+    monkeypatch.delenv("SERPAPI_API_KEY", raising=False)
     result = flights_service.search_flights(
         origin="ZRH",
         destination="LIS",
@@ -305,13 +306,8 @@ def test_flights_service_search():
     )
     assert result["origin"] == "ZRH"
     assert result["destination"] == "LIS"
-    assert "google_flights_url" in result
-    assert len(result["flights"]) > 0
-    flight = result["flights"][0]
-    assert flight["from"] == "ZRH"
-    assert flight["to"] == "LIS"
-    assert "flight_number" in flight
-    assert "google_flights_url" in flight
+    assert "https://www.google.com/travel/flights?q=" in result["google_flights_url"]
+    assert result["flights"] == []
 
 
 @patch("services.flights_service.gmail_service.list_messages")
@@ -334,6 +330,22 @@ def test_flights_service_get_reservations_from_gmail(mock_list):
     assert res["from"] == "ZRH"
     assert res["to"] == "LIS"
     assert "https://www.google.com/travel/flights?q=" in res["google_flights_url"]
+
+
+@patch("services.flights_service.gmail_service.list_messages")
+def test_flights_service_reservations_never_invent_details(mock_list):
+    mock_list.return_value = [
+        {"id": "hotel", "subject": "Your booking at Hotel Bern", "snippet": "See you soon", "from": "Hotel", "date": "2026-10-09"},
+        {"id": "flight", "subject": "Your SWISS flight", "snippet": "Flight LX 1820 is confirmed", "from": "SWISS", "date": "2026-10-09"},
+    ]
+    reservations = flights_service.get_user_flight_reservations("test_access_token")
+    assert len(reservations) == 1
+    res = reservations[0]
+    assert res["flight_number"] == "LX 1820"
+    assert res["airline"] == "SWISS"
+    assert res["booking_ref"] is None
+    assert res["from"] is None and res["to"] is None
+    assert res["departure"] is None
 
 
 @patch("main.flights_service.search_flights")
