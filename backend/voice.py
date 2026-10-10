@@ -34,6 +34,7 @@ END_HORIZON_S = 2.0  # read the `vad` entry with this horizon_s
 END_PROB = 0.5  # its inactivity_prob must be above this...
 END_STEPS = 3  # ...for this many steps in a row, once the turn has text
 REOPEN_AFTER_S = 1.0  # a closed hands-free session reopens on the next audio, at most once a second
+BACKLOG_CHUNKS = 25  # hands-free audio waiting for a session: the newest 2 s, older chunks drop
 
 # Gradium keyword boosting for the demo's place names. Case-sensitive, hence the variants.
 # Synthetic test voices still say "Bern" like "burn", so the agent also resolves names.
@@ -154,7 +155,8 @@ class ContinuousTranscriber:
         language: str = "en",
     ):
         self._on_speech, self._on_turn, self._language = on_speech, on_turn, language
-        self._queue: asyncio.Queue[bytes] = asyncio.Queue()
+        self._queue: asyncio.Queue[bytes] = asyncio.Queue(BACKLOG_CHUNKS)
+        self._turn = TurnDetector()  # outlives a session, so a turn survives a reopen
         self._task: asyncio.Task | None = None
         self._opened = float("-inf")
 
@@ -163,6 +165,8 @@ class ContinuousTranscriber:
         if closed and time.monotonic() - self._opened > REOPEN_AFTER_S:
             self._opened = time.monotonic()
             self._task = asyncio.create_task(self._run())
+        if self._queue.full():  # no session drains it: drop the oldest, never replay a stale backlog
+            self._queue.get_nowait()
         self._queue.put_nowait(base64.b64decode(b64))
 
     def cancel(self) -> None:
@@ -189,7 +193,8 @@ class ContinuousTranscriber:
         log.info("hands-free STT session closed; the next audio reopens it")
 
     async def _listen(self, stt) -> None:
-        turn, flushing = TurnDetector(), False
+        # A flush sent on a closed session gets no `flushed`; an ended turn flushes again on the next `step`.
+        turn, flushing = self._turn, False
         async for msg in _messages(stt):
             fresh = not turn.words
             ended = turn.feed(msg)

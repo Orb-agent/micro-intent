@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 from types import SimpleNamespace
 
@@ -38,14 +39,15 @@ def test_end_of_turn_rule():
     assert not any(turn.feed(step(0.99)) for _ in range(5))  # next turn starts empty
 
 
+async def frames(msgs):
+    for m in msgs:
+        yield SimpleNamespace(type=aiohttp.WSMsgType.TEXT, data=json.dumps(m))
+
+
 async def test_flush_then_emit_one_turn():
     msgs = [text("Can"), text("I"), step(0.9), step(0.9), step(0.9), step(0.9),
             text("go"), {"type": "flushed", "flush_id": 0}, text("Next")]
     events, flushes = [], []
-
-    async def frames():
-        for m in msgs:
-            yield SimpleNamespace(type=aiohttp.WSMsgType.TEXT, data=json.dumps(m))
 
     async def send_flush():
         flushes.append(len(events))
@@ -56,10 +58,45 @@ async def test_flush_then_emit_one_turn():
     async def on_turn(t):
         events.append(t)
 
-    stt = SimpleNamespace(_ws=frames(), send_flush=send_flush)
+    stt = SimpleNamespace(_ws=frames(msgs), send_flush=send_flush)
     await voice.ContinuousTranscriber(on_speech, on_turn)._listen(stt)
     assert events == ["speech", "Can I go", "speech"]  # the word after `flush` joins the turn
     assert flushes == [1]  # one flush, after the first words
+
+
+async def test_turn_survives_a_reopen():
+    events, flushes = [], []
+
+    async def send_flush():
+        flushes.append(len(events))
+
+    async def on_speech():
+        events.append("speech")
+
+    async def on_turn(t):
+        events.append(t)
+
+    stt = voice.ContinuousTranscriber(on_speech, on_turn)
+    # Gradium closes the session after the end-of-turn flush, before its `flushed`.
+    await stt._listen(SimpleNamespace(_ws=frames([text("Can"), text("I"), step(0.9), step(0.9), step(0.9)]),
+                                      send_flush=send_flush))
+    await stt._listen(SimpleNamespace(_ws=frames([step(0.9), {"type": "flushed", "flush_id": 0}]),
+                                      send_flush=send_flush))
+    assert events == ["speech", "Can I"]  # one turn, its words kept across the reopen
+    assert flushes == [1, 1]  # the new session flushes again
+
+
+async def test_backlog_is_bounded_while_no_session_opens(monkeypatch):
+    def refused():
+        raise RuntimeError("concurrent session limit")
+
+    monkeypatch.setattr(voice, "client", refused)
+    stt = voice.ContinuousTranscriber(None, None)
+    for i in range(100):  # 8 s of audio, no session to drain it
+        stt.push(base64.b64encode(bytes([i])).decode())
+        await asyncio.sleep(0)  # lets the open attempt fail
+    assert stt._queue.qsize() == voice.BACKLOG_CHUNKS
+    assert stt._queue.get_nowait() == bytes([100 - voice.BACKLOG_CHUNKS])  # only the newest audio waits
 
 
 class FakeListener:
