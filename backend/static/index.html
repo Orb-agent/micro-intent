@@ -265,10 +265,12 @@ function snap() { // the shared screen now, at most 1280 wide, as base64 JPEG 0.
 function grabScreen(why) {
   if (!screenVideo || !screenVideo.videoWidth || performance.now() - lastGrab < 1500) return;
   lastGrab = performance.now();
-  const f = snap();
+  const f = snap(), recent = ring.at(-1) === f.data ? ring.slice(0, -1) : ring; ring = [];
+  let bytes = [f.data, ...recent].reduce((n, d) => n + d.length * 0.75, 0);
+  while (recent.length && bytes > 8 << 20) bytes -= recent.shift().length * 0.75; // contract: all images ≤ 8 MB
   $("screenThumb").src = "data:image/jpeg;base64," + f.data; $("screenThumb").style.display = "block";
-  send({ type: "screen", mime: "image/jpeg", data: f.data });
-  log(`screen frame sent (${why}, ${f.w}x${f.h}, ${Math.round(f.data.length * 0.75 / 1024)} KB)`);
+  send({ type: "screen", mime: "image/jpeg", data: f.data, ...(recent.length && { recent }) });
+  log(`screen frame sent (${why}, ${f.w}x${f.h}, ${recent.length} earlier, ${Math.round(bytes / 1024)} KB)`);
 }
 
 // ---------- Text ----------
