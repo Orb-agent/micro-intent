@@ -311,9 +311,15 @@ class Session:
 @app.websocket("/ws")
 async def ws_endpoint(ws: WebSocket):
     await ws.accept()
+    # A malformed frame: bad JSON (ValueError), a binary frame (KeyError), bad base64 (ValueError).
+    # Not RuntimeError: Starlette raises it on every receive once the socket is gone.
+    bad_frame = (ValueError, KeyError, TypeError)
     try:
-        hello = await ws.receive_json()
-        if hello.get("type") != "hello" or not token_ok(hello.get("token")):
+        try:
+            hello = await ws.receive_json()
+        except bad_frame:
+            hello = None
+        if not isinstance(hello, dict) or hello.get("type") != "hello" or not token_ok(hello.get("token")):
             await ws.close(code=1008)
             return
         session = Session(ws, handsfree=hello.get("mode") == "handsfree")
@@ -322,9 +328,12 @@ async def ws_endpoint(ws: WebSocket):
         sessions.add(session)
         try:
             while True:
-                msg = await ws.receive_json()
-                if isinstance(msg, dict):
-                    await session.handle(msg)
+                try:
+                    msg = await ws.receive_json()
+                    if isinstance(msg, dict):
+                        await session.handle(msg)
+                except bad_frame as e:
+                    log.warning("ignored malformed frame: %r", e)
         finally:
             sessions.discard(session)
             session.close()

@@ -21,6 +21,16 @@ class FakeTranscriber:
         pass
 
 
+class OfflineTranscriber(server.voice.Transcriber):
+    """The real push(), which base64-decodes, without opening Gradium."""
+
+    def __init__(self):
+        self._queue = asyncio.Queue()
+
+    def cancel(self):
+        pass
+
+
 async def fake_speak(text):
     for chunk in ("AAAA", "BBBB"):
         yield chunk
@@ -101,6 +111,33 @@ def test_wrong_token_is_rejected(client):
         with pytest.raises(WebSocketDisconnect) as exc:
             ws.receive_json()
     assert exc.value.code == 1008
+
+
+def test_non_dict_hello_is_rejected(client):
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json(["hello", "test-token"])
+        with pytest.raises(WebSocketDisconnect) as exc:
+            ws.receive_json()
+    assert exc.value.code == 1008
+
+
+def test_malformed_frames_are_ignored(client):
+    ctx, ws = connect(client)
+    ws.send_text("{not json")
+    ws.send_bytes(b"\x00")
+    ws.send_json({"type": "text", "text": "hi"})
+    assert ws.receive_json() == {"type": "state", "state": "thinking"}
+    ctx.__exit__(None, None, None)
+
+
+def test_bad_base64_audio_is_ignored(client, monkeypatch):
+    monkeypatch.setattr(server.voice, "Transcriber", OfflineTranscriber)
+    ctx, ws = connect(client)
+    ws.send_json({"type": "audio", "data": "AAA"})  # bad padding: push() raises binascii.Error
+    assert ws.receive_json() == {"type": "state", "state": "listening"}
+    ws.send_json({"type": "text", "text": "hi"})
+    assert ws.receive_json() == {"type": "state", "state": "thinking"}
+    ctx.__exit__(None, None, None)
 
 
 def speak_slowly_until_first_audio(client, monkeypatch):
