@@ -240,7 +240,7 @@ class Agent:
 - Declare functions with `parameters_json_schema`. For `cards.items`, use `anyOf` with one object per kind, each with a single-value `enum` on `kind`. Don't use `const`, `oneOf` or `$defs`, keep it shallow, and validate the arguments in code anyway.
 - Function calling mode `ANY` on every step, so the model always calls `sbb_connections` or `respond` and never returns free text. On the last step add `allowed_function_names=["respond"]`.
 - Append `response.candidates[0].content` to the history unmodified; it carries the thought signatures, and dropping them gives a 400. Then add one function response per call, with the call's `id` and `name`, after all the calls.
-- Vision attaches the screenshot as an inline image part at medium media resolution (560 tokens); use high if small chat text comes back wrong.
+- Vision attaches the screenshot as an inline image part at medium media resolution (560 tokens); use high if small chat text comes back wrong. Earlier frames (`recent`) go before it, each labelled `Frame -Ns`, at low resolution per part.
 
 **Context.** `context.load_context()` runs once per session and goes into the system prompt as JSON:
 
