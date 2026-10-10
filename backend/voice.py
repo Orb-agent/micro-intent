@@ -228,6 +228,11 @@ class ContinuousTranscriber:
         self._task: asyncio.Task | None = None
         self._opened = float("-inf")
 
+    @property
+    def hearing(self) -> bool:
+        """The user is mid-turn: Gradium has heard words and the turn hasn't ended."""
+        return bool(self._turn.words)
+
     def push(self, b64: str) -> None:
         closed = self._task is None or self._task.done()
         if closed and time.monotonic() - self._opened > REOPEN_AFTER_S:
