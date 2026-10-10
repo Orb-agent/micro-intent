@@ -3,7 +3,7 @@
   "checkpoint_id": "01M4JXXPREVNF8ZRXTH4EG45YY",
   "strategy": "manual-commit",
   "branch": "feature/wp2-backend-voice-vision",
-  "checkpoints_count": 1,
+  "checkpoints_count": 3,
   "files_touched": [
     "backend/voice.py"
   ],
@@ -14,13 +14,27 @@
       "compact_transcript": "/0/transcript.jsonl",
       "content_hash": "/0/content_hash.txt",
       "prompt": "/0/prompt.txt"
+    },
+    {
+      "metadata": "/1/metadata.json",
+      "transcript": "/1/full.jsonl",
+      "compact_transcript": "/1/transcript.jsonl",
+      "content_hash": "/1/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
-    "input_tokens": 8,
-    "cache_creation_tokens": 11163,
-    "cache_read_tokens": 463154,
-    "output_tokens": 2696,
-    "api_call_count": 4
+    "input_tokens": 18,
+    "cache_creation_tokens": 18429,
+    "cache_read_tokens": 2708171,
+    "output_tokens": 6168,
+    "api_call_count": 9,
+    "subagent_tokens": {
+      "input_tokens": 8,
+      "cache_creation_tokens": 5536,
+      "cache_read_tokens": 678451,
+      "output_tokens": 1374,
+      "api_call_count": 4
+    }
   }
 }
