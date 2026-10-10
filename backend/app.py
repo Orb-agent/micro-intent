@@ -204,6 +204,11 @@ async def prototype_client():
     return FileResponse(HERE / "static" / "index.html")
 
 
+@app.get("/static/travel-ui.mjs")
+async def travel_ui():
+    return FileResponse(HERE / "static" / "travel-ui.mjs", media_type="text/javascript")
+
+
 @app.get("/health")
 async def health():
     return {"ok": True, "workspace": os.environ.get("WORKSPACE_MODE", "fixture")}
