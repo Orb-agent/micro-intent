@@ -20,6 +20,11 @@
 			path = BeaverAgent;
 			sourceTree = "<group>";
 		};
+		B1A2C3D4E5F60718293A4B21 /* NativeCards */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = NativeCards;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -38,6 +43,7 @@
 			isa = PBXGroup;
 			children = (
 				B1A2C3D4E5F60718293A4B20 /* BeaverAgent */,
+				B1A2C3D4E5F60718293A4B21 /* NativeCards */,
 				B1A2C3D4E5F60718293A4B41 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -67,6 +73,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				B1A2C3D4E5F60718293A4B20 /* BeaverAgent */,
+				B1A2C3D4E5F60718293A4B21 /* NativeCards */,
 			);
 			name = BeaverAgent;
 			packageProductDependencies = (
