@@ -15,7 +15,7 @@ The agent is WP3's `agent.py` when it exists, else the prototype `dev_agent.py`.
 
 ## Desktop and Chrome
 
-The desktop client at `/` supports typed questions, push-to-talk, hands-free voice, spoken replies, screen sharing, and cards. Launch it in desktop Chrome with the token in the URL fragment (the client stores it locally, then removes it from the address bar):
+The Orbs desktop client at `/` supports typed questions, push-to-talk, hands-free voice, spoken replies, screen sharing, and cards. Launch it in desktop Chrome with the token in the URL fragment (the client stores it locally, then removes it from the address bar):
 
 ```bash
 open -a "Google Chrome" "http://localhost:8000/#token=$(grep '^APP_TOKEN=' .env | cut -d= -f2-)"

@@ -1,6 +1,14 @@
 "use strict";
 const RATE = 24000; // 24 kHz mono, contracts § Audio
 const $ = (id) => document.getElementById(id);
+function orbMark() {
+  const ticks = Array.from({ length: 48 }, (_, i) =>
+    `<rect x="48" y="4" width="4" height="10" rx="2" transform="rotate(${i * 7.5} 50 50)"/>`
+  ).join("");
+  return `<svg viewBox="0 0 100 100" aria-hidden="true"><g fill="currentColor">${ticks}</g></svg>`;
+}
+$("orb").innerHTML = orbMark();
+$("brandMark").innerHTML = orbMark().replace('<svg viewBox="0 0 100 100" aria-hidden="true">', '<g>').replace('</svg>', '</g>');
 const log = (...a) => { const l = $("log"); l.textContent += a.join(" ") + "\n"; l.scrollTop = l.scrollHeight; };
 
 let token = "", server = "";
@@ -186,7 +194,7 @@ async function initialize() {
   token = settings.beaverToken;
   if (!token) {
     setConn("token required", false);
-    $("label").textContent = "Open the Beaver Assistant popup and save your APP_TOKEN.";
+    $("label").textContent = "Open the Orbs popup and save your APP_TOKEN.";
     return;
   }
   connect();

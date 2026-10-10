@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Beaver Assistant",
-  "version": "1.0.0",
-  "description": "Open the Beaver desktop assistant with text and voice controls.",
+  "name": "Orbs",
+  "version": "1.1.0",
+  "description": "A desktop voice and text assistant, connected to your Orbs backend.",
   "permissions": ["storage"],
   "optional_host_permissions": [
     "http://localhost/*",
@@ -11,7 +11,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Beaver Assistant"
+    "default_title": "Orbs"
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:* http://127.0.0.1:* https://* wss://*"

@@ -3,23 +3,27 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Beaver Assistant</title>
+    <title>Orbs</title>
     <style>
       :root { color-scheme: light dark; font: 14px/1.45 system-ui, sans-serif; }
       body { width: 320px; margin: 0; padding: 18px; color: CanvasText; background: Canvas; }
+      .brand { display: flex; align-items: center; gap: 10px; }
+      .brand-icon { width: 30px; height: 30px; border-radius: 9px; background: #fff url("orb-icon.svg") center / cover no-repeat; }
+      @media (prefers-color-scheme: dark) { .brand-icon { filter: invert(1); } }
       h1 { margin: 0; font-size: 18px; }
       p { margin: 6px 0 16px; color: GrayText; }
       label { display: grid; gap: 5px; margin: 12px 0; font-size: 12px; font-weight: 600; }
       input { box-sizing: border-box; width: 100%; padding: 9px 10px; border: 1px solid #8886; border-radius: 8px; background: Canvas; color: CanvasText; font: inherit; }
-      button { width: 100%; min-height: 38px; margin-top: 8px; border: 0; border-radius: 9px; background: #a94f23; color: white; font: inherit; font-weight: 650; cursor: pointer; }
+      button { width: 100%; min-height: 38px; margin-top: 8px; border: 0; border-radius: 9px; background: #111; color: white; font: inherit; font-weight: 650; cursor: pointer; }
       button.secondary { border: 1px solid #8886; background: transparent; color: CanvasText; }
+      @media (prefers-color-scheme: dark) { button:not(.secondary) { background: white; color: #111; } }
       button:disabled { opacity: .55; cursor: wait; }
       #status { min-height: 1.4em; margin: 10px 0 0; font-size: 12px; }
       .hint { margin-top: 14px; font-size: 11px; }
     </style>
   </head>
   <body>
-    <h1>Beaver Assistant</h1>
+    <div class="brand"><span class="brand-icon" aria-hidden="true"></span><h1>Orbs</h1></div>
     <p>Desktop voice and text assistant</p>
     <label for="server">Backend URL</label>
     <input id="server" type="url" placeholder="http://localhost:8000" autocomplete="url">

@@ -44,7 +44,7 @@ saveButton.addEventListener("click", async () => {
     const granted = await chrome.permissions.request({ origins: [hostPattern(server)] });
     if (!granted) throw new Error("Server access was not granted; settings were not changed.");
     await chrome.storage.local.set({ beaverServer: server, beaverToken: token });
-    status.textContent = "Saved. Text and voice connect through this server.";
+    status.textContent = "Saved. Orbs will use this server for text and voice.";
   } catch (error) {
     status.textContent = error.message || "Could not save settings.";
   } finally {
