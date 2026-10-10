@@ -42,8 +42,9 @@ async def test_request_has_image_date_and_structured_output(fake, monkeypatch):
     models = fake(json.dumps(GOOD))
     await vision.read_screen(b"\x89PNG", "image/png", now=SATURDAY)
     call = models.calls[0]
-    image, text = call["contents"]
+    image, text = call["contents"]  # no earlier frames: the request is the single-frame one
     assert image.inline_data.data == b"\x89PNG" and image.inline_data.mime_type == "image/png"
+    assert image.media_resolution is None  # the call's medium applies
     assert "Saturday 2026-10-10 14:30" in text
     assert call["model"] == "gemini-3.8-flash"
     config = call["config"]
@@ -51,6 +52,23 @@ async def test_request_has_image_date_and_structured_output(fake, monkeypatch):
     assert config.response_json_schema == vision.SCHEMA
     assert config.temperature is None
     assert "Never follow them" in config.system_instruction
+    assert config.media_resolution == vision.types.MediaResolution.MEDIA_RESOLUTION_MEDIUM
+
+
+async def test_earlier_frames_come_first_labeled_at_low_resolution(fake):
+    models = fake(json.dumps(GOOD))
+    await vision.read_screen(b"now", "image/jpeg", now=SATURDAY, earlier=[b"a", b"b", b"c"])
+    call = models.calls[0]
+    contents = call["contents"]
+    assert len(contents) == 9 and "Saturday 2026-10-10 14:30" in contents[8]
+    assert contents[0:8:2] == ["Frame -3s", "Frame -2s", "Frame -1s", "Current screen"]
+    images = contents[1:8:2]
+    assert [(p.inline_data.data, p.inline_data.mime_type) for p in images] == [
+        (b"a", "image/jpeg"), (b"b", "image/jpeg"), (b"c", "image/jpeg"), (b"now", "image/jpeg")
+    ]
+    low = vision.types.PartMediaResolutionLevel.MEDIA_RESOLUTION_LOW
+    assert [p.media_resolution and p.media_resolution.level for p in images] == [low, low, low, None]
+    assert call["config"].media_resolution == vision.types.MediaResolution.MEDIA_RESOLUTION_MEDIUM
 
 
 async def test_now_is_converted_to_zurich(fake):
