@@ -1,0 +1,81 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4KAM81P4X1XWJPDYW67TJY4",
+  "session_id": "0084effe-9cb3-402e-8f31-d92dfdc55953",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T16:34:08.718933Z",
+  "branch": "fm/micro-intent-ios-brand-theme-v1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "backend/app.py",
+    "backend/pyproject.toml",
+    "backend/tests/test_proactive.py",
+    "backend/tests/test_screen.py",
+    "backend/uv.lock",
+    "docs/contracts.md",
+    "frontend/BeaverAgent/BeaverAgent/AgentSession.swift",
+    "frontend/BeaverAgent/BeaverAgent/ContentView.swift",
+    "frontend/BeaverAgent/BeaverAgent/Fixtures.swift",
+    "frontend/BeaverAgent/BeaverAgent/Fixtures/screen_seen.json",
+    "frontend/BeaverAgent/BeaverAgent/Protocol.swift"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "7f494fc4c2d1",
+  "checkpoint_transcript_start": 661,
+  "transcript_lines_at_start": 661,
+  "compact_transcript_start": 113,
+  "token_usage": {
+    "input_tokens": 40,
+    "cache_creation_tokens": 30205,
+    "cache_read_tokens": 5268348,
+    "output_tokens": 14251,
+    "api_call_count": 20
+  },
+  "session_metrics": {
+    "turn_count": 6
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T16:34:08.506472Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 13,
+    "total_committed": 0,
+    "total_lines_changed": 13,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 186,
+      "user_lines_removed": 13,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 1,
+        "backend/app.py": 40,
+        "backend/pyproject.toml": 1,
+        "backend/tests/test_proactive.py": 5,
+        "backend/tests/test_screen.py": 14,
+        "backend/uv.lock": 87,
+        "docs/contracts.md": 4,
+        "frontend/BeaverAgent/BeaverAgent/AgentSession.swift": 17,
+        "frontend/BeaverAgent/BeaverAgent/ContentView.swift": 1,
+        "frontend/BeaverAgent/BeaverAgent/Fixtures.swift": 10,
+        "frontend/BeaverAgent/BeaverAgent/Fixtures/screen_seen.json": 1,
+        "frontend/BeaverAgent/BeaverAgent/Protocol.swift": 5
+      },
+      "user_removed_per_file": {
+        "backend/app.py": 1,
+        "backend/tests/test_proactive.py": 3,
+        "docs/contracts.md": 2,
+        "frontend/BeaverAgent/BeaverAgent/AgentSession.swift": 5,
+        "frontend/BeaverAgent/BeaverAgent/ContentView.swift": 1,
+        "frontend/BeaverAgent/BeaverAgent/Fixtures.swift": 1
+      }
+    }
+  ]
+}
