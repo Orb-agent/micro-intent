@@ -1,0 +1,49 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4JXXPREVNF8ZRXTH4EG45YY",
+  "session_id": "f1c27adf-0d4f-4a29-9192-d1742af6da60",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T12:52:08.068224Z",
+  "branch": "feature/wp2-backend-voice-vision",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "backend/voice.py"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "78a9449b4e09",
+  "checkpoint_transcript_start": 99,
+  "transcript_lines_at_start": 99,
+  "compact_transcript_start": 8,
+  "token_usage": {
+    "input_tokens": 8,
+    "cache_creation_tokens": 11163,
+    "cache_read_tokens": 463154,
+    "output_tokens": 2696,
+    "api_call_count": 4
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T12:52:08.045538Z",
+    "agent_lines": 110,
+    "agent_removed": 4,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 110,
+    "total_lines_changed": 114,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}
