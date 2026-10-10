@@ -13,21 +13,21 @@
       "transcript": "/0/full.jsonl",
       "compact_transcript": "/0/transcript.jsonl",
       "content_hash": "/0/content_hash.txt",
-      "prompt": "/0/prompt.txt"
+      "prompt": ""
     }
   ],
   "token_usage": {
-    "input_tokens": 22,
-    "cache_creation_tokens": 27471,
-    "cache_read_tokens": 4168141,
-    "output_tokens": 19053,
-    "api_call_count": 11,
+    "input_tokens": 2,
+    "cache_creation_tokens": 393,
+    "cache_read_tokens": 390076,
+    "output_tokens": 509,
+    "api_call_count": 1,
     "subagent_tokens": {
-      "input_tokens": 86,
-      "cache_creation_tokens": 292035,
-      "cache_read_tokens": 3212029,
-      "output_tokens": 1628,
-      "api_call_count": 43
+      "input_tokens": 2,
+      "cache_creation_tokens": 652,
+      "cache_read_tokens": 91572,
+      "output_tokens": 428,
+      "api_call_count": 1
     }
   }
 }
