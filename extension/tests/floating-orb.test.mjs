@@ -17,6 +17,10 @@ test("only the extension frame may expand the orb, and website replies cannot se
   assert.equal(frame.style.width, "128px");
   listener({ source: frame.contentWindow, origin: "chrome-extension://orbs", data: { type: "orbs-layout", expanded: true } });
   assert.match(frame.style.width, /380px/);
+  listener({ source: frame.contentWindow, origin: "chrome-extension://orbs", data: { type: "orbs-layout", expanded: true, height: 360 } });
+  assert.match(frame.style.height, /360px/);
+  listener({ source: frame.contentWindow, origin: "chrome-extension://orbs", data: { type: "orbs-layout", expanded: true, height: 9999 } });
+  assert.match(frame.style.height, /460px/);
   listener({ source: frame.contentWindow, origin: "chrome-extension://orbs", data: { type: "orbs-layout", expanded: false } });
   assert.equal(frame.style.height, "112px");
   listener({ source: win, origin: "https://lu.ma", data: { channel: "orbs-a2ui", message: { type: "audio", data: "not forwarded" } } });

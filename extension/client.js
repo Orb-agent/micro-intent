@@ -232,18 +232,24 @@ function cardMarkup(c) {
 }
 
 let noticePort;
+function notifyWidgetLayout(visible, height = 460) {
+  if (widgetMode) parent.postMessage({ type: "orbs-layout", expanded: visible, height }, "*");
+}
 const conflictPopup = createConflictPopup({
   popup: $("conflictPopup"), content: $("conflictContent"), dismissButton: $("dismissConflict"),
   renderFallback: (cards) => { $("conflictContent").innerHTML = cards.map(cardMarkup).join(""); }, log,
   onVisibilityChange: (visible) => {
     document.body.classList.toggle("has-notice", visible);
-    if (widgetMode) parent.postMessage({ type: "orbs-layout", expanded: visible }, "*");
+    notifyWidgetLayout(visible);
   },
   onDismiss: (keys) => {
     if (noticePort) { try { noticePort.postMessage({ type: "dismiss", keys }); } catch {} }
     else void chrome.runtime.sendMessage({ type: "orbs-ui", message: { type: "dismiss", keys } }).catch(() => {});
   },
 });
+if (widgetMode) new ResizeObserver(() => {
+  if (!$("conflictPopup").hidden) notifyWidgetLayout(true, Math.ceil($("conflictPopup").getBoundingClientRect().height) + 136);
+}).observe($("conflictPopup"));
 function publishUI(message) {
   const payload = message.type === "reply" ? { type: "reply", cards: message.cards || [] }
     : { type: "a2ui", messages: message.messages };

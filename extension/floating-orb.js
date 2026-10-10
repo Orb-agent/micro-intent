@@ -27,7 +27,8 @@
         event.data?.type === "orbs-layout") {
       const expanded = event.data.expanded === true;
       orb.style.width = expanded ? "min(380px, calc(100vw - 36px))" : "128px";
-      orb.style.height = expanded ? "min(460px, calc(100dvh - 36px))" : "112px";
+      const height = Number.isFinite(event.data.height) ? Math.max(200, Math.min(460, event.data.height)) : 460;
+      orb.style.height = expanded ? `min(${height}px, calc(100dvh - 36px))` : "112px";
     }
     // Only the backend root page is accepted by the service worker as a source.
     if (event.source === window && event.origin === location.origin &&
