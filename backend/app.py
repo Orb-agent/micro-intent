@@ -125,6 +125,19 @@ def store_screenshot(image: bytes, mime: str) -> None:
     log.info("screenshot %d: %d bytes %s", latest.id, len(image), mime)
 
 
+async def take_screen() -> dict | None:
+    """The latest ScreenContext if it is fresh and unused (contracts § HTTP, screenshot rule)."""
+    shot = latest
+    if shot is None or shot.used or time.monotonic() - shot.at > SCREEN_MAX_AGE:
+        return None
+    await asyncio.wait({shot.task}, timeout=VISION_WAIT)  # never cancels the vision task
+    shot.used = True  # after the wait, so an interrupted turn leaves it for the next one
+    if not shot.task.done() or shot.task.cancelled():
+        log.warning("screenshot %d not read within %ds, turn goes without it", shot.id, VISION_WAIT)
+        return None
+    return shot.task.result()
+
+
 app = FastAPI()
 
 
@@ -175,14 +188,17 @@ class Session:
         async def on_status(label: str) -> None:
             await self.state("searching", label)
 
+        screen = await take_screen()
+        timings["vision_wait"] = time.monotonic() - t0
+        t_agent = time.monotonic()
         try:
-            reply = await self.agent.turn(text, None, on_status)
+            reply = await self.agent.turn(text, screen, on_status)
         except Exception:
             log.exception("turn failed")
             await self.send({"type": "error", "message": "Sorry, something went wrong."})
             await self.state("idle")
             return
-        timings["agent"] = time.monotonic() - t0
+        timings["agent"] = time.monotonic() - t_agent
 
         await self.send({"type": "reply", "say": reply["say"], "cards": reply["cards"]})
         if cards_to_a2ui and reply["cards"]:

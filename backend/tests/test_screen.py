@@ -1,11 +1,12 @@
 import base64
 import json
+import time
 
 import pytest
 from fastapi.testclient import TestClient
 
 import app as server
-from tests.test_app import FakeTranscriber, fake_speak
+from tests.test_app import FakeTranscriber, fake_speak, kinds, receive_turn
 
 SCREEN = json.loads((server.FIXTURES / "screen.json").read_text())
 PNG = b"\x89PNG\r\n\x1a\nfake"
@@ -81,3 +82,70 @@ def test_bad_screen_frames_are_ignored(client):
     assert ws.receive_json() == {"type": "state", "state": "thinking"}  # no screen_ok
     ctx.__exit__(None, None, None)
     assert server.latest is None
+
+
+class RecordingAgent:
+    def __init__(self):
+        self.screens = []
+
+    async def start(self):
+        pass
+
+    async def turn(self, text, screen, on_status):
+        self.screens.append(screen)
+        return json.loads((server.FIXTURES / "demo_reply.json").read_text())
+
+
+@pytest.fixture
+def agent(monkeypatch):
+    agent = RecordingAgent()
+    monkeypatch.setattr(server, "make_agent", lambda: agent)
+    return agent
+
+
+def ask(ws):
+    ws.send_json({"type": "text", "text": "Can I make it?"})
+    return receive_turn(ws)
+
+
+def test_next_turn_gets_the_screen_once(client, agent):
+    ctx, ws = connect(client)
+    client.post("/screenshot", content=PNG, headers=AUTH)
+    assert ws.receive_json()["type"] == "screen_ok"
+    ask(ws)
+    ask(ws)
+    ctx.__exit__(None, None, None)
+    assert agent.screens == [SCREEN, None]
+
+
+def test_turn_waits_for_running_vision(client, agent, monkeypatch, caplog):
+    monkeypatch.setattr(server, "read_screen", lambda image, mime: time.sleep(0.3) or SCREEN)
+    caplog.set_level("INFO", logger="app")
+    ctx, ws = connect(client)
+    client.post("/screenshot", content=PNG, headers=AUTH)
+    msgs = ask(ws)  # sent while vision still runs
+    ctx.__exit__(None, None, None)
+    assert "screen_ok" in kinds(msgs)
+    assert agent.screens == [SCREEN]
+    assert "'vision_wait'" in caplog.text
+
+
+def test_old_screenshot_is_not_used(client, agent):
+    ctx, ws = connect(client)
+    client.post("/screenshot", content=PNG, headers=AUTH)
+    assert ws.receive_json()["type"] == "screen_ok"
+    server.latest.at -= server.SCREEN_MAX_AGE + 1
+    ask(ws)
+    ctx.__exit__(None, None, None)
+    assert agent.screens == [None]
+
+
+def test_vision_failure(client, agent, monkeypatch):
+    monkeypatch.setattr(server, "read_screen", failing_read_screen)
+    ctx, ws = connect(client)
+    client.post("/screenshot", content=PNG, headers=AUTH)
+    assert ws.receive_json() == {"type": "screen_ok"}
+    msgs = ask(ws)
+    ctx.__exit__(None, None, None)
+    assert "reply" in kinds(msgs)
+    assert agent.screens == [None]
