@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 
 /// Orbs monochrome tokens shared with the web prototype and brand kit.
+/// Light and dark counterparts keep the app chrome consistent across appearances.
 enum Theme {
     // MARK: Ground
 

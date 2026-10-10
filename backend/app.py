@@ -13,7 +13,7 @@ import json
 import logging
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -42,6 +42,8 @@ except ImportError:
 
 SCREEN_MIMES = {"image/jpeg", "image/png"}
 SCREEN_MAX_BYTES = 8 * 1024 * 1024
+SCREEN_MAX_RECENT = 9  # earlier frames in one `screen` message
+SCREEN_CLIP_MAX_BYTES = 8 * 1024 * 1024  # `data` and `recent` together, decoded
 SCREEN_MAX_AGE = 120  # s; contracts § HTTP, screenshot rule
 VISION_WAIT = 5  # s a turn waits for a running vision call
 
@@ -54,6 +56,7 @@ class Screenshot:
     at: float  # time.monotonic() when received
     task: asyncio.Task | None = None  # read_screen in the background; its result is the ScreenContext
     used: bool = False
+    earlier: list[bytes] = field(default_factory=list)  # frames from the seconds before, oldest first
 
 
 # Single user: one latest screenshot, shared by all sessions.
@@ -111,11 +114,12 @@ async def read_latest(shot: Screenshot) -> dict | None:
     if read_screen is None:
         log.warning("vision.py not available, screenshot %d not read", shot.id)
     else:
+        earlier = {"earlier": shot.earlier} if shot.earlier else {}
         try:
             if inspect.iscoroutinefunction(read_screen):
-                screen = await read_screen(shot.image, shot.mime)
+                screen = await read_screen(shot.image, shot.mime, **earlier)
             else:  # a sync read_screen must not block the event loop
-                screen = await asyncio.to_thread(read_screen, shot.image, shot.mime)
+                screen = await asyncio.to_thread(read_screen, shot.image, shot.mime, **earlier)
         except Exception:
             log.exception("vision failed on screenshot %d", shot.id)
         screen = screen if isinstance(screen, dict) else None
@@ -125,14 +129,33 @@ async def read_latest(shot: Screenshot) -> dict | None:
     return screen
 
 
-def store_screenshot(image: bytes, mime: str) -> None:
+def store_screenshot(image: bytes, mime: str, earlier=()) -> None:
     """Keep only the latest screenshot and start reading it."""
     global latest
     if latest and latest.task:
         latest.task.cancel()  # its context is stale now
-    latest = Screenshot(latest.id + 1 if latest else 1, image, mime, time.monotonic())
+    latest = Screenshot(latest.id + 1 if latest else 1, image, mime, time.monotonic(), earlier=list(earlier))
     latest.task = asyncio.create_task(read_latest(latest))
-    log.info("screenshot %d: %d bytes %s", latest.id, len(image), mime)
+    log.info("screenshot %d: %d bytes %s, %d earlier", latest.id, len(image), mime, len(earlier))
+
+
+def decode_recent(recent: object, current: int) -> list[bytes]:
+    """The `recent` frames of a `screen` message, oldest first. All or none: any bad entry, or
+    too many bytes together with the `current` frame's, drops them all but never the current frame."""
+    if recent is None:
+        return []
+    try:
+        if not isinstance(recent, list) or len(recent) > SCREEN_MAX_RECENT:
+            raise ValueError(f"not a list of at most {SCREEN_MAX_RECENT}")
+        frames = [base64.b64decode(data, validate=True) for data in recent]
+        if not all(0 < len(f) <= SCREEN_MAX_BYTES for f in frames):
+            raise ValueError("an empty or too big frame")
+        if current + sum(map(len, frames)) > SCREEN_CLIP_MAX_BYTES:
+            raise ValueError(f"over {SCREEN_CLIP_MAX_BYTES} bytes together")
+    except (TypeError, ValueError) as e:
+        log.warning("dropped recent screen frames, kept the current one: %s", e)
+        return []
+    return frames
 
 
 async def take_screen() -> tuple[Screenshot | None, dict | None]:
@@ -231,7 +254,7 @@ class Session:
             await self.send({"type": "a2ui", "messages": messages})
         await self.state("speaking")
         try:  # aclosing: an interrupt closes the TTS socket now, not when GC finds it
-            async with contextlib.aclosing(voice.speak(reply["say"])) as chunks:
+            async with contextlib.aclosing(voice.speak(reply["say"], reply.get("voice_id"))) as chunks:
                 async for chunk in chunks:
                     timings.setdefault("first_audio", time.monotonic() - t0)
                     await self.send({"type": "audio", "data": chunk})
@@ -307,7 +330,7 @@ class Session:
             except (TypeError, ValueError):
                 image = b""
             if msg.get("mime") in SCREEN_MIMES and 0 < len(image) <= SCREEN_MAX_BYTES:
-                store_screenshot(image, msg["mime"])
+                store_screenshot(image, msg["mime"], decode_recent(msg.get("recent"), len(image)))
             else:
                 log.warning("ignored screen frame: bad mime, base64 or size")
         elif kind == "interrupt":

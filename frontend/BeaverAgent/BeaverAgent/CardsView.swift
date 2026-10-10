@@ -25,13 +25,24 @@ struct CardsView: View {
         }
     }
 
-    /// Fallback for replies without `a2ui` (WP1 task 3). Native card views from
-    /// `frontend/BeaverAgent/NativeCards/` plug in here, e.g.
-    /// `ForEach(cards) { NativeCardView(card: $0, onAction: ...) }`.
-    @ViewBuilder
+    /// Fallback for replies without `a2ui` (WP1 task 3): the native views from
+    /// `NativeCards/`. A card that doesn't decode is skipped, not the whole reply.
     private func nativeCards(_ cards: [CardPayload]) -> some View {
-        EmptyView()
+        let decoded = cards.compactMap { try? Self.cardDecoder.decode(Card.self, from: $0.raw) }
+        return VStack(spacing: 16) {
+            ForEach(decoded.indices, id: \.self) { NativeCardView(card: decoded[$0]) }
+        }
+        // The native cards are dark glass only (docs/design-system), so their text uses dark tokens.
+        .environment(\.colorScheme, .dark)
     }
+
+    /// contracts § Cards: `.convertFromSnakeCase`, `.iso8601`.
+    private static let cardDecoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }()
 }
 
 /// The A2UI `Card`, drawn as a solid Orbs surface with the kit's 24 pt radius.
