@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K8J8Q1A09ZPYBFPWWHBXGK",
+  "strategy": "manual-commit",
+  "branch": "fm/micro-intent-ios-brand-theme-v1",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "frontend/BeaverAgent/BeaverAgent/Sheets.swift"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 28,
+    "cache_creation_tokens": 17087,
+    "cache_read_tokens": 2727508,
+    "output_tokens": 5906,
+    "api_call_count": 14
+  }
+}
